@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { GAME_WIDTH, GAME_HEIGHT, COLORS } from '../utils/constants';
+import { GAME_WIDTH, GAME_HEIGHT, COLORS, TIME_UNITS_PER_DAY } from '../utils/constants';
 import { getState } from '../systems/GameState';
 import { PROJECTS } from '../data/projects';
 import { getTheme } from '../utils/themes';
@@ -81,6 +81,12 @@ export class BriefingScene extends Phaser.Scene {
   create(): void {
     const state = getState();
     const theme = getTheme(state.playerClass ?? undefined);
+    
+    // Snapshot day-start resources
+    state.dayStartBudget = state.budget;
+    state.dayStartHardware = state.hardwareHp;
+    state.timeUnitsRemaining = TIME_UNITS_PER_DAY;
+    
     this.cameras.main.setBackgroundColor(COLORS.bg);
 
     // Clear ticker state from previous visits

@@ -5,6 +5,7 @@ import type { Strategy } from '../systems/GameState';
 import { getTheme } from '../utils/themes';
 import { Window } from '../ui/Window';
 import { Taskbar } from '../ui/Taskbar';
+import { EconomySystem } from '../systems/EconomySystem';
 
 interface StrategyOption {
   id: Strategy;
@@ -27,6 +28,7 @@ export class PlanningScene extends Phaser.Scene {
   private selectedStrategy: Strategy | null = null;
   private launchBtn!: Phaser.GameObjects.Text;
   private cards: Phaser.GameObjects.Rectangle[] = [];
+  private strategyPreviewText!: Phaser.GameObjects.Text;
 
   constructor() {
     super({ key: 'Planning' });
@@ -121,6 +123,9 @@ export class PlanningScene extends Phaser.Scene {
     this.add.text(760 + mArea.x, 50 + mArea.y + 80, `Agent Slots: ${state.agentSlots}`, {
       fontFamily: 'monospace', fontSize: '13px', color: '#8b949e',
     });
+    this.add.text(760 + mArea.x, 50 + mArea.y + 104, `Daily Cost: $${EconomySystem.getModelDayCost(state.model)}/day`, {
+      fontFamily: 'monospace', fontSize: '13px', color: '#8b949e',
+    });
 
     // Agent slot (right side)
     const agentWin = new Window({
@@ -147,6 +152,10 @@ export class PlanningScene extends Phaser.Scene {
     this.launchBtn = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 60, '[ Select a strategy to continue ]', {
       fontFamily: 'monospace', fontSize: '16px', color: '#30363d',
     }).setOrigin(0.5);
+
+    this.strategyPreviewText = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 35, '', {
+      fontFamily: 'monospace', fontSize: '12px', color: '#8b949e',
+    }).setOrigin(0.5);
   }
 
   private selectStrategy(option: StrategyOption, index: number): void {
@@ -167,5 +176,8 @@ export class PlanningScene extends Phaser.Scene {
     this.launchBtn.setInteractive({ useHandCursor: true });
     this.launchBtn.off('pointerdown');
     this.launchBtn.on('pointerdown', () => this.scene.start('Execution'));
+
+    const mod = EconomySystem.getStrategyModifier(option.id);
+    this.strategyPreviewText.setText(`Est. cost: $${EconomySystem.getModelDayCost(state.model)}/day · Quality: ${mod.qualityMult.toFixed(1)}x`);
   }
 }
