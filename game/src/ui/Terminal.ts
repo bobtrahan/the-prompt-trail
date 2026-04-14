@@ -22,7 +22,10 @@ export class Terminal {
   private bg: Phaser.GameObjects.Rectangle;
   private lines: string[] = [];
   private lineTexts: Phaser.GameObjects.Text[] = [];
-  private promptText!: Phaser.GameObjects.Text;
+  private typedText!: Phaser.GameObjects.Text;
+  private cursorText!: Phaser.GameObjects.Text;
+  private remainingText!: Phaser.GameObjects.Text;
+  private hintLabel!: Phaser.GameObjects.Text;
   private cursorBlink!: Phaser.Time.TimerEvent;
   private cursorVisible = true;
 
@@ -35,6 +38,7 @@ export class Terminal {
   private currentPrompt = '';
   private typedSoFar = '';
   private promptPrefix = '> ';
+  private firstPromptShown = false;
 
   constructor(config: TerminalConfig) {
     this.scene = config.scene;
@@ -50,13 +54,32 @@ export class Terminal {
       .setOrigin(0);
     this.container.add(this.bg);
 
-    // Prompt line (at bottom of terminal area)
-    this.promptText = config.scene.add.text(8, config.height - LINE_HEIGHT - 8, '', {
+    // Prompt segments (at bottom of terminal area)
+    const promptY = config.height - LINE_HEIGHT - 8;
+    this.typedText = config.scene.add.text(8, promptY, '', {
+      fontFamily: 'monospace',
+      fontSize: '14px',
+      color: '#39d353',
+    });
+    this.cursorText = config.scene.add.text(8, promptY, '', {
       fontFamily: 'monospace',
       fontSize: '14px',
       color: '#e6edf3',
     });
-    this.container.add(this.promptText);
+    this.remainingText = config.scene.add.text(8, promptY, '', {
+      fontFamily: 'monospace',
+      fontSize: '14px',
+      color: '#484f58',
+    });
+    
+    // Hint label
+    this.hintLabel = config.scene.add.text(8, promptY + 18, '↑ type this', {
+      fontFamily: 'monospace',
+      fontSize: '11px',
+      color: '#484f58',
+    }).setVisible(false);
+
+    this.container.add([this.typedText, this.cursorText, this.remainingText, this.hintLabel]);
 
     // Cursor blink
     this.cursorBlink = config.scene.time.addEvent({
@@ -81,6 +104,9 @@ export class Terminal {
 
   /** Set the current prompt the player needs to type */
   setPrompt(prompt: string): void {
+    if (!this.firstPromptShown && prompt) {
+      this.hintLabel.setVisible(true);
+    }
     this.currentPrompt = prompt;
     this.typedSoFar = '';
     this.renderPrompt();
@@ -92,12 +118,21 @@ export class Terminal {
       this.typedSoFar += this.currentPrompt[this.typedSoFar.length];
       this.cursorVisible = true;
       this.renderPrompt();
+
+      if (this.isComplete() && !this.firstPromptShown) {
+        this.firstPromptShown = true;
+        this.hintLabel.destroy();
+      }
     }
   }
 
   /** Called on incorrect keystroke — flash red briefly */
   showError(): void {
-    this.promptText.setColor('#f85149');
+    const errorColor = '#f85149';
+    this.typedText.setColor(errorColor);
+    this.cursorText.setColor(errorColor);
+    this.remainingText.setColor(errorColor);
+
     this.scene.time.delayedCall(150, () => {
       this.renderPrompt();
     });
@@ -135,11 +170,27 @@ export class Terminal {
   }
 
   private renderPrompt(): void {
-    const typed = this.typedSoFar;
-    const remaining = this.currentPrompt.slice(typed.length);
+    const typed = this.promptPrefix + this.typedSoFar;
+    const remaining = this.currentPrompt.slice(this.typedSoFar.length);
     const cursor = this.cursorVisible ? '█' : ' ';
-    this.promptText.setText(this.promptPrefix + typed + cursor + remaining);
-    this.promptText.setColor('#e6edf3');
+
+    this.typedText.setText(typed);
+    this.typedText.setColor('#39d353');
+
+    // Position cursor after typed text
+    this.cursorText.setX(this.typedText.x + this.typedText.width);
+    this.cursorText.setText(cursor);
+    this.cursorText.setColor('#e6edf3');
+
+    // Position remaining after cursor
+    this.remainingText.setX(this.cursorText.x + this.cursorText.width);
+    this.remainingText.setText(remaining);
+    this.remainingText.setColor('#484f58');
+
+    // Position hint label relative to prompt start
+    if (this.hintLabel.active) {
+      this.hintLabel.setX(this.typedText.x + 16); // offset a bit to align roughly with typed area
+    }
   }
 
   destroy(): void {
