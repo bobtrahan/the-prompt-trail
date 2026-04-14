@@ -106,10 +106,10 @@ export class ResultsScene extends Phaser.Scene {
 
     // Total
     this.window.add(this.add.text(x + 20, y + 230, 'Day Total:', {
-      fontFamily: 'monospace', fontSize: '18px', color: '#e6edf3', fontWeight: 'bold'
+      fontFamily: 'monospace', fontSize: '18px', color: '#e6edf3', fontStyle: 'bold'
     }));
     this.totalRepText = this.add.text(x + 140, y + 230, '+0 ⭐', {
-      fontFamily: 'monospace', fontSize: '18px', color: '#f2cc60', fontWeight: 'bold'
+      fontFamily: 'monospace', fontSize: '18px', color: '#f2cc60', fontStyle: 'bold'
     });
     this.window.add(this.totalRepText);
 
