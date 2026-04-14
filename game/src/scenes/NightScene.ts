@@ -54,7 +54,7 @@ export class NightScene extends Phaser.Scene {
     this.add.text(cx, cy + 85, '── TOMORROW ──', {
       fontFamily: 'monospace',
       fontSize: '14px',
-      color: COLORS.accentStr,
+      color: '#58a6ff',
     });
 
     const nextProject = PROJECTS[state.day]; // state.day is 1-indexed, PROJECTS is 0-indexed. Day 1 complete -> PROJECTS[1] is Day 2.
