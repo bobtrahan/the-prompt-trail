@@ -66,7 +66,7 @@ export class EconomySystem {
       // Using index + day as a simple seed
       const seed = day * (index + 1);
       const fluctuation = Math.sin(seed) * 0.2; // -0.2 to +0.2
-      const finalPrice = Math.round(item.cost * (1 + fluctuation));
+      const finalPrice = Math.round(item.baseCost * (1 + fluctuation));
       prices.set(item.id, finalPrice);
     });
 
