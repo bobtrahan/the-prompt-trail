@@ -90,6 +90,11 @@ export interface GameState {
 
   // Flags for cross-event references
   eventFlags: Record<string, boolean>;
+
+  // Class restrictions & hardware
+  lockedStrategies: Strategy[];
+  lockedModels: ModelTier[];
+  localSlots: number;
 }
 
 function createInitialState(): GameState {
@@ -110,6 +115,9 @@ function createInitialState(): GameState {
     ownedUpgrades: [],
     dayScores: [],
     eventFlags: {},
+    lockedStrategies: [],
+    lockedModels: [],
+    localSlots: 0,
   };
 }
 
@@ -139,5 +147,10 @@ export function initClassState(playerClass: PlayerClass): void {
   }
   if (playerClass === 'techBro') {
     state.unlockedModels.push('local');
+    state.localSlots = 1;
+  }
+  if (playerClass === 'corporateDev') {
+    state.lockedStrategies = ['vibeCode'];
+    state.lockedModels = ['free', 'sketchy', 'local'];
   }
 }

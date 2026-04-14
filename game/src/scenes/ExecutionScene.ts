@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT, COLORS, TIME_UNITS_PER_DAY, EVENT_INTERVAL_MS } from '../utils/constants';
+import type { PlaceholderEvent } from '../utils/constants';
 import { getState } from '../systems/GameState';
 import { getTheme } from '../utils/themes';
 import { Window } from '../ui/Window';
@@ -25,11 +26,12 @@ const DAY_PROJECTS: string[] = [
 ];
 
 // Placeholder events (will be replaced by EventEngine)
-const PLACEHOLDER_EVENTS = [
+const PLACEHOLDER_EVENTS: PlaceholderEvent[] = [
   {
     title: '⚠️ API Rate Limit',
     body: 'You hit the rate limit on your model provider.\nTokens are being throttled.',
     choices: ['Wait it out (lose 1 time)', 'Switch to backup model ($200)', 'Rage tweet about it'],
+    tags: ['requiresCloud'],
   },
   {
     title: '🔥 Agent Loop Detected',
@@ -40,6 +42,7 @@ const PLACEHOLDER_EVENTS = [
     title: '💸 Surprise Invoice',
     body: 'Your model provider sent an unexpected bill.\n"Premium context window surcharge: $150"',
     choices: ['Pay it ($150)', 'Dispute it (lose 1 time)', 'Switch to free tier'],
+    tags: ['requiresCloud'],
   },
   {
     title: '📡 Model Update Available',
@@ -55,6 +58,18 @@ const PLACEHOLDER_EVENTS = [
     title: '⚡ Power Flicker',
     body: 'The lights flickered. Your local model\nlost its entire context window.',
     choices: ['Reload context ($50)', 'Switch to cloud model ($100)', 'Work from memory'],
+  },
+  {
+    title: '🌡️ GPU Overheating',
+    body: 'Your GPU temperature just hit 97°C.\nFans are screaming.',
+    choices: ['Throttle it (lose 1 time)', 'Buy a cooling fan ($100)', 'Let it cook'],
+    tags: ['requiresLocal'],
+  },
+  {
+    title: '🤖 Local Model Hallucination',
+    body: 'Your local model just generated 400 lines\nof confident, completely wrong code.',
+    choices: ['Restart inference (lose 1 time)', 'Switch to cloud ($150)', 'Post it on Twitter'],
+    tags: ['requiresLocal'],
   },
 ];
 
@@ -193,7 +208,7 @@ export class ExecutionScene extends Phaser.Scene {
     const rX = 852 + rArea.x;
     const rY = 288 + rArea.y;
 
-    this.add.text(rX, rY, `💰 Budget: $${state.budget.toLocaleString()}`, rStyle);
+    this.add.text(rX, rY, state.playerClass === 'corporateDev' ? '💳 Company Card' : `💰 Budget: $${state.budget.toLocaleString()}`, rStyle);
     this.add.text(rX, rY + 28, `🖥️ Hardware: ${state.hardwareHp}%`, rStyle);
     this.add.text(rX, rY + 56, `⭐ Reputation: ${state.reputation}`, rStyle);
     this.add.text(rX, rY + 84, `📡 Model: ${state.model}`, rStyle);
@@ -304,6 +319,11 @@ export class ExecutionScene extends Phaser.Scene {
     if (this.timeUnits <= 0) return;
 
     const evt = Phaser.Utils.Array.GetRandom(PLACEHOLDER_EVENTS);
+    const state = getState();
+    // filter out requiresCloud events when running local
+    if (evt.tags?.includes('requiresCloud') && state.localSlots > 0 && state.model === 'local') return;
+    // filter out requiresLocal events when player has no local slots
+    if (evt.tags?.includes('requiresLocal') && state.localSlots === 0) return;
     this.showEventModal(evt.title, evt.body, evt.choices);
   }
 

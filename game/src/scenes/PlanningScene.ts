@@ -63,14 +63,22 @@ export class PlanningScene extends Phaser.Scene {
     STRATEGIES.forEach((s, i) => {
       const cardY = 50 + sArea.y + 32 + i * 120;
       const cardX = 40 + sArea.x;
+      const isLocked = state.lockedStrategies.includes(s.id);
 
-      const card = this.add.rectangle(cardX, cardY, sArea.width, 100, COLORS.titleBar).setOrigin(0)
-        .setInteractive({ useHandCursor: true });
-      this.cards.push(card);
+      const card = this.add.rectangle(cardX, cardY, sArea.width, 100, isLocked ? 0x1a1a1a : COLORS.titleBar).setOrigin(0);
+      if (!isLocked) {
+        card.setInteractive({ useHandCursor: true });
+        this.cards.push(card);
+      }
 
       this.add.text(cardX + 16, cardY + 12, `${s.icon}  ${s.name}`, {
-        fontFamily: 'monospace', fontSize: '16px', color: '#e6edf3',
+        fontFamily: 'monospace', fontSize: '16px', color: isLocked ? '#484f58' : '#e6edf3',
       });
+      if (isLocked) {
+        this.add.text(cardX + 16, cardY + 34, '🔒 Against company policy', {
+          fontFamily: 'monospace', fontSize: '11px', color: '#484f58',
+        });
+      }
       this.add.text(cardX + 50, cardY + 38, s.desc, {
         fontFamily: 'monospace', fontSize: '12px', color: '#8b949e',
         wordWrap: { width: sArea.width - 80 },
@@ -80,13 +88,15 @@ export class PlanningScene extends Phaser.Scene {
         color: s.riskLabel === 'Low Risk' ? '#3fb950' : s.riskLabel === 'High Risk' ? '#f85149' : '#d29922',
       });
 
-      card.on('pointerdown', () => this.selectStrategy(s, i));
-      card.on('pointerover', () => {
-        if (this.selectedStrategy !== s.id) card.setFillStyle(COLORS.windowBg);
-      });
-      card.on('pointerout', () => {
-        if (this.selectedStrategy !== s.id) card.setFillStyle(COLORS.titleBar);
-      });
+      if (!isLocked) {
+        card.on('pointerdown', () => this.selectStrategy(s, i));
+        card.on('pointerover', () => {
+          if (this.selectedStrategy !== s.id) card.setFillStyle(COLORS.windowBg);
+        });
+        card.on('pointerout', () => {
+          if (this.selectedStrategy !== s.id) card.setFillStyle(COLORS.titleBar);
+        });
+      }
     });
 
     // Model info panel (right side)
@@ -102,7 +112,7 @@ export class PlanningScene extends Phaser.Scene {
     this.add.text(760 + mArea.x, 50 + mArea.y, `Active Model: ${state.model}`, {
       fontFamily: 'monospace', fontSize: '14px', color: '#e6edf3',
     });
-    this.add.text(760 + mArea.x, 50 + mArea.y + 28, `Budget: $${state.budget.toLocaleString()}`, {
+    this.add.text(760 + mArea.x, 50 + mArea.y + 28, state.playerClass === 'corporateDev' ? '💳 Company Card' : `Budget: $${state.budget.toLocaleString()}`, {
       fontFamily: 'monospace', fontSize: '13px', color: '#8b949e',
     });
     this.add.text(760 + mArea.x, 50 + mArea.y + 52, `Hardware: ${state.hardwareHp}%`, {
