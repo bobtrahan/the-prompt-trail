@@ -84,29 +84,44 @@ gamedevjs-2026/
     └── public/assets/  ← fonts, audio, images (mostly empty)
 ```
 
-## Current Status (as of April 14, 2026)
+## Current Status (as of April 14, 2026 — end of day)
 
 ### Done ✅
 - Full game design spec (loop, events, systems, art, audio, balance)
 - Project scaffolded (Vite + Phaser 3 + TypeScript)
 - Scene flow wired: Boot → Title → ClassSelect → Briefing → Planning → Execution → Results → Night → loop → Final
 - GameState singleton with class defs, resource tracking, event flags
-- Class select screen with 4 clickable class cards
+- Class select screen with 4 clickable class cards, reordered by difficulty (easy→brutal), with difficulty badges and multiplier labels
 - Title screen with PromptOS boot animation
 - GitHub repo created (private)
 - Color/theme system ready for per-class theming
+- **OS chrome UI components** — `Window` (title bar, accent strip, close button, content area), `Taskbar` (budget/hw/rep/day), `Terminal` (scrolling output, cursor blink)
+- **Terminal typing** — three-segment colored prompt (typed=green, cursor=white blink, remaining=dim gray ghost text). `↑ type this` hint on first prompt. Difficulty scaling: easy→medium→hard prompts as you progress.
+- **Typing engine** — keyboard input, accuracy tracking, shuffled prompt queues per difficulty tier
+- **Execution scene** — full PromptOS desktop: terminal window (typing), agent manager panel (animated status), system monitor (budget/hw/rep/model + time bar), progress bar. Pulsing "START TYPING" affordance that fades on first keystroke. Day timer + events don't start until player types.
+- **Event modal system** — events fire as modal dialogs that pause typing, dim background, offer 3 choices (clickable or keyboard 1/2/3). First event fires at 5 sec to teach rhythm. Placeholder events with basic consequence logic (budget cost, time loss).
+- **Planning scene** — strategy picker with 4 cards (Plan Then Build / Just Start / One-Shot / Vibe Code) showing risk labels. Model + agent info panels. Must pick strategy before launching.
+- **Class rebalance** — Tech Bro ×0.8 (easy, 2 agent slots), Corp Dev ×1.2, Indie ×1.8, Student ×3.0 (brutal)
+- **Corporate Dev restrictions** — `lockedStrategies: ['vibeCode']`, `lockedModels: ['free', 'sketchy', 'local']`. Grayed-out cards with 🔒 label. Budget displays as "💳 Company Card" everywhere.
+- **Local hardware system** — `localSlots` in GameState. Tech Bro starts with 1. Events tagged `requiresCloud`/`requiresLocal` with filtering. Local-specific events: GPU Overheating, Local Model Hallucination.
 
-### Next Up (Phase 1 remaining → Phase 2)
-- [ ] OS chrome UI components (window frames, title bar, taskbar)
-- [ ] Terminal component (for typing area)
-- [ ] Typing engine (prompts, accuracy tracking, speed effects)
-- [ ] Execution scene — the main gameplay screen with typing + progress bar
-- [ ] Event engine (load events from data, weight by day/class, fire on timer)
-- [ ] Dialog box component (notification banners + modal dialogs for events)
-- [ ] Planning scene (strategy/model/agent picker UIs)
-- [ ] Economy system (budget tracking, model costs)
-- [ ] Reputation scoring system
-- [ ] 13 project definitions with difficulty curves
+### Next Up (Phase 2: Core Loop)
+- [ ] Event engine — load all 55 events from data files, weight by day/class, replace placeholder events
+- [ ] Economy system — budget tracking, model costs per time unit, strategy cost modifiers
+- [ ] Reputation scoring — base rep from progress + accuracy bonus + strategy modifier + class multiplier
+- [ ] 13 project definitions with difficulty curves (data file)
+- [ ] Briefing scene upgrade — project reveal "Daily Digest" app, resource summary, AI news ticker
+- [ ] Results scene upgrade — day stats (accuracy, prompts completed, rep earned, budget spent)
+- [ ] Night scene — transition to Token Market / Bug Bounty choice
+
+### Phase 3+ (after core loop works)
+- [ ] Token Market shop (item data, purchase UI, upgrade effects)
+- [ ] Bug Bounty mini-game (click bugs in code grid)
+- [ ] All 55 events with class-specific variants and cross-event chains
+- [ ] Per-class OS color themes applied everywhere
+- [ ] Audio (5 tracks + SFX)
+- [ ] Agent synergy/clash system
+- [ ] Polish, juice, balance, deploy
 
 ### Build Milestones (from TECHPLAN.md)
 | Phase | Target Date | Focus |
@@ -123,7 +138,15 @@ gamedevjs-2026/
 - Every code change → `git add` + `git commit`. Uncommitted = unfinished.
 - TypeScript strict (but noUnusedLocals/Params off for jam speed).
 - No unit tests (jam pace). Manual playtesting after each phase.
-- Sub-agents (Boris/Vlad) can handle mechanical scene implementation once patterns are established.
+- Agents handle implementation: Forge (complex/multi-file), Patch (clear-spec single-file), Chip (trivial). Route dispatches.
+
+## Workflow
+
+- **Haze** architects and specs, produces task lists
+- **Route** dispatches tasks to agents (Forge/Patch/Chip) via `route-dispatch` prompt template in haze-control
+- **Bob** reviews Route's dispatch plan, approves spawns, playtests results
+- **Haze** verifies agent output, updates documentation
+- Loop: architect → spec → dispatch → verify → document → next phase
 
 ## Running Locally
 
