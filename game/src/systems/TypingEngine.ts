@@ -1,28 +1,47 @@
 import Phaser from 'phaser';
 import { Terminal } from '../ui/Terminal';
 
-/** Prompt definitions — what the player types during execution */
-const PROMPTS: string[] = [
+/**
+ * Prompts organized by difficulty tier.
+ * Early game = short/easy. Scales up as day progresses.
+ */
+const PROMPTS_EASY: string[] = [
+  'hello world',
+  'npm start',
+  'git init',
+  'ls -la',
+  'cd src',
+  'make',
+  'go run .',
+  'pip install',
+  'node app',
+  'cat README',
+];
+
+const PROMPTS_MEDIUM: string[] = [
+  'git push origin',
+  'docker compose up',
+  'npm run build',
+  'python train.py',
+  'ssh prod@server',
+  'curl localhost',
+  'export API_KEY=',
+  'screen -r agent',
+  'tail -f logs',
+  'chmod 755 run.sh',
+];
+
+const PROMPTS_HARD: string[] = [
   'git push --force',
   'pip install sketchy-model',
   'await agent.think()',
   'rm -rf node_modules',
-  'LGTM ship it',
-  'npm run build',
-  'docker compose up -d',
-  'curl -X POST /api/deploy',
-  'sudo reboot now',
-  'git commit -m "fixes"',
-  'ssh prod@server',
-  'python train.py --epochs 100',
-  'export OPENAI_KEY=sk-...',
-  'tail -f /var/log/agent.log',
-  'chmod 777 everything.sh',
+  'kubectl apply -f chaos.yaml',
+  'rsync -avz ./weights remote:',
   'wget model-7b.gguf',
   'systemctl restart agent',
-  'screen -r training',
-  'rsync -avz ./weights remote:',
-  'kubectl apply -f chaos.yaml',
+  'LGTM ship it',
+  'export OPENAI_KEY=sk-...',
 ];
 
 export interface TypingStats {
@@ -34,34 +53,61 @@ export interface TypingStats {
 /**
  * Typing Engine — manages the typing mechanic during Execution phase.
  * Listens for keyboard input, advances terminal, tracks accuracy.
+ * Difficulty scales: first few prompts are short/easy, then medium, then hard.
  */
 export class TypingEngine {
   private scene: Phaser.Scene;
   private terminal: Terminal;
   private stats: TypingStats = { correct: 0, incorrect: 0, promptsCompleted: 0 };
-  private promptQueue: string[] = [];
+  private easyQueue: string[] = [];
+  private mediumQueue: string[] = [];
+  private hardQueue: string[] = [];
   private active = false;
+  private paused = false;
   private onPromptComplete?: () => void;
+  private onFirstKeystroke?: () => void;
+  private hasTypedOnce = false;
 
-  constructor(scene: Phaser.Scene, terminal: Terminal, onPromptComplete?: () => void) {
+  constructor(
+    scene: Phaser.Scene,
+    terminal: Terminal,
+    onPromptComplete?: () => void,
+    onFirstKeystroke?: () => void,
+  ) {
     this.scene = scene;
     this.terminal = terminal;
     this.onPromptComplete = onPromptComplete;
+    this.onFirstKeystroke = onFirstKeystroke;
 
-    // Shuffle and queue prompts
-    this.promptQueue = Phaser.Utils.Array.Shuffle([...PROMPTS]);
+    this.easyQueue = Phaser.Utils.Array.Shuffle([...PROMPTS_EASY]);
+    this.mediumQueue = Phaser.Utils.Array.Shuffle([...PROMPTS_MEDIUM]);
+    this.hardQueue = Phaser.Utils.Array.Shuffle([...PROMPTS_HARD]);
 
-    // Listen for keyboard
     scene.input.keyboard!.on('keydown', this.handleKey, this);
   }
 
   start(): void {
     this.active = true;
+    this.paused = false;
     this.nextPrompt();
   }
 
   stop(): void {
     this.active = false;
+  }
+
+  /** Pause typing (e.g. during event modal) */
+  pause(): void {
+    this.paused = true;
+  }
+
+  /** Resume typing after event */
+  resume(): void {
+    this.paused = false;
+  }
+
+  isPaused(): boolean {
+    return this.paused;
   }
 
   getStats(): TypingStats {
@@ -73,20 +119,35 @@ export class TypingEngine {
     return total === 0 ? 1 : this.stats.correct / total;
   }
 
+  private getNextPromptPool(): string[] {
+    const completed = this.stats.promptsCompleted;
+    if (completed < 3) return this.easyQueue;
+    if (completed < 7) return this.mediumQueue;
+    return this.hardQueue;
+  }
+
   private nextPrompt(): void {
-    if (this.promptQueue.length === 0) {
-      this.promptQueue = Phaser.Utils.Array.Shuffle([...PROMPTS]);
+    const pool = this.getNextPromptPool();
+    if (pool.length === 0) {
+      // Refill
+      if (pool === this.easyQueue) this.easyQueue = Phaser.Utils.Array.Shuffle([...PROMPTS_EASY]);
+      else if (pool === this.mediumQueue) this.mediumQueue = Phaser.Utils.Array.Shuffle([...PROMPTS_MEDIUM]);
+      else this.hardQueue = Phaser.Utils.Array.Shuffle([...PROMPTS_HARD]);
     }
-    const prompt = this.promptQueue.pop()!;
-    this.terminal.addLine(`> ${this.terminal['currentPrompt'] || ''}`.trim());
+    const activePool = this.getNextPromptPool();
+    const prompt = activePool.pop() ?? 'npm start';
     this.terminal.setPrompt(prompt);
   }
 
   private handleKey = (event: KeyboardEvent): void => {
-    if (!this.active) return;
-    // Ignore modifier keys, function keys, etc.
+    if (!this.active || this.paused) return;
     if (event.key.length !== 1 && event.key !== 'Backspace') return;
     if (event.metaKey || event.ctrlKey || event.altKey) return;
+
+    if (!this.hasTypedOnce) {
+      this.hasTypedOnce = true;
+      this.onFirstKeystroke?.();
+    }
 
     const expected = this.terminal['currentPrompt'][this.terminal.getTypedLength()];
 
@@ -99,9 +160,8 @@ export class TypingEngine {
         this.terminal.addLine(`✓ ${this.terminal['currentPrompt']}`);
         this.onPromptComplete?.();
 
-        // Small delay before next prompt
-        this.scene.time.delayedCall(300, () => {
-          if (this.active) this.nextPrompt();
+        this.scene.time.delayedCall(250, () => {
+          if (this.active && !this.paused) this.nextPrompt();
         });
       }
     } else if (event.key !== 'Backspace') {
