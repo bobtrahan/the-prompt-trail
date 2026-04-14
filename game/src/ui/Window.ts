@@ -91,13 +91,12 @@ export class Window {
       this.container.add(this.closeBtn);
     }
 
-    // Window dots (decorative)
-    const dotY = this.BORDER_WIDTH + 10;
+    // Window dots (decorative, macOS-style upper-left)
+    const dotY = this.BORDER_WIDTH + this.TITLE_BAR_HEIGHT / 2;
     const dotColors = [0xf85149, 0xd29922, 0x3fb950];
-    // Only show on right side if close button exists, otherwise skip
     if (!config.closeable) {
       dotColors.forEach((c, i) => {
-        const dot = config.scene.add.circle(config.width - 18 + i * 14, dotY, 4, c);
+        const dot = config.scene.add.circle(config.width - 44 + i * 14, dotY, 4, c);
         this.container.add(dot);
       });
     }
