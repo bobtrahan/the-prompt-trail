@@ -19,6 +19,7 @@ export interface ClassDef {
   hardwareHp: number;
   startingModel: ModelTier;
   scoreMultiplier: number;
+  agentSlots?: number;
 }
 
 export const CLASS_DEFS: Record<PlayerClass, ClassDef> = {
@@ -28,8 +29,9 @@ export const CLASS_DEFS: Record<PlayerClass, ClassDef> = {
     description: 'Best hardware, big budget, zero self-awareness.',
     startingBudget: 10000,
     hardwareHp: 100,
-    startingModel: 'local',
-    scoreMultiplier: 1.0,
+    startingModel: 'standard',
+    scoreMultiplier: 0.8,
+    agentSlots: 2,
   },
   indieHacker: {
     id: 'indieHacker',
@@ -38,7 +40,7 @@ export const CLASS_DEFS: Record<PlayerClass, ClassDef> = {
     startingBudget: 2000,
     hardwareHp: 80,
     startingModel: 'standard',
-    scoreMultiplier: 1.5,
+    scoreMultiplier: 1.8,
   },
   collegeStudent: {
     id: 'collegeStudent',
@@ -47,13 +49,13 @@ export const CLASS_DEFS: Record<PlayerClass, ClassDef> = {
     startingBudget: 500,
     hardwareHp: 50,
     startingModel: 'free',
-    scoreMultiplier: 2.5,
+    scoreMultiplier: 3.0,
   },
   corporateDev: {
     id: 'corporateDev',
     name: 'Corporate Dev',
-    description: 'Company card. Company laptop. Company meetings.',
-    startingBudget: 5000,
+    description: 'Company card. Company laptop. Company meetings. No freedom.',
+    startingBudget: 99999,
     hardwareHp: 90,
     startingModel: 'standard',
     scoreMultiplier: 1.2,
@@ -129,6 +131,9 @@ export function initClassState(playerClass: PlayerClass): void {
   state.budget = def.startingBudget;
   state.hardwareHp = def.hardwareHp;
   state.model = def.startingModel;
+  if (def.agentSlots !== undefined) {
+    state.agentSlots = def.agentSlots;
+  }
   if (def.startingModel !== 'free') {
     state.unlockedModels.push(def.startingModel);
   }

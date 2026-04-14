@@ -24,7 +24,13 @@ export class ClassSelectScene extends Phaser.Scene {
       color: '#8b949e',
     }).setOrigin(0.5);
 
-    const classes = Object.values(CLASS_DEFS);
+    const classes = ['techBro', 'corporateDev', 'indieHacker', 'collegeStudent'].map(id => CLASS_DEFS[id as PlayerClass]);
+    const DIFFICULTY: Record<string, string> = {
+      techBro: '☆ Easy',
+      corporateDev: '☆☆ Medium',
+      indieHacker: '☆☆☆ Hard',
+      collegeStudent: '☆☆☆☆ Brutal',
+    };
     const cardWidth = 260;
     const totalWidth = classes.length * cardWidth + (classes.length - 1) * 20;
     const startX = (GAME_WIDTH - totalWidth) / 2 + cardWidth / 2;
@@ -34,7 +40,7 @@ export class ClassSelectScene extends Phaser.Scene {
       const y = GAME_HEIGHT / 2 - 20;
 
       // Card background
-      const card = this.add.rectangle(x, y, cardWidth, 340, COLORS.windowBg)
+      const card = this.add.rectangle(x, y, cardWidth, 380, COLORS.windowBg)
         .setStrokeStyle(2, COLORS.windowBorder)
         .setInteractive({ useHandCursor: true });
 
@@ -47,13 +53,20 @@ export class ClassSelectScene extends Phaser.Scene {
       }).setOrigin(0.5);
 
       // Description
-      this.add.text(x, y - 90, def.description, {
+      const descText = this.add.text(x, y - 90, def.description, {
         fontFamily: 'monospace',
         fontSize: '11px',
         color: '#8b949e',
         wordWrap: { width: cardWidth - 30 },
         align: 'center',
       }).setOrigin(0.5, 0);
+
+      // Difficulty badge
+      this.add.text(x, y - 90 + descText.height + 24, DIFFICULTY[def.id], {
+        fontFamily: 'monospace',
+        fontSize: '12px',
+        color: '#58a6ff',
+      }).setOrigin(0.5);
 
       // Stats
       const statsY = y + 10;
