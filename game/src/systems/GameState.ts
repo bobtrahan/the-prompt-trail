@@ -1,3 +1,5 @@
+import type { DayScore } from './ScoringSystem';
+
 export type PlayerClass = 'techBro' | 'indieHacker' | 'collegeStudent' | 'corporateDev';
 export type Strategy = 'planThenBuild' | 'justStart' | 'oneShot' | 'vibeCode';
 export type ModelTier = 'free' | 'standard' | 'frontier' | 'local' | 'sketchy' | 'openSource';
@@ -95,6 +97,17 @@ export interface GameState {
   lockedStrategies: Strategy[];
   lockedModels: ModelTier[];
   localSlots: number;
+
+  // Last day results snapshot
+  lastDayResult?: {
+    progress: number;
+    accuracy: number;
+    score: DayScore;
+    budgetSpent: number;
+    hardwareDelta: number;
+  };
+  dayStartBudget: number;
+  dayStartHardware: number;
 }
 
 function createInitialState(): GameState {
@@ -118,6 +131,8 @@ function createInitialState(): GameState {
     lockedStrategies: [],
     lockedModels: [],
     localSlots: 0,
+    dayStartBudget: 0,
+    dayStartHardware: 100,
   };
 }
 
