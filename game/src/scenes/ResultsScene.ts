@@ -186,7 +186,6 @@ export class ResultsScene extends Phaser.Scene {
     if (state.day >= 13) {
       this.scene.start('Final');
     } else {
-      state.day++;
       this.scene.start('Night');
     }
   }
