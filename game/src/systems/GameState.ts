@@ -108,6 +108,8 @@ export interface GameState {
   };
   dayStartBudget: number;
   dayStartHardware: number;
+  dayStartBudget: number;
+  dayStartHardware: number;
 }
 
 function createInitialState(): GameState {

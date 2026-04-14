@@ -1,35 +1,184 @@
 import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT, COLORS } from '../utils/constants';
-import { getState } from '../systems/GameState';
+import { getState, CLASS_DEFS } from '../systems/GameState';
+import { Window } from '../ui/Window';
+import { Taskbar } from '../ui/Taskbar';
+import { PROJECTS } from '../data/projects';
 
 export class ResultsScene extends Phaser.Scene {
+  private window!: Window;
+  private taskbar!: Taskbar;
+  private continueBtn!: Phaser.GameObjects.Text;
+  
+  // Animation state
+  private animProgress = 0;
+  private animDuration = 1000; // 1 second
+  private isAnimating = true;
+
+  // Display objects
+  private progressText!: Phaser.GameObjects.Text;
+  private accuracyText!: Phaser.GameObjects.Text;
+  private baseRepText!: Phaser.GameObjects.Text;
+  private accuracyBonusText!: Phaser.GameObjects.Text;
+  private strategyBonusText!: Phaser.GameObjects.Text;
+  private totalRepText!: Phaser.GameObjects.Text;
+  private budgetDeltaText!: Phaser.GameObjects.Text;
+  private hardwareDeltaText!: Phaser.GameObjects.Text;
+
   constructor() {
     super({ key: 'Results' });
   }
 
   create(): void {
-    this.cameras.main.setBackgroundColor(COLORS.bg);
     const state = getState();
+    const result = state.lastDayResult;
 
-    this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 20, 'Results Phase', {
-      fontFamily: 'monospace',
-      fontSize: '32px',
-      color: '#e6edf3',
-    }).setOrigin(0.5);
+    if (!result) {
+      console.warn('No lastDayResult found in GameState!');
+      this.advance();
+      return;
+    }
 
-    this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 20, 'Day ' + state.day + ' · $' + state.budget, {
-      fontFamily: 'monospace',
-      fontSize: '16px',
-      color: '#8b949e',
-    }).setOrigin(0.5);
+    this.cameras.main.setBackgroundColor(COLORS.bg);
+    this.taskbar = new Taskbar(this);
 
-    const btn = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 80, '[ Continue ]', {
-      fontFamily: 'monospace',
-      fontSize: '14px',
-      color: '#58a6ff',
-    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    // Create Results Window
+    const winWidth = 500;
+    const winHeight = 420;
+    this.window = new Window({
+      scene: this,
+      x: (GAME_WIDTH - winWidth) / 2,
+      y: (GAME_HEIGHT - winHeight) / 2 - 20,
+      width: winWidth,
+      height: winHeight,
+      title: `Day ${state.day} Results`,
+      titleIcon: '📊',
+    });
 
-    btn.on('pointerdown', () => this.advance());
+    const project = PROJECTS[state.day - 1];
+    const { x, y, width } = this.window.contentArea;
+
+    // Project Name & Status
+    this.window.add(this.add.text(x, y + 10, `Project: ${project?.name || 'Unknown'}`, {
+      fontFamily: 'monospace', fontSize: '16px', color: '#e6edf3'
+    }));
+
+    const statusLabel = result.progress >= 100 ? '✅ Complete' : '⚠️ Partial';
+    const statusColor = result.progress >= 100 ? '#3fb950' : '#d29922';
+    this.window.add(this.add.text(x + width, y + 10, statusLabel, {
+      fontFamily: 'monospace', fontSize: '14px', color: statusColor
+    }).setOrigin(1, 0));
+
+    // Divider
+    this.window.add(this.add.text(x + width/2, y + 45, '── BREAKDOWN ──', {
+      fontFamily: 'monospace', fontSize: '12px', color: '#8b949e'
+    }).setOrigin(0.5));
+
+    // Stats Labels
+    const labelStyle = { fontFamily: 'monospace', fontSize: '14px', color: '#8b949e' };
+    const valueStyle = { fontFamily: 'monospace', fontSize: '14px', color: '#e6edf3' };
+
+    this.window.add(this.add.text(x + 20, y + 75, 'Progress:', labelStyle));
+    this.progressText = this.add.text(x + 140, y + 75, '0%', valueStyle);
+    this.window.add(this.progressText);
+
+    this.window.add(this.add.text(x + 20, y + 100, 'Accuracy:', labelStyle));
+    this.accuracyText = this.add.text(x + 140, y + 100, '0%', valueStyle);
+    this.window.add(this.accuracyText);
+
+    this.window.add(this.add.text(x + 20, y + 125, 'Base Rep:', labelStyle));
+    this.baseRepText = this.add.text(x + 140, y + 125, '+0', valueStyle);
+    this.window.add(this.baseRepText);
+
+    this.window.add(this.add.text(x + 20, y + 150, 'Accuracy ♙:', labelStyle));
+    this.accuracyBonusText = this.add.text(x + 140, y + 150, '+0', valueStyle);
+    this.window.add(this.accuracyBonusText);
+
+    const strategyLabel = this.getStrategyLabel(state.strategy || 'justStart');
+    this.window.add(this.add.text(x + 20, y + 175, 'Strategy ♙:', labelStyle));
+    this.strategyBonusText = this.add.text(x + 140, y + 175, `+0  (${strategyLabel})`, valueStyle);
+    this.window.add(this.strategyBonusText);
+
+    // Footer Divider
+    this.window.add(this.add.text(x + width/2, y + 205, '───────────', {
+      fontFamily: 'monospace', fontSize: '12px', color: '#8b949e'
+    }).setOrigin(0.5));
+
+    // Total
+    this.window.add(this.add.text(x + 20, y + 230, 'Day Total:', {
+      fontFamily: 'monospace', fontSize: '18px', color: '#e6edf3', fontWeight: 'bold'
+    }));
+    this.totalRepText = this.add.text(x + 140, y + 230, '+0 ⭐', {
+      fontFamily: 'monospace', fontSize: '18px', color: '#f2cc60', fontWeight: 'bold'
+    });
+    this.window.add(this.totalRepText);
+
+    // Delta Stats
+    const deltaY = y + 280;
+    this.window.add(this.add.text(x + 20, deltaY, `Budget Spent: $${result.budgetSpent}`, labelStyle));
+    
+    const hwStart = Math.round(state.dayStartHardware);
+    const hwEnd = Math.round(state.hardwareHp);
+    this.window.add(this.add.text(x + width - 20, deltaY, `Hardware: ${hwStart}% → ${hwEnd}%`, labelStyle).setOrigin(1, 0));
+
+    // Continue Button (hidden until animation ends)
+    const btnText = state.day === 13 ? '[ Final Score → ]' : '[ Continue to Night → ]';
+    this.continueBtn = this.add.text(x + width/2, y + 340, btnText, {
+      fontFamily: 'monospace', fontSize: '16px', color: '#58a6ff'
+    }).setOrigin(0.5).setInteractive({ useHandCursor: true }).setAlpha(0);
+    
+    this.continueBtn.on('pointerdown', () => this.advance());
+    this.window.add(this.continueBtn);
+
+    // Start Animation
+    this.isAnimating = true;
+    this.animProgress = 0;
+  }
+
+  update(time: number, delta: number): void {
+    if (!this.isAnimating) return;
+
+    this.animProgress += delta;
+    const factor = Math.min(this.animProgress / this.animDuration, 1);
+    
+    const state = getState();
+    const result = state.lastDayResult!;
+
+    const curProgress = Math.floor(result.progress * factor);
+    const curAccuracy = Math.floor(result.accuracy * 100 * factor);
+    const curBase = Math.floor(result.score.baseRep * factor);
+    const curAccBonus = Math.floor(result.score.accuracyBonus * factor);
+    const curStratBonus = Math.floor(result.score.strategyBonus * factor);
+    const curTotal = Math.floor(result.score.total * factor);
+
+    this.progressText.setText(`${curProgress}%`);
+    this.accuracyText.setText(`${curAccuracy}%`);
+    this.baseRepText.setText(`+${curBase}`);
+    this.accuracyBonusText.setText(`+${curAccBonus}`);
+    
+    const strategyLabel = this.getStrategyLabel(state.strategy || 'justStart');
+    this.strategyBonusText.setText(`${curStratBonus >= 0 ? '+' : ''}${curStratBonus}  (${strategyLabel})`);
+    
+    this.totalRepText.setText(`+${curTotal} ⭐`);
+
+    if (factor >= 1) {
+      this.isAnimating = false;
+      this.tweens.add({
+        targets: this.continueBtn,
+        alpha: 1,
+        duration: 200
+      });
+    }
+  }
+
+  private getStrategyLabel(strat: string): string {
+    switch (strat) {
+      case 'planThenBuild': return 'Plan Then Build +15%';
+      case 'justStart': return 'Just Start +0%';
+      case 'oneShot': return 'One-Shot -10%';
+      case 'vibeCode': return 'Vibe Code ?%';
+      default: return 'Standard';
+    }
   }
 
   private advance(): void {
