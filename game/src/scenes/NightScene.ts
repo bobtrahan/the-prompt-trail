@@ -37,46 +37,46 @@ export class NightScene extends Phaser.Scene {
 
     const { x: cx, y: cy, width: cw } = nightWin.contentArea;
 
-    // Body text
-    this.add.text(cx, cy + 10, 'The office is quiet. Your agents are sleeping.', {
+    // Body text — all content added to Window container using relative coords
+    nightWin.add(this.add.text(cx, cy + 10, 'The office is quiet. Your agents are sleeping.', {
       fontFamily: 'monospace',
       fontSize: '16px',
       color: '#e6edf3',
-    });
-    this.add.text(cx, cy + 35, '(Your hardware hums in the dark.)', {
+    }));
+    nightWin.add(this.add.text(cx, cy + 35, '(Your hardware hums in the dark.)', {
       fontFamily: 'monospace',
       fontSize: '14px',
       color: '#8b949e',
       fontStyle: 'italic',
-    });
+    }));
 
     // Tomorrow Preview Section
-    this.add.text(cx, cy + 85, '── TOMORROW ──', {
+    nightWin.add(this.add.text(cx, cy + 85, '── TOMORROW ──', {
       fontFamily: 'monospace',
       fontSize: '14px',
       color: '#58a6ff',
-    });
+    }));
 
     const nextProject = PROJECTS[state.day]; // state.day is 1-indexed, PROJECTS is 0-indexed. Day 1 complete -> PROJECTS[1] is Day 2.
     if (nextProject) {
-      this.add.text(cx, cy + 110, `Day ${state.day + 1}: ${nextProject.name}`, {
+      nightWin.add(this.add.text(cx, cy + 110, `Day ${state.day + 1}: ${nextProject.name}`, {
         fontFamily: 'monospace',
         fontSize: '16px',
         color: '#e6edf3',
-      });
+      }));
 
       const stars = this.getDifficultyStars(nextProject.difficulty);
-      this.add.text(cx, cy + 135, `Difficulty: ${stars}`, {
+      nightWin.add(this.add.text(cx, cy + 135, `Difficulty: ${stars}`, {
         fontFamily: 'monospace',
         fontSize: '16px',
         color: '#8b949e',
-      });
+      }));
     } else {
-      this.add.text(cx, cy + 110, `The Final Stretch...`, {
+      nightWin.add(this.add.text(cx, cy + 110, `The Final Stretch...`, {
         fontFamily: 'monospace',
         fontSize: '16px',
         color: '#e6edf3',
-      });
+      }));
     }
 
     // Phase 3 Placeholders (Market / Bounty)
@@ -89,36 +89,33 @@ export class NightScene extends Phaser.Scene {
     };
 
     const marketBtn = this.add.text(cx, cy + 200, '[ Token Market ]', btnStyle)
-      .setAlpha(0.4)
-      .setInteractive({ useHandCursor: false });
-    this.add.text(cx + 160, cy + 208, '(Coming Soon — Phase 3)', {
+      .setAlpha(0.4);
+    nightWin.add(marketBtn);
+    nightWin.add(this.add.text(cx + 160, cy + 208, '(Coming Soon — Phase 3)', {
       fontFamily: 'monospace',
       fontSize: '12px',
       color: '#8b949e',
-    });
+    }));
 
     const bountyBtn = this.add.text(cx, cy + 250, '[ Bug Bounty ]', btnStyle)
-      .setAlpha(0.4)
-      .setInteractive({ useHandCursor: false });
-    this.add.text(cx + 160, cy + 258, '(Coming Soon — Phase 3)', {
+      .setAlpha(0.4);
+    nightWin.add(bountyBtn);
+    nightWin.add(this.add.text(cx + 160, cy + 258, '(Coming Soon — Phase 3)', {
       fontFamily: 'monospace',
       fontSize: '12px',
       color: '#8b949e',
-    });
+    }));
 
     // Advance Button
     const sleepBtn = this.add.text(cx, cy + 320, '[ Sleep → Morning Briefing ]', {
       ...btnStyle,
       backgroundColor: '#238636',
     }).setInteractive({ useHandCursor: true });
+    nightWin.add(sleepBtn);
 
     sleepBtn.on('pointerover', () => sleepBtn.setBackgroundColor('#2ea043'));
     sleepBtn.on('pointerout', () => sleepBtn.setBackgroundColor('#238636'));
     sleepBtn.on('pointerdown', () => this.advance());
-
-    // Add everything to container via Window.add (not strictly necessary but keeps it tidy)
-    // Actually Window.ts doesn't have a generic add for everything, let's just use the scene.
-    // The Window's container is already in the scene.
   }
 
   private getDifficultyStars(diff: string): string {
