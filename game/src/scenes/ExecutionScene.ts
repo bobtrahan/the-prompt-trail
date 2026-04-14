@@ -1,77 +1,18 @@
 import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT, COLORS, TIME_UNITS_PER_DAY, EVENT_INTERVAL_MS } from '../utils/constants';
-import type { PlaceholderEvent } from '../utils/constants';
-import { getState } from '../systems/GameState';
+import { getState, CLASS_DEFS } from '../systems/GameState';
 import { getTheme } from '../utils/themes';
 import { Window } from '../ui/Window';
 import { Taskbar } from '../ui/Taskbar';
 import { Terminal } from '../ui/Terminal';
 import { TypingEngine } from '../systems/TypingEngine';
+import { PROJECTS } from '../data/projects';
+import { EventEngine } from '../systems/EventEngine';
+import { EconomySystem } from '../systems/EconomySystem';
+import { ScoringSystem } from '../systems/ScoringSystem';
+import type { EventDef, EventChoice } from '../data/events';
 
-// Placeholder project names per day
-const DAY_PROJECTS: string[] = [
-  'Email Automator v0.1',
-  'Twitter Reply Bot',
-  'Resume Optimizer Pro',
-  'AI Meal Planner',
-  'Smart Home Dashboard',
-  'Code Review Agent',
-  'Startup Pitch Generator',
-  'Legal Contract Scanner',
-  'AI Dungeon Master',
-  'Self-Driving Grocery Cart',
-  'Sentient Spreadsheet',
-  'AGI Prototype (lol)',
-  'The Final Deploy',
-];
 
-// Placeholder events (will be replaced by EventEngine)
-const PLACEHOLDER_EVENTS: PlaceholderEvent[] = [
-  {
-    title: '⚠️ API Rate Limit',
-    body: 'You hit the rate limit on your model provider.\nTokens are being throttled.',
-    choices: ['Wait it out (lose 1 time)', 'Switch to backup model ($200)', 'Rage tweet about it'],
-    tags: ['requiresCloud'],
-  },
-  {
-    title: '🔥 Agent Loop Detected',
-    body: 'Your agent has been generating the same\nfunction for the last 47 iterations.',
-    choices: ['Restart agent (lose progress)', 'Let it cook', 'Add more agents ($300)'],
-  },
-  {
-    title: '💸 Surprise Invoice',
-    body: 'Your model provider sent an unexpected bill.\n"Premium context window surcharge: $150"',
-    choices: ['Pay it ($150)', 'Dispute it (lose 1 time)', 'Switch to free tier'],
-    tags: ['requiresCloud'],
-  },
-  {
-    title: '📡 Model Update Available',
-    body: 'A new model version just dropped mid-project.\n"30% faster, 60% more hallucinations"',
-    choices: ['Upgrade now (risky)', 'Stay on current', 'Read the changelog (lose 1 time)'],
-  },
-  {
-    title: '🐛 Bug Report',
-    body: 'Your agent committed code that passes all tests\nbut does the opposite of what was asked.',
-    choices: ['Revert and redo ($100)', 'Ship it anyway', 'Write more tests (lose 1 time)'],
-  },
-  {
-    title: '⚡ Power Flicker',
-    body: 'The lights flickered. Your local model\nlost its entire context window.',
-    choices: ['Reload context ($50)', 'Switch to cloud model ($100)', 'Work from memory'],
-  },
-  {
-    title: '🌡️ GPU Overheating',
-    body: 'Your GPU temperature just hit 97°C.\nFans are screaming.',
-    choices: ['Throttle it (lose 1 time)', 'Buy a cooling fan ($100)', 'Let it cook'],
-    tags: ['requiresLocal'],
-  },
-  {
-    title: '🤖 Local Model Hallucination',
-    body: 'Your local model just generated 400 lines\nof confident, completely wrong code.',
-    choices: ['Restart inference (lose 1 time)', 'Switch to cloud ($150)', 'Post it on Twitter'],
-    tags: ['requiresLocal'],
-  },
-];
 
 export class ExecutionScene extends Phaser.Scene {
   private taskbar!: Taskbar;
@@ -101,6 +42,10 @@ export class ExecutionScene extends Phaser.Scene {
 
   // Event modal
   private modalGroup?: Phaser.GameObjects.Container;
+  private currentEvent?: EventDef;
+
+  // Systems
+  private eventEngine!: EventEngine;
 
   constructor() {
     super({ key: 'Execution' });
@@ -115,6 +60,12 @@ export class ExecutionScene extends Phaser.Scene {
     this.timeUnits = state.timeUnitsRemaining;
     this.startedTyping = false;
 
+    // Initialise systems
+    this.eventEngine = new EventEngine(state);
+    EconomySystem.applyDayCosts(state);
+    state.dayStartBudget = state.budget;
+    state.dayStartHardware = state.hardwareHp;
+
     // ── Taskbar ──
     this.taskbar = new Taskbar(this, theme.accent);
 
@@ -125,7 +76,7 @@ export class ExecutionScene extends Phaser.Scene {
 
     // ── Project header bar ──
     this.add.rectangle(0, 28, GAME_WIDTH, 36, COLORS.titleBar).setOrigin(0);
-    const projectName = DAY_PROJECTS[(state.day - 1) % DAY_PROJECTS.length];
+    const projectName = PROJECTS[state.day - 1]?.name ?? `Day ${state.day} Project`;
     this.add.text(16, 34, `📋 Building: ${projectName}`, {
       fontFamily: 'monospace', fontSize: '14px', color: '#e6edf3',
     });
@@ -318,16 +269,15 @@ export class ExecutionScene extends Phaser.Scene {
     if (this.modalGroup) return;
     if (this.timeUnits <= 0) return;
 
-    const evt = Phaser.Utils.Array.GetRandom(PLACEHOLDER_EVENTS);
-    const state = getState();
-    // filter out requiresCloud events when running local
-    if (evt.tags?.includes('requiresCloud') && state.localSlots > 0 && state.model === 'local') return;
-    // filter out requiresLocal events when player has no local slots
-    if (evt.tags?.includes('requiresLocal') && state.localSlots === 0) return;
-    this.showEventModal(evt.title, evt.body, evt.choices);
+    const evt = this.eventEngine.selectEvent();
+    if (!evt) return;
+
+    this.currentEvent = evt;
+    this.showEventModal(evt);
   }
 
-  private showEventModal(title: string, body: string, choices: string[]): void {
+  private showEventModal(evt: EventDef): void {
+    const { title, body, choices } = evt;
     this.typingEngine.pause();
 
     this.modalGroup = this.add.container(0, 0).setDepth(200);
@@ -381,20 +331,20 @@ export class ExecutionScene extends Phaser.Scene {
         .setInteractive({ useHandCursor: true });
       this.modalGroup!.add(btnBg);
 
-      const btnText = this.add.text(dx + 32, btnY + 7, `[${i + 1}] ${choice}`, {
+      const btnText = this.add.text(dx + 32, btnY + 7, `[${i + 1}] ${(choice as EventChoice).text}`, {
         fontFamily: 'monospace', fontSize: '13px', color: '#58a6ff',
       });
       this.modalGroup!.add(btnText);
 
       btnBg.on('pointerover', () => btnBg.setFillStyle(COLORS.windowBorder));
       btnBg.on('pointerout', () => btnBg.setFillStyle(COLORS.titleBar));
-      btnBg.on('pointerdown', () => this.resolveEvent(i, choice));
+      btnBg.on('pointerdown', () => this.resolveEvent(i, choice as EventChoice));
     });
 
     // Keyboard shortcuts (1/2/3)
-    this.input.keyboard!.once('keydown-ONE', () => this.resolveEvent(0, choices[0]));
-    this.input.keyboard!.once('keydown-TWO', () => choices.length > 1 && this.resolveEvent(1, choices[1]));
-    this.input.keyboard!.once('keydown-THREE', () => choices.length > 2 && this.resolveEvent(2, choices[2]));
+    this.input.keyboard!.once('keydown-ONE', () => this.resolveEvent(0, choices[0] as EventChoice));
+    this.input.keyboard!.once('keydown-TWO', () => choices.length > 1 && this.resolveEvent(1, choices[1] as EventChoice));
+    this.input.keyboard!.once('keydown-THREE', () => choices.length > 2 && this.resolveEvent(2, choices[2] as EventChoice));
 
     // Slide-in animation
     this.modalGroup.setAlpha(0);
@@ -406,22 +356,24 @@ export class ExecutionScene extends Phaser.Scene {
     });
   }
 
-  private resolveEvent(choiceIndex: number, choiceText: string): void {
+  private resolveEvent(choiceIndex: number, choice: EventChoice): void {
     if (!this.modalGroup) return;
 
-    this.terminal.addLine(`> Event: chose "${choiceText}"`);
+    this.terminal.addLine(`> Event: chose "${choice.text}"`);
 
-    // TODO: apply actual event consequences from EventEngine
-    // For now, minor placeholder effects
     const state = getState();
-    if (choiceText.includes('$')) {
-      const match = choiceText.match(/\$(\d+)/);
-      if (match) state.budget -= parseInt(match[1], 10);
+    const logs = this.eventEngine.applyEffects(choice, state);
+    for (const line of logs) {
+      this.terminal.addLine(line);
     }
-    if (choiceText.includes('lose 1 time') && this.timeUnits > 1) {
-      this.timeUnits--;
-      state.timeUnitsRemaining = this.timeUnits;
+
+    if (this.currentEvent) {
+      this.eventEngine.markFired(this.currentEvent.id, state.day);
+      this.currentEvent = undefined;
     }
+
+    // Sync local timeUnits from state (in case event changed time)
+    this.timeUnits = state.timeUnitsRemaining;
 
     // Close modal
     this.tweens.add({
@@ -451,11 +403,24 @@ export class ExecutionScene extends Phaser.Scene {
     this.eventTimer?.destroy();
 
     const state = getState();
-    const baseRep = Math.floor(this.progress * 0.5);
-    const accuracyBonus = Math.floor(this.typingEngine.getAccuracy() * 20);
-    const totalRep = baseRep + accuracyBonus;
-    state.reputation += totalRep;
-    state.dayScores.push(totalRep);
+    const dayScore = ScoringSystem.calcDayReputation(
+      this.progress,
+      this.typingEngine.getAccuracy(),
+      state.strategy!,
+      CLASS_DEFS[state.playerClass!],
+      state.day
+    );
+
+    state.lastDayResult = {
+      progress: this.progress,
+      accuracy: this.typingEngine.getAccuracy(),
+      score: dayScore,
+      budgetSpent: state.dayStartBudget - state.budget,
+      hardwareDelta: state.hardwareHp - state.dayStartHardware,
+    };
+
+    state.reputation += dayScore.total;
+    state.dayScores.push(dayScore.total);
 
     this.scene.start('Results');
   }
