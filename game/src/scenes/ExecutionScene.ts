@@ -547,7 +547,7 @@ export class ExecutionScene extends Phaser.Scene {
   }
 
   private tickTime(): void {
-    if ((window as any).__GOD_MODE) return;
+    if (window.__GOD_MODE) return;
     this.timeUnits--;
     const state = getState();
     state.timeUnitsRemaining = this.timeUnits;
@@ -586,7 +586,7 @@ export class ExecutionScene extends Phaser.Scene {
       this.terminal.addLine("🦆 Rubber Duck resolved the issue!");
       this.showFlashMessage("🦆 Rubber Duck resolved the issue!");
       AudioManager.getInstance().playSFX('notification');
-      this.resolveEvent(0, evt.choices[0] as EventChoice, true);
+      this.resolveEvent(0, evt.choices[0], true);
       return;
     }
 
@@ -656,7 +656,7 @@ export class ExecutionScene extends Phaser.Scene {
     const choiceStartY = dy + 48 + 60 + 20;
     let cumulativeY = choiceStartY;
     choices.forEach((choice, i) => {
-      const btnTextObj = this.add.text(dx + 32, cumulativeY + 7, `[${i + 1}] ${(choice as EventChoice).text}`, {
+      const btnTextObj = this.add.text(dx + 32, cumulativeY + 7, `[${i + 1}] ${choice.text}`, {
         fontFamily: 'monospace', fontSize: '13px', color: '#58a6ff',
         wordWrap: { width: dw - 72 },
       });
@@ -672,16 +672,16 @@ export class ExecutionScene extends Phaser.Scene {
       btnBg.on('pointerout', () => btnBg.setFillStyle(COLORS.titleBar));
       btnBg.on('pointerdown', () => {
         AudioManager.getInstance().playSFX('choice-select');
-        this.resolveEvent(i, choice as EventChoice);
+        this.resolveEvent(i, choice);
       });
 
       cumulativeY += btnH + 8;
     });
 
     // Keyboard shortcuts (1/2/3)
-    this.input.keyboard!.once('keydown-ONE', () => this.resolveEvent(0, choices[0] as EventChoice));
-    this.input.keyboard!.once('keydown-TWO', () => choices.length > 1 && this.resolveEvent(1, choices[1] as EventChoice));
-    this.input.keyboard!.once('keydown-THREE', () => choices.length > 2 && this.resolveEvent(2, choices[2] as EventChoice));
+    this.input.keyboard!.once('keydown-ONE', () => this.resolveEvent(0, choices[0]));
+    this.input.keyboard!.once('keydown-TWO', () => choices.length > 1 && this.resolveEvent(1, choices[1]));
+    this.input.keyboard!.once('keydown-THREE', () => choices.length > 2 && this.resolveEvent(2, choices[2]));
 
     // ── Countdown overlay (top-right corner of modal) ──
     const COUNTDOWN_SEC = 10;

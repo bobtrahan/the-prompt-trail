@@ -21,7 +21,9 @@ class AudioManager {
 
   private game: Phaser.Game | null = null;
   private currentMusicKey: string | null = null;
-  private currentMusic: Phaser.Sound.BaseSound | null = null;
+  // Stored as the concrete union so setVolume() is available without re-casting.
+  // Phaser's sound.add() returns BaseSound, so we narrow at the assignment site.
+  private currentMusic: Phaser.Sound.WebAudioSound | Phaser.Sound.HTML5AudioSound | null = null;
 
   private _masterVolume = 1;
   private _musicVolume = 0.7;
@@ -75,6 +77,9 @@ class AudioManager {
     if (this.currentMusicKey === key && this.currentMusic?.isPlaying) return;
 
     const sm = this.game.sound;
+    // Phaser API limitation: sound.add() returns BaseSound, but the runtime instance
+    // is always either WebAudioSound or HTML5AudioSound depending on the chosen
+    // sound manager. We narrow once here so downstream code can call setVolume().
     const incoming = sm.add(key, {
       loop: true,
       volume: 0,
@@ -184,7 +189,7 @@ class AudioManager {
   private applyMusicVolume(): void {
     if (!this.currentMusic) return;
     const vol = this.isMuted ? 0 : this._masterVolume * this._musicVolume;
-    (this.currentMusic as Phaser.Sound.WebAudioSound | Phaser.Sound.HTML5AudioSound).setVolume(vol);
+    this.currentMusic.setVolume(vol);
   }
 
   private saveSettings(): void {

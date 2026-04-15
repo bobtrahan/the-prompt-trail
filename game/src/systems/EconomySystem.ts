@@ -16,8 +16,10 @@ export class EconomySystem {
         return 0.05;
       case 'frontier':
         return 0.15;
-      default:
-        return 0;
+      default: {
+        const _exhaustive: never = model;
+        return _exhaustive;
+      }
     }
   }
 
@@ -35,8 +37,10 @@ export class EconomySystem {
         return 5;
       case 'openSource':
         return 10;
-      default:
-        return 0;
+      default: {
+        const _exhaustive: never = model;
+        return _exhaustive;
+      }
     }
   }
 
@@ -62,8 +66,10 @@ export class EconomySystem {
           strategyCost: 45,
           riskLabel: '??? · $45',
         };
-      default:
-        return { timeBonus: 0, costMult: 1.0, qualityMult: 1.0, strategyCost: 0, riskLabel: '' };
+      default: {
+        const _exhaustive: never = strategy;
+        return _exhaustive;
+      }
     }
   }
 

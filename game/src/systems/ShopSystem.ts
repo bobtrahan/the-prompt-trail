@@ -1,5 +1,6 @@
 import type { ItemDef } from '../data/items';
-import type { GameState, ModelTier } from './GameState';
+import type { GameState } from './GameState';
+import { isModelTier } from '../utils/playerClass';
 
 export class ShopSystem {
   /**
@@ -13,8 +14,8 @@ export class ShopSystem {
 
     // 2. Check if already owned/unlocked
     if (item.category === 'model') {
-      const modelTier = item.mechanical?.value as ModelTier;
-      if (state.unlockedModels.includes(modelTier)) {
+      const modelTier = item.mechanical?.value;
+      if (isModelTier(modelTier) && state.unlockedModels.includes(modelTier)) {
         return { ok: false, reason: 'Model already unlocked' };
       }
     }
@@ -26,8 +27,8 @@ export class ShopSystem {
     }
 
     if (item.category === 'agentSlot') {
-      const slotCount = item.mechanical?.value as number;
-      if (state.agentSlots >= slotCount) {
+      const slotCount = item.mechanical?.value;
+      if (typeof slotCount === 'number' && state.agentSlots >= slotCount) {
         return { ok: false, reason: 'Slot already unlocked' };
       }
     }
@@ -76,11 +77,15 @@ export class ShopSystem {
 
       switch (type) {
         case 'unlockModel':
-          state.unlockedModels.push(value as ModelTier);
+          if (isModelTier(value)) {
+            state.unlockedModels.push(value);
+          }
           break;
 
         case 'unlockSlot':
-          state.agentSlots = Math.max(state.agentSlots, value as number);
+          if (typeof value === 'number') {
+            state.agentSlots = Math.max(state.agentSlots, value);
+          }
           break;
 
         case 'eventWeightMod':

@@ -197,7 +197,7 @@ export class Telemetry {
       worstDay,
     };
 
-    (window as any).__TELEMETRY = runLog;
+    window.__TELEMETRY = runLog;
 
     // Store finalized run
     currentRun = runLog;
@@ -210,9 +210,9 @@ export class Telemetry {
   }
 
   /** Return the current (possibly partial) run log. */
-  static getRunLog(): RunLog | null {
+  static getRunLog(): Partial<RunLog> | null {
     if (!currentRun.startedAt) return null;
-    return currentRun as RunLog;
+    return currentRun;
   }
 
   /**

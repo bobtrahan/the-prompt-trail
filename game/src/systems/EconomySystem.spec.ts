@@ -12,7 +12,6 @@ describe('EconomySystem.getModelQualityMod', () => {
   it('openSource → 0', () => expect(EconomySystem.getModelQualityMod('openSource')).toBe(0));
   it('standard → 0.05', () => expect(EconomySystem.getModelQualityMod('standard')).toBe(0.05));
   it('frontier → 0.15', () => expect(EconomySystem.getModelQualityMod('frontier')).toBe(0.15));
-  it('unknown → 0', () => expect(EconomySystem.getModelQualityMod('unknown' as ModelTier)).toBe(0));
 });
 
 // Tests for EconomySystem.getModelDayCost — maps model tier to daily cost
@@ -23,7 +22,6 @@ describe('EconomySystem.getModelDayCost', () => {
   it('openSource → 10', () => expect(EconomySystem.getModelDayCost('openSource')).toBe(10));
   it('standard → 30', () => expect(EconomySystem.getModelDayCost('standard')).toBe(30));
   it('frontier → 100', () => expect(EconomySystem.getModelDayCost('frontier')).toBe(100));
-  it('unknown → 0', () => expect(EconomySystem.getModelDayCost('unknown' as ModelTier)).toBe(0));
 });
 
 // Tests for EconomySystem.getStrategyModifier — returns cost/quality/time data per strategy
@@ -57,10 +55,6 @@ describe('EconomySystem.getStrategyModifier', () => {
     }
   });
 
-  it('unknown → strategyCost 0', () => {
-    const mod = EconomySystem.getStrategyModifier('unknown' as Strategy);
-    expect(mod.strategyCost).toBe(0);
-  });
 });
 
 // Tests for EconomySystem.applyDayCosts — deducts costs, handles bankruptcy/discounts

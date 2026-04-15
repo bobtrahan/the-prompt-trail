@@ -188,12 +188,12 @@ export class DebugMenu extends Phaser.GameObjects.Container {
 
     // ── God Mode toggle ──
     const godLabel = () =>
-      (window as any).__GOD_MODE ? '[ God Mode: ON ]' : '[ God Mode: OFF ]';
+      window.__GOD_MODE ? '[ God Mode: ON ]' : '[ God Mode: OFF ]';
     const godColor = () =>
-      (window as any).__GOD_MODE ? '#3fb950' : '#9da5b0';
+      window.__GOD_MODE ? '#3fb950' : '#9da5b0';
 
     makeButton(scene, this, godLabel(), innerX, curY, godColor(), (txt) => {
-      (window as any).__GOD_MODE = !(window as any).__GOD_MODE;
+      window.__GOD_MODE = !window.__GOD_MODE;
       txt.setText(godLabel());
       txt.setColor(godColor());
     });

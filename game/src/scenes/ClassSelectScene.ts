@@ -34,7 +34,8 @@ export class ClassSelectScene extends Phaser.Scene {
       color: `#${COLORS.textDim.toString(16).padStart(6, '0')}`,
     }).setOrigin(0.5);
 
-    const classes = ['techBro', 'corporateDev', 'indieHacker', 'collegeStudent'].map(id => CLASS_DEFS[id as PlayerClass]);
+    const classIds: PlayerClass[] = ['techBro', 'corporateDev', 'indieHacker', 'collegeStudent'];
+    const classes = classIds.map(id => CLASS_DEFS[id]);
     const DIFFICULTY: Record<string, string> = {
       techBro: '☆ Easy',
       corporateDev: '☆☆ Medium',
@@ -151,7 +152,7 @@ export class ClassSelectScene extends Phaser.Scene {
         });
         // Delay scene start
         this.time.delayedCall(200, () => {
-          this.selectClass(def.id as PlayerClass);
+          this.selectClass(def.id);
         });
       });
     });

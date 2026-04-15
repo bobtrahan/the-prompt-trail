@@ -258,7 +258,7 @@ export class TokenMarketScene extends Phaser.Scene {
 
   private renderItems(): void {
     // Destroy previous list
-    this.itemListObjects.forEach(o => (o as Phaser.GameObjects.GameObject & { destroy: () => void }).destroy());
+    this.itemListObjects.forEach(o => o.destroy());
     this.itemListObjects = [];
 
     const state = getState();

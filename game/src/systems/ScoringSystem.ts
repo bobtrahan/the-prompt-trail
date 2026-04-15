@@ -49,6 +49,10 @@ export class ScoringSystem {
         // random(-0.2 to +0.4)
         strategyMod = Math.random() * 0.6 - 0.2;
         break;
+      default: {
+        const _exhaustive: never = strategy;
+        throw new Error(`Unhandled strategy: ${_exhaustive}`);
+      }
     }
 
     const strategyBonus = Math.floor(baseRep * strategyMod);

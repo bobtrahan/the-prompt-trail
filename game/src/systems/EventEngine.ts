@@ -173,8 +173,8 @@ export class EventEngine {
         }
 
         default: {
-          logs.push(`> EFFECT: ${effect.type} = ${effect.value}`);
-          break;
+          const _exhaustive: never = effect.type;
+          throw new Error(`Unhandled effect type: ${String(_exhaustive)}`);
         }
       }
     }
