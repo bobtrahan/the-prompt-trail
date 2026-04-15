@@ -360,6 +360,30 @@ export class PlanningScene extends Phaser.Scene {
 
   // ── Strategy selection ────────────────────────────────────────────────
 
+  // ── Model selection ────────────────────────────────────────────────────
+
+  private selectModel(model: ModelTier): void {
+    const state = getState();
+    state.model = model;
+
+    // Update row highlight styles
+    this.modelRowBgs.forEach((bg, m) => {
+      const selected = m === model;
+      bg.setFillStyle(selected ? 0x1c3a1c : COLORS.titleBar);
+      if (selected) bg.setStrokeStyle(1, 0x3fb950);
+      else bg.setStrokeStyle(0, 0);
+    });
+
+    // Refresh the strategy cost preview if a strategy is selected
+    if (this.selectedStrategy) {
+      const option = STRATEGIES.find(s => s.id === this.selectedStrategy)!;
+      const mod = EconomySystem.getStrategyModifier(option.id);
+      const totalDayCost = EconomySystem.getModelDayCost(state.model) + mod.strategyCost;
+      const qualityLabel = option.id === 'vibeCode' ? '???' : `${mod.qualityMult.toFixed(1)}x`;
+      this.strategyPreviewText.setText(`Daily cost: $${totalDayCost} (model $${EconomySystem.getModelDayCost(state.model)} + strategy $${mod.strategyCost}) · Quality: ${qualityLabel}`);
+    }
+  }
+
   private selectStrategy(option: StrategyOption, index: number): void {
     this.selectedStrategy = option.id;
     const state = getState();
