@@ -154,17 +154,23 @@ export class BugBountyScene extends Phaser.Scene {
     this.gridW = ca.width - 16;
     this.gridH = CODE_LINES.length * lineH;
 
-    // Start
-    this.startTime = this.time.now;
-    this.lastSpawn = this.time.now;
-    this.ended = false;
+    // Reset all game state (critical for scene re-entry)
     this.bugs = [];
     this.bugCount = 0;
     this.totalEarned = 0;
+    this.ended = false;
+    this.startTime = 0;
+    this.lastSpawn = 0;
   }
 
   update(time: number, _delta: number): void {
     if (this.ended) return;
+
+    // Initialize timing on first update frame
+    if (this.startTime === 0) {
+      this.startTime = time;
+      this.lastSpawn = time;
+    }
 
     const elapsed = time - this.startTime;
     const remaining = Math.max(0, GAME_DURATION - elapsed);
