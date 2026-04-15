@@ -10,6 +10,7 @@ import { NightScene } from './scenes/NightScene';
 import { TokenMarketScene } from './scenes/TokenMarketScene';
 import { BugBountyScene } from './scenes/BugBountyScene';
 import { FinalScene } from './scenes/FinalScene';
+import { ScanlineScene } from './ui/Scanlines';
 
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
@@ -34,6 +35,7 @@ const config: Phaser.Types.Core.GameConfig = {
     TokenMarketScene,
     BugBountyScene,
     FinalScene,
+    ScanlineScene,
   ],
 };
 
