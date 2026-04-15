@@ -134,6 +134,8 @@ export class BugBountyScene extends Phaser.Scene {
   private bugs: ActiveBug[] = [];
   private bugCount = 0;
   private totalEarned = 0;
+  private lastMissClick = 0;
+  private timePenalty = 0;
   private startTime = 0;
   private lastSpawn = 0;
   private ended = false;
@@ -147,6 +149,8 @@ export class BugBountyScene extends Phaser.Scene {
     this.bugs = [];
     this.bugCount = 0;
     this.totalEarned = 0;
+    this.lastMissClick = 0;
+    this.timePenalty = 0;
     this.ended = false;
     this.startTime = 0;
     this.lastSpawn = 0;
@@ -212,6 +216,28 @@ export class BugBountyScene extends Phaser.Scene {
     this.gridY = codeStartY;
     this.gridW = ca.width - 16;
     this.gridH = CODE_LINES.length * lineH;
+
+    const gridBg = this.add.rectangle(this.gridX, this.gridY, this.gridW, this.gridH, 0x000000, 0)
+      .setOrigin(0).setDepth(15).setInteractive();
+    gridBg.on('pointerdown', (pointer: Phaser.Input.Pointer) => this.handleMissClick(pointer.x, pointer.y));
+  }
+
+  private handleMissClick(x: number, y: number): void {
+    const now = this.time.now;
+    if (now - this.lastMissClick < 200) return;
+    this.lastMissClick = now;
+
+    this.timePenalty += 1000;
+    AudioManager.getInstance().playSFX('bug-miss');
+
+    const flash = this.add.rectangle(this.gridX, this.gridY, this.gridW, this.gridH, 0xff0000, 0.15)
+      .setOrigin(0).setDepth(25);
+    this.tweens.add({ targets: flash, alpha: 0, duration: 200, onComplete: () => flash.destroy() });
+
+    const txt = this.add.text(x, y, '−1s', {
+      fontFamily: 'monospace', fontSize: '16px', color: '#ff0000',
+    }).setOrigin(0.5).setDepth(30);
+    this.tweens.add({ targets: txt, y: y - 40, alpha: 0, duration: 400, onComplete: () => txt.destroy() });
   }
 
   update(time: number, _delta: number): void {
@@ -224,7 +250,7 @@ export class BugBountyScene extends Phaser.Scene {
     }
 
     const elapsed = time - this.startTime;
-    const remaining = Math.max(0, GAME_DURATION - elapsed);
+    const remaining = Math.max(0, GAME_DURATION - elapsed - this.timePenalty);
     const frac = remaining / GAME_DURATION;
 
     // Update timer bar
@@ -520,6 +546,28 @@ export class BugBountyScene extends Phaser.Scene {
   private catchBug(bug: ActiveBug): void {
     if (!this.bugs.includes(bug)) return;
 
+    if (bug.type === 'heisen') {
+      this.cameras.main.shake(120, 0.008);
+      const whiteFlash = this.add.rectangle(this.gridX, this.gridY, this.gridW, this.gridH, 0xffffff, 0.3)
+        .setOrigin(0).setDepth(25);
+      this.tweens.add({ targets: whiteFlash, alpha: 0, duration: 50, onComplete: () => whiteFlash.destroy() });
+    } else {
+      this.cameras.main.shake(80, 0.004);
+    }
+
+    const bugX = bug.obj.x;
+    const bugY = bug.obj.y;
+    const pColor = BUG_DEFS[bug.type].color;
+    for (let i = 0; i < 6; i++) {
+      const p = this.add.circle(bugX, bugY, 4, pColor).setDepth(25);
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 50 + Math.random() * 100;
+      this.tweens.add({
+        targets: p, x: p.x + Math.cos(angle) * speed, y: p.y + Math.sin(angle) * speed,
+        alpha: 0, duration: 400, onComplete: () => p.destroy()
+      });
+    }
+
     const def = BUG_DEFS[bug.type];
     let reward = def.reward;
 
@@ -574,15 +622,24 @@ export class BugBountyScene extends Phaser.Scene {
     if (caught) {
       this.tweens.add({
         targets: bug.obj,
-        alpha: 0,
-        scaleX: 0,
-        scaleY: 0,
-        duration: 150,
-        ease: 'Quad.easeIn',
+        scaleX: 2, scaleY: 2, angle: 360, alpha: 0,
+        duration: 250, ease: 'Quad.easeOut',
         onComplete: () => bug.obj.destroy(),
       });
     } else {
-      bug.obj.destroy();
+      this.totalEarned = Math.max(0, this.totalEarned - 5);
+      this.updateStats();
+      AudioManager.getInstance().playSFX('bug-miss');
+
+      const txt = this.add.text(bug.obj.x, bug.obj.y, '−$5 ESCAPED', {
+        fontFamily: 'monospace', fontSize: '14px', color: '#ff0000',
+      }).setDepth(30);
+      this.tweens.add({ targets: txt, y: txt.y - 30, alpha: 0, duration: 600, onComplete: () => txt.destroy() });
+
+      this.tweens.add({
+        targets: bug.obj, y: bug.obj.y - 50, alpha: 0, duration: 500,
+        onComplete: () => bug.obj.destroy()
+      });
     }
   }
 
