@@ -1,6 +1,15 @@
 import Phaser from 'phaser';
-import { Terminal } from '../ui/Terminal';
 import AudioManager from './AudioManager';
+
+export interface TypingTarget {
+  setPrompt(prompt: string): void;
+  advanceChar(): void;
+  isComplete(): boolean;
+  showError(): void;
+  addLine(text: string): void;
+  getTypedLength(): number;
+  getCurrentPrompt(): string;
+}
 
 /**
  * Prompts organized by difficulty tier.
@@ -58,7 +67,7 @@ export interface TypingStats {
  */
 export class TypingEngine {
   private scene: Phaser.Scene;
-  private terminal: Terminal;
+  private terminal: TypingTarget;
   private stats: TypingStats = { correct: 0, incorrect: 0, promptsCompleted: 0 };
   private easyQueue: string[] = [];
   private mediumQueue: string[] = [];
@@ -77,7 +86,7 @@ export class TypingEngine {
 
   constructor(
     scene: Phaser.Scene,
-    terminal: Terminal,
+    terminal: TypingTarget,
     onPromptComplete?: () => void,
     onFirstKeystroke?: () => void,
     typoForgiveness = 0,
@@ -175,7 +184,7 @@ export class TypingEngine {
       this.onFirstKeystroke?.();
     }
 
-    const expected = this.terminal['currentPrompt'][this.terminal.getTypedLength()];
+    const expected = this.terminal.getCurrentPrompt()[this.terminal.getTypedLength()];
 
     const now = Date.now();
 
@@ -195,7 +204,7 @@ export class TypingEngine {
 
       if (this.terminal.isComplete()) {
         this.stats.promptsCompleted++;
-        this.terminal.addLine(`✓ ${this.terminal['currentPrompt']}`);
+        this.terminal.addLine(`✓ ${this.terminal.getCurrentPrompt()}`);
         this.onPromptComplete?.();
 
         this.scene.time.delayedCall(250, () => {

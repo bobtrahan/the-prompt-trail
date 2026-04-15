@@ -4,15 +4,6 @@ export type PlayerClass = 'techBro' | 'indieHacker' | 'collegeStudent' | 'corpor
 export type Strategy = 'planThenBuild' | 'justStart' | 'oneShot' | 'vibeCode';
 export type ModelTier = 'free' | 'standard' | 'frontier' | 'local' | 'sketchy' | 'openSource';
 
-export interface AgentDef {
-  id: string;
-  name: string;
-  personality: string;
-  speed: number;    // 1-5
-  quality: number;  // 1-5
-  trait: string;
-}
-
 export interface ClassDef {
   id: PlayerClass;
   name: string;
