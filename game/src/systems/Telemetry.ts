@@ -2,7 +2,7 @@ import { DEV_CONFIG } from '../utils/devConfig';
 import type { GameState } from './GameState';
 import type { FinalScore } from './ScoringSystem';
 import type { DayScore } from './ScoringSystem';
-import { AudioManager } from './AudioManager';
+import AudioManager from './AudioManager';
 
 // ─── Exported Types ───────────────────────────────────────────────────────────
 
