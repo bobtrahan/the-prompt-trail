@@ -1,5 +1,5 @@
-import { ItemDef } from '../data/items';
-import { GameState, ModelTier } from './GameState';
+import type { ItemDef } from '../data/items';
+import type { GameState, ModelTier } from './GameState';
 
 export class ShopSystem {
   /**
