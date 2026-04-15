@@ -4,6 +4,7 @@ import { DEV_CONFIG } from '../utils/devConfig';
 import { Telemetry } from '../systems/Telemetry';
 import { getState, resetState } from '../systems/GameState';
 import { SHOP_ITEMS } from '../data/items';
+import AudioManager from '../systems/AudioManager';
 
 const TASKBAR_HEIGHT = 32;
 const PANEL_W = 260;
@@ -69,9 +70,9 @@ export class DebugMenu extends Phaser.GameObjects.Container {
     const scene = this.scene;
     const hasDebug = DEV_CONFIG.debugMenu === true;
 
-    // Row count: 1 reboot + (hasDebug ? separator + 8 debug buttons : 0)
+    // Row count: 1 sound + 1 reboot + (hasDebug ? separator + 8 debug buttons : 0)
     const debugRows = hasDebug ? 9 : 0; // separator counts as a row
-    const rows = 1 + debugRows;
+    const rows = 2 + debugRows;
     const panelH = PAD + rows * (BTN_H + 4) + PAD;
 
     const panelX = 8;
@@ -99,6 +100,16 @@ export class DebugMenu extends Phaser.GameObjects.Container {
 
     const innerX = panelX + PAD;
     let curY = panelY + PAD;
+
+    // ── Sound toggle ──
+    const muteLabel = () => AudioManager.getInstance().isMuted ? '🔇 Sound: OFF' : '🔊 Sound: ON';
+    const muteColor = () => AudioManager.getInstance().isMuted ? '#f85149' : '#e6edf3';
+    makeButton(scene, this, muteLabel(), innerX, curY, muteColor(), (txt) => {
+      AudioManager.getInstance().toggleMute();
+      txt.setText(muteLabel());
+      txt.setColor(muteColor());
+    });
+    curY += BTN_H + 4;
 
     // ── Reboot button ──
     makeButton(scene, this, '🔄 Reboot', innerX, curY, '#e6edf3', () => {

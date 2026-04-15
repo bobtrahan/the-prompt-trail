@@ -37,6 +37,8 @@ export class BootScene extends Phaser.Scene {
       color: '#8b949e',
     }).setOrigin(0.5);
 
+    AudioManager.getInstance().init(this.game);
+
     this.time.delayedCall(1500, () => {
       AudioManager.getInstance().playSFX('boot');
       this.scene.start('Title');

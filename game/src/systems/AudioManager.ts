@@ -19,7 +19,7 @@ const SFX_KEYS = [
 class AudioManager {
   private static instance: AudioManager | null = null;
 
-  private scene: Phaser.Scene | null = null;
+  private game: Phaser.Game | null = null;
   private currentMusicKey: string | null = null;
   private currentMusic: Phaser.Sound.BaseSound | null = null;
 
@@ -54,9 +54,9 @@ class AudioManager {
 
   // ── Lifecycle ────────────────────────────────────────────────
 
-  /** Call once after the first scene with audio context is created. */
-  setScene(scene: Phaser.Scene): void {
-    this.scene = scene;
+  /** Call once from BootScene create to bind the global game reference. */
+  init(game: Phaser.Game): void {
+    this.game = game;
   }
 
   static preload(scene: Phaser.Scene): void {
@@ -71,10 +71,11 @@ class AudioManager {
   // ── Music ────────────────────────────────────────────────────
 
   playMusic(key: string, fadeMs = 500): void {
-    if (!this.scene) return;
+    if (!this.game) return;
     if (this.currentMusicKey === key && this.currentMusic?.isPlaying) return;
 
-    const incoming = this.scene.sound.add(key, {
+    const sm = this.game.sound;
+    const incoming = sm.add(key, {
       loop: true,
       volume: 0,
     }) as Phaser.Sound.WebAudioSound | Phaser.Sound.HTML5AudioSound;
@@ -83,28 +84,49 @@ class AudioManager {
 
     const targetVol = this.isMuted ? 0 : this._masterVolume * this._musicVolume;
 
-    // 10ms mini-ramp from 0 to target volume to eliminate click artifacts
-    this.scene.tweens.add({
-      targets: incoming,
-      volume: targetVol,
-      duration: 10,
-      ease: 'Linear',
-      delay: 0,
-    });
-
-    // Fade in incoming (main crossfade from 0 to target over fadeMs)
-    this.scene.tweens.add({
-      targets: incoming,
-      volume: targetVol,
-      duration: fadeMs,
-      ease: 'Linear',
-      delay: 10,
-    });
+    // Fade in incoming over fadeMs
+    const scene = this.game.scene.scenes.find(s => s.scene.isActive());
+    if (scene) {
+      scene.tweens.add({
+        targets: incoming,
+        volume: targetVol,
+        duration: fadeMs,
+        ease: 'Linear',
+      });
+    } else {
+      incoming.setVolume(targetVol);
+    }
 
     // Fade out + stop outgoing
     if (this.currentMusic) {
       const outgoing = this.currentMusic;
-      this.scene.tweens.add({
+      if (scene) {
+        scene.tweens.add({
+          targets: outgoing,
+          volume: 0,
+          duration: fadeMs,
+          ease: 'Linear',
+          onComplete: () => {
+            outgoing.stop();
+            outgoing.destroy();
+          },
+        });
+      } else {
+        outgoing.stop();
+        outgoing.destroy();
+      }
+    }
+
+    this.currentMusic = incoming;
+    this.currentMusicKey = key;
+  }
+
+  stopMusic(fadeMs = 500): void {
+    if (!this.game || !this.currentMusic) return;
+    const outgoing = this.currentMusic;
+    const scene = this.game.scene.scenes.find(s => s.scene.isActive());
+    if (scene) {
+      scene.tweens.add({
         targets: outgoing,
         volume: 0,
         duration: fadeMs,
@@ -114,25 +136,10 @@ class AudioManager {
           outgoing.destroy();
         },
       });
+    } else {
+      outgoing.stop();
+      outgoing.destroy();
     }
-
-    this.currentMusic = incoming;
-    this.currentMusicKey = key;
-  }
-
-  stopMusic(fadeMs = 500): void {
-    if (!this.scene || !this.currentMusic) return;
-    const outgoing = this.currentMusic;
-    this.scene.tweens.add({
-      targets: outgoing,
-      volume: 0,
-      duration: fadeMs,
-      ease: 'Linear',
-      onComplete: () => {
-        outgoing.stop();
-        outgoing.destroy();
-      },
-    });
     this.currentMusic = null;
     this.currentMusicKey = null;
   }
@@ -140,11 +147,11 @@ class AudioManager {
   // ── SFX ─────────────────────────────────────────────────────
 
   playSFX(key: string, rateVariation = 0.05): void {
-    if (!this.scene) return;
+    if (!this.game) return;
     if (this.isMuted) return;
     const rate = 1.0 + (Math.random() * 2 - 1) * rateVariation;
     const vol = this._masterVolume * this._sfxVolume;
-    this.scene.sound.play(key, { volume: vol, rate });
+    this.game.sound.play(key, { volume: vol, rate });
   }
 
   // ── Volume ───────────────────────────────────────────────────
