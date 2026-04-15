@@ -137,6 +137,10 @@ export class BugBountyScene extends Phaser.Scene {
   private lastMissClick = 0;
   private timePenalty = 0;
   private startTime = 0;
+  private lastCatchTime = 0;
+  private comboCount = 0;
+  private maxCombo = 0;
+  private comboText!: Phaser.GameObjects.Text;
   private lastSpawn = 0;
   private ended = false;
 
@@ -151,9 +155,11 @@ export class BugBountyScene extends Phaser.Scene {
     this.totalEarned = 0;
     this.lastMissClick = 0;
     this.timePenalty = 0;
-    this.ended = false;
-    this.startTime = 0;
     this.lastSpawn = 0;
+    this.lastCatchTime = 0;
+    this.comboCount = 0;
+    this.maxCombo = 0;
+    this.ended = false;
 
     AudioManager.getInstance().playMusic('bugbounty');
 
@@ -198,6 +204,10 @@ export class BugBountyScene extends Phaser.Scene {
       this.statsStr(),
       { fontFamily: 'monospace', fontSize: '13px', color: '#e6edf3' }
     ).setOrigin(1, 0).setDepth(12);
+
+    this.comboText = this.add.text(this.gridX, this.gridY - 4, '', {
+      fontFamily: 'monospace', fontSize: '24px', color: '#ffff00', fontStyle: 'bold'
+    }).setOrigin(0, 1).setDepth(25).setAlpha(0);
 
     // ── Code lines ───────────────────────────────────────────────────────────
     const lineH = 28;
@@ -546,13 +556,28 @@ export class BugBountyScene extends Phaser.Scene {
   private catchBug(bug: ActiveBug): void {
     if (!this.bugs.includes(bug)) return;
 
+    const now = this.time.now;
+    if (now - this.lastCatchTime < 2000) {
+      this.comboCount++;
+    } else {
+      if (this.comboCount >= 2) {
+        this.tweens.add({ targets: this.comboText, alpha: 0, duration: 300 });
+      }
+      this.comboCount = 1;
+    }
+    this.lastCatchTime = now;
+    if (this.comboCount > this.maxCombo) this.maxCombo = this.comboCount;
+
+    const comboMultiplier = 1 + (this.comboCount - 1) * 0.25;
+
     if (bug.type === 'heisen') {
       this.cameras.main.shake(120, 0.008);
       const whiteFlash = this.add.rectangle(this.gridX, this.gridY, this.gridW, this.gridH, 0xffffff, 0.3)
         .setOrigin(0).setDepth(25);
       this.tweens.add({ targets: whiteFlash, alpha: 0, duration: 50, onComplete: () => whiteFlash.destroy() });
     } else {
-      this.cameras.main.shake(80, 0.004);
+      const shakeIntensity = 0.004 * Math.min(2, 1 + this.comboCount * 0.1);
+      this.cameras.main.shake(80, shakeIntensity);
     }
 
     const bugX = bug.obj.x;
@@ -569,11 +594,16 @@ export class BugBountyScene extends Phaser.Scene {
     }
 
     const def = BUG_DEFS[bug.type];
-    let reward = def.reward;
+    let reward = Math.floor(def.reward * comboMultiplier);
 
     // Memory leak: bonus based on scale
     if (bug.type === 'memleak') {
-      reward = 10 + Math.floor(bug.obj.scaleX * 10);
+      reward = Math.floor((10 + bug.obj.scaleX * 10) * comboMultiplier);
+    }
+
+    if (this.comboCount >= 2) {
+      this.comboText.setText(`COMBO ×${this.comboCount}`).setAlpha(1);
+      this.tweens.add({ targets: this.comboText, scaleX: 1.2, scaleY: 1.2, duration: 100, yoyo: true });
     }
 
     this.totalEarned += reward;
@@ -581,7 +611,8 @@ export class BugBountyScene extends Phaser.Scene {
     this.updateStats();
 
     // Flash reward text
-    const flash = this.add.text(bug.obj.x, bug.obj.y - 10, `+$${reward}`, {
+    const rewardStr = this.comboCount >= 2 ? `+$${reward} ×${this.comboCount}` : `+$${reward}`;
+    const flash = this.add.text(bug.obj.x, bug.obj.y - 10, rewardStr, {
       fontFamily: 'monospace',
       fontSize: '14px',
       color: '#ffd700',
@@ -696,6 +727,7 @@ export class BugBountyScene extends Phaser.Scene {
       `Earned: $${this.totalEarned}`,
     ];
     if (bonusHp) lines.push('+5 HP hardware repair bonus');
+    if (this.maxCombo >= 2) lines.push(`Best combo: ×${this.maxCombo}`);
 
     lines.forEach((line, i) => {
       this.add.text(overlayX, overlayY - 70 + i * 34, line, {
