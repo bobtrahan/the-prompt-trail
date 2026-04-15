@@ -99,28 +99,30 @@ gamedevjs-2026/
 - **Terminal typing** — three-segment colored prompt (typed=green, cursor=white blink, remaining=dim gray ghost text). `↑ type this` hint on first prompt. Difficulty scaling: easy→medium→hard prompts as you progress.
 - **Typing engine** — keyboard input, accuracy tracking, shuffled prompt queues per difficulty tier
 - **Execution scene** — full PromptOS desktop: terminal window (typing), agent manager panel (animated status), system monitor (budget/hw/rep/model + time bar), progress bar. Pulsing "START TYPING" affordance that fades on first keystroke. Day timer + events don't start until player types.
-- **Event modal system** — events fire as modal dialogs that pause typing, dim background, offer 3 choices (clickable or keyboard 1/2/3). First event fires at 5 sec to teach rhythm. Placeholder events with basic consequence logic (budget cost, time loss).
-- **Planning scene** — strategy picker with 4 cards (Plan Then Build / Just Start / One-Shot / Vibe Code) showing risk labels. Model + agent info panels. Must pick strategy before launching.
+- **Event modal system** — events fire as modal dialogs that pause typing, dim background, offer 3 choices (clickable or keyboard 1/2/3). First event fires at 5 sec to teach rhythm. Word-wrapping on long choice text.
+- **Planning scene** — strategy picker with 4 cards (Plan Then Build / Just Start / One-Shot / Vibe Code) showing risk + cost labels. Model + agent info panels with daily cost preview. Must pick strategy before launching.
 - **Class rebalance** — Tech Bro ×0.8 (easy, 2 agent slots), Corp Dev ×1.2, Indie ×1.8, Student ×3.0 (brutal)
 - **Corporate Dev restrictions** — `lockedStrategies: ['vibeCode']`, `lockedModels: ['free', 'sketchy', 'local']`. Grayed-out cards with 🔒 label. Budget displays as "💳 Company Card" everywhere.
 - **Local hardware system** — `localSlots` in GameState. Tech Bro starts with 1. Events tagged `requiresCloud`/`requiresLocal` with filtering. Local-specific events: GPU Overheating, Local Model Hallucination.
 
-### Next Up (Phase 2: Core Loop)
-- [ ] Event engine — load all 55 events from data files, weight by day/class, replace placeholder events
-- [ ] Economy system — budget tracking, model costs per time unit, strategy cost modifiers
-- [ ] Reputation scoring — base rep from progress + accuracy bonus + strategy modifier + class multiplier
-- [ ] 13 project definitions with difficulty curves (data file)
-- [ ] Briefing scene upgrade — project reveal "Daily Digest" app, resource summary, AI news ticker
-- [ ] Results scene upgrade — day stats (accuracy, prompts completed, rep earned, budget spent)
-- [ ] Night scene — transition to Token Market / Bug Bounty choice
+- **Data layer (Phase 2)** — `data/projects.ts` (13 projects with difficulty curves, flavor text, max rep), `data/agents.ts` (6 agents + synergy/clash pairs), `data/events.ts` (all 55 events with kebab-case ids, class variants, chains, cooldowns), `data/items.ts` (full Token Market inventory: models, hardware, agent slots, consumables, joke items, repairs)
+- **EventEngine** (`systems/EventEngine.ts`) — weighted random selection filtered by day range, class, tags (requiresCloud/requiresLocal), chain prerequisites, cooldowns, recently-fired penalty. Applies effects (budget/time/hardware/rep/flags). Replaces all placeholder events.
+- **EconomySystem** (`systems/EconomySystem.ts`) — model daily costs (free $0 → frontier $100), strategy costs (Plan $60, Start $30, One-Shot $10, Vibe $45), daily cost deduction, Corp Dev exemption, shop price fluctuation ±20% seeded by day.
+- **ScoringSystem** (`systems/ScoringSystem.ts`) — day reputation = (progress% × maxRep) + accuracy bonus (30%) + strategy modifier (Plan +15%, Start 0%, One-Shot -10%, Vibe random). Final score = raw total × class multiplier. Ranks: S/A/B/C/D/F.
+- **BriefingScene upgrade** — "Daily Digest" app: project card with difficulty stars + flavor text, resource summary row (Corp Dev shows 💳 Company Card), scrolling AI news ticker (25 satirical headlines, 3 per day seeded).
+- **ResultsScene upgrade** — animated count-up breakdown: progress, accuracy, base rep, accuracy bonus, strategy bonus, day total. Budget spent + hardware delta. Continue button appears after animation.
+- **NightScene upgrade** — transition screen with flavor text, tomorrow's project preview + difficulty, grayed-out Phase 3 buttons (Token Market, Bug Bounty), fade-to-black sleep transition.
+- **GameState additions** — `lastDayResult` snapshot (progress, accuracy, score, budgetSpent, hardwareDelta), `dayStartBudget`/`dayStartHardware` for delta tracking.
 
-### Phase 3+ (after core loop works)
-- [ ] Token Market shop (item data, purchase UI, upgrade effects)
-- [ ] Bug Bounty mini-game (click bugs in code grid)
-- [ ] All 55 events with class-specific variants and cross-event chains
+### Next Up (Phase 3: Night Phase)
+- [ ] Token Market shop (item data exists in `data/items.ts`, needs shop UI + purchase logic + upgrade effects applied to GameState)
+- [ ] Bug Bounty mini-game (click bugs in code grid, 5 bug types with different behaviors)
+- [ ] NightScene wired to Token Market / Bug Bounty choice
+
+### Phase 4+ (after night phase works)
 - [ ] Per-class OS color themes applied everywhere
 - [ ] Audio (5 tracks + SFX)
-- [ ] Agent synergy/clash system
+- [ ] Agent synergy/clash system wired into Execution
 - [ ] Polish, juice, balance, deploy
 
 ### Build Milestones (from TECHPLAN.md)
