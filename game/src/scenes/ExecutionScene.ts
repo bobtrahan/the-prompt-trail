@@ -10,6 +10,7 @@ import { PROJECTS } from '../data/projects';
 import { EventEngine } from '../systems/EventEngine';
 import { EconomySystem } from '../systems/EconomySystem';
 import { ScoringSystem } from '../systems/ScoringSystem';
+import { AgentSystem } from '../systems/AgentSystem';
 import type { EventDef, EventChoice } from '../data/events';
 
 
@@ -62,6 +63,8 @@ export class ExecutionScene extends Phaser.Scene {
 
   // Systems
   private eventEngine!: EventEngine;
+  private speedMod: number = 0;
+  private traitResults: { agentId: string; trait: string; fired: boolean; description: string }[] = [];
 
   constructor() {
     super({ key: 'Execution' });
@@ -78,6 +81,8 @@ export class ExecutionScene extends Phaser.Scene {
 
     // Initialise systems
     this.eventEngine = new EventEngine(state);
+    this.speedMod = AgentSystem.getSpeedModifier(state.activeAgents);
+    this.traitResults = AgentSystem.checkTraits(state.activeAgents, state.day);
     EconomySystem.applyDayCosts(state);
     state.dayStartBudget = state.budget;
     state.dayStartHardware = state.hardwareHp;
@@ -137,12 +142,13 @@ export class ExecutionScene extends Phaser.Scene {
       accentColor: theme.accent,
     });
 
-    const agents = state.activeAgents.length > 0 ? state.activeAgents : ['turbo'];
+    const activeAgentIds = state.activeAgents.length > 0 ? state.activeAgents : ['turbo'];
+    const agentDefs = AgentSystem.getAgentDefs(activeAgentIds);
     const aArea = this.agentWindow.contentArea;
-    agents.forEach((agentId, i) => {
+    agentDefs.forEach((agent, i) => {
       const label = this.add.text(
         852 + aArea.x, 72 + aArea.y + i * 40,
-        `🤖 ${agentId.charAt(0).toUpperCase() + agentId.slice(1)}`,
+        `🤖 ${agent.name}`,
         { fontFamily: 'monospace', fontSize: '14px', color: '#e6edf3' }
       );
       this.agentWindow.add(label);
@@ -189,8 +195,35 @@ export class ExecutionScene extends Phaser.Scene {
     // ── Terminal boot text ──
     this.terminal.addLine('PromptOS Terminal v1.3.7');
     this.terminal.addLine(`Loading project: ${projectName}...`);
-    this.terminal.addLine(`Agent${agents.length > 1 ? 's' : ''} online: ${agents.join(', ')}`);
+    this.terminal.addLine(`Agent${agentDefs.length > 1 ? 's' : ''} online: ${agentDefs.map(a => a.name).join(', ')}`);
     this.terminal.addLine('');
+
+    // Apply trait effects
+    this.traitResults.forEach(res => {
+      if (res.fired) {
+        if (res.trait === 'architecture_debates') {
+          state.timeUnitsRemaining -= 1;
+          this.terminal.addLine("🤖 Linter: 'We need to discuss the architecture first.'");
+        } else if (res.trait === 'deploy_unapproved') {
+          this.progress = Math.min(100, this.progress + 10);
+          state.eventFlags['turbo_deployed'] = true;
+          this.terminal.addLine("🤖 Turbo: 'Already deployed. You're welcome.'");
+        } else if (res.trait === 'feature_creep') {
+          state.timeUnitsRemaining -= 2;
+          this.terminal.addLine("🤖 Scope: 'I added dark mode and a settings page! You're welcome!'");
+        } else if (res.trait === 'low_hallucination') {
+          this.terminal.addLine("🤖 Oracle: 'I have seen the future. It is... mostly fine.'");
+        } else if (res.trait === 'agreeable') {
+          this.terminal.addLine("🤖 Parrot: 'Exactly what I was thinking!'");
+        } else if (res.trait === 'wildcard_shortcut') {
+          this.terminal.addLine("🤖 Gremlin: 'I found a shortcut! Don't ask how.'");
+        }
+      }
+    });
+
+    // Update timeUnits in case traits changed it
+    this.timeUnits = state.timeUnitsRemaining;
+    this.updateProgressBar();
 
     // ── "START TYPING" hint ──
     this.typeHint = this.add.text(
@@ -257,7 +290,7 @@ export class ExecutionScene extends Phaser.Scene {
 
   private onPromptComplete(): void {
     const accuracy = this.typingEngine.getAccuracy();
-    const gain = 8 + Math.floor(accuracy * 7);
+    const gain = Math.round((8 + Math.floor(accuracy * 7)) * (1 + this.speedMod));
     this.progress = Math.min(100, this.progress + gain);
     this.updateProgressBar();
 
