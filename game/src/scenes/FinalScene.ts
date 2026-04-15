@@ -43,6 +43,8 @@ export class FinalScene extends Phaser.Scene {
   private statsText!: Phaser.GameObjects.Text;
   private playAgainBtn!: Phaser.GameObjects.Text;
 
+  private lastTickTime = 0;
+
   // Computed final score data
   private rawTotal = 0;
   private multiplier = 1;
@@ -157,9 +159,13 @@ export class FinalScene extends Phaser.Scene {
     });
     this.window.add(this.playAgainBtn);
 
+    // Initial state for rankText
+    this.rankText.setAlpha(0).setScale(3);
+
     // Start animation
     this.isAnimating = true;
     this.animProgress = 0;
+    this.lastTickTime = 0;
   }
 
   update(_time: number, delta: number): void {
@@ -174,11 +180,65 @@ export class FinalScene extends Phaser.Scene {
     this.rawRepText.setText(curRaw.toLocaleString());
     this.finalScoreText.setText(curFinal.toLocaleString());
 
+    // Score tick SFX
+    if (this.animProgress - this.lastTickTime > 300) {
+      AudioManager.getInstance().playSFX('score-tick');
+      this.lastTickTime = this.animProgress;
+    }
+
     if (factor >= 1) {
       this.isAnimating = false;
-      AudioManager.getInstance().playSFX('day-complete');
-      // Reveal rank, flavor, stats, and button
-      this.tweens.add({ targets: this.rankText, alpha: 1, duration: 300 });
+
+      // Reveal rank with impact
+      this.tweens.add({
+        targets: this.rankText,
+        alpha: 1,
+        scaleX: 1,
+        scaleY: 1,
+        duration: 400,
+        ease: 'Back.easeOut',
+        onComplete: () => {
+          // Play rank-specific SFX
+          if (['S', 'A', 'B'].includes(this.rank)) {
+            AudioManager.getInstance().playSFX('rep-gain');
+          } else if (['D', 'F'].includes(this.rank)) {
+            AudioManager.getInstance().playSFX('rep-loss');
+          } else if (this.rank === 'C') {
+            AudioManager.getInstance().playSFX('day-complete');
+          }
+
+          // Camera effects for bad grades
+          if (['D', 'F'].includes(this.rank)) {
+            this.cameras.main.shake(300, 0.008);
+            if (this.rank === 'F') {
+              this.cameras.main.flash(200, 248, 81, 73);
+            }
+          }
+
+          // Celebration particles for S and A
+          if (['S', 'A'].includes(this.rank)) {
+            const { x, y, width, height } = this.window.contentArea;
+            for (let i = 0; i < 30; i++) {
+              const px = x + Math.random() * width;
+              const py = y + height;
+              const colors = [0xf2cc60, 0x3fb950, 0x58a6ff, 0xe6edf3];
+              const particle = this.add.rectangle(px, py, 4, 8, colors[Math.floor(Math.random() * colors.length)]);
+              this.window.add(particle);
+              this.tweens.add({
+                targets: particle,
+                y: py - 200 - Math.random() * 200,
+                x: px + (Math.random() - 0.5) * 120,
+                angle: Math.random() * 360,
+                alpha: 0,
+                duration: 1200 + Math.random() * 600,
+                ease: 'Cubic.easeOut',
+                onComplete: () => particle.destroy(),
+              });
+            }
+          }
+        },
+      });
+
       this.tweens.add({ targets: this.flavorText, alpha: 1, duration: 400, delay: 200 });
       this.tweens.add({ targets: this.statsText, alpha: 1, duration: 300, delay: 400 });
       this.tweens.add({ targets: this.playAgainBtn, alpha: 1, duration: 300, delay: 600 });
