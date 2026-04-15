@@ -7,6 +7,7 @@ import { Taskbar } from '../ui/Taskbar';
 import { PROJECTS } from '../data/projects';
 import AudioManager from '../systems/AudioManager';
 import { drawWallpaper } from '../ui/DesktopWallpaper';
+import { addButtonFx } from '../ui/ButtonFx';
 
 export class NightScene extends Phaser.Scene {
   private taskbar!: Taskbar;
@@ -142,6 +143,7 @@ export class NightScene extends Phaser.Scene {
     });
     marketBtn.on('pointerout', () => marketBtn.setBackgroundColor('#30363d'));
     marketBtn.on('pointerdown', () => this.scene.start('TokenMarket'));
+    addButtonFx(this, marketBtn);
 
     // Bounty Button
     const alreadyPlayed = state.bountyPlayedTonight;

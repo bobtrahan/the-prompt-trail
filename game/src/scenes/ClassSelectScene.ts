@@ -4,6 +4,7 @@ import { initClassState, getState } from '../systems/GameState';
 import { CLASS_DEFS } from '../data/classes';
 import { Telemetry } from '../systems/Telemetry';
 import type { PlayerClass } from '../systems/GameState';
+import { addButtonFx } from '../ui/ButtonFx';
 
 const CLASS_EMOJI: Record<string, string> = {
   techBro: '🤑',
@@ -133,6 +134,7 @@ export class ClassSelectScene extends Phaser.Scene {
       });
 
       // Selection animation (D)
+      addButtonFx(this, card);
       card.on('pointerdown', () => {
         // Tween scale
         this.tweens.add({
