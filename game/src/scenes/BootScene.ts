@@ -13,8 +13,9 @@ export class BootScene extends Phaser.Scene {
     const { width, height } = this.cameras.main;
     const barWidth = 300;
     const barX = (width - barWidth) / 2;
-    const barBg = this.add.rectangle(width / 2, height / 2, barWidth, 4, 0x21262d).setOrigin(0.5);
-    const bar = this.add.rectangle(barX, height / 2, 0, 4, 0x58a6ff).setOrigin(0, 0.5);
+    const barY = height / 2 + 30;
+    const barBg = this.add.rectangle(width / 2, barY, barWidth, 4, 0x21262d).setOrigin(0.5);
+    const bar = this.add.rectangle(barX, barY, 0, 4, 0x58a6ff).setOrigin(0, 0.5);
     this.load.on('progress', (value: number) => {
       bar.width = barWidth * value;
     });
