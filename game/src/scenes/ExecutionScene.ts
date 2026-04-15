@@ -196,6 +196,9 @@ export class ExecutionScene extends Phaser.Scene {
     this.terminal.addLine('PromptOS Terminal v1.3.7');
     this.terminal.addLine(`Loading project: ${projectName}...`);
     this.terminal.addLine(`Agent${agentDefs.length > 1 ? 's' : ''} online: ${agentDefs.map(a => a.name).join(', ')}`);
+    if (state.eventFlags['broke']) {
+      this.terminal.addLine('⚠️ BUDGET DEPLETED — API credits revoked. Downgraded to Free Tier.');
+    }
     this.terminal.addLine('');
 
     // Apply trait effects

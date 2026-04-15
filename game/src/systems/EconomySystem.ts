@@ -60,6 +60,9 @@ export class EconomySystem {
 
     if (state.budget < 0) {
       state.eventFlags['broke'] = true;
+      // Force downgrade to free tier — API credits revoked
+      state.model = 'free';
+      state.budget = 0; // Clamp to zero, no negative tracking
     }
   }
 
