@@ -13,25 +13,46 @@ type BugType = 'syntax' | 'logic' | 'race' | 'memleak' | 'heisen';
 
 interface BugConfig {
   emoji: string;
+  label: string;
   reward: number;
   despawnMs: number;
   weight: number;
+  color: number;
+  dotColor: number;
 }
 
 const BUG_DEFS: Record<BugType, BugConfig> = {
-  syntax:  { emoji: '🔴', reward: 10, despawnMs: 6000, weight: 35 },
-  logic:   { emoji: '🟡', reward: 15, despawnMs: 8000, weight: 25 },
-  race:    { emoji: '🟣', reward: 20, despawnMs: 6000, weight: 15 },
-  memleak: { emoji: '🟢', reward: 10, despawnMs: 8000, weight: 15 },
-  heisen:  { emoji: '👻', reward: 30, despawnMs: 5000, weight: 10 },
+  syntax:  { emoji: '🔴', label: 'SyntaxError',    reward: 10, despawnMs: 6000, weight: 35, color: 0xda3633, dotColor: 0xff6b6b },
+  logic:   { emoji: '🟡', label: 'LogicBug',       reward: 15, despawnMs: 8000, weight: 25, color: 0xd29922, dotColor: 0xffd166 },
+  race:    { emoji: '🟣', label: 'RaceCondition',  reward: 20, despawnMs: 6000, weight: 15, color: 0x8957e5, dotColor: 0xb89af7 },
+  memleak: { emoji: '🟢', label: 'MemoryLeak',     reward: 10, despawnMs: 8000, weight: 15, color: 0x238636, dotColor: 0x3fb950 },
+  heisen:  { emoji: '👻', label: 'Heisenbug',      reward: 30, despawnMs: 5000, weight: 10, color: 0x6e7681, dotColor: 0x9aa6b2 },
 };
 
+// Chip dimensions (centered at container origin)
+const CHIP_W = 120;
+const CHIP_H = 28;
+const CHIP_R = 6; // corner radius
+
 interface ActiveBug {
-  obj: Phaser.GameObjects.Text;
+  obj: Phaser.GameObjects.Container;
   type: BugType;
   spawnedAt: number;
-  direction: number;        // logic: +1 or -1
-  lastTeleport: number;     // race: timestamp of last teleport
+  direction: number;      // logic: +1 / -1
+  lastTeleport: number;   // race: age-ms of last teleport
+
+  // chip child refs
+  bgGraphics: Phaser.GameObjects.Graphics;
+  glowRect: Phaser.GameObjects.Rectangle;
+  borderRect: Phaser.GameObjects.Rectangle;
+  labelText: Phaser.GameObjects.Text;
+
+  // despawn / heisen state
+  despawnWarned: boolean;
+  bangText: Phaser.GameObjects.Text | null;
+  despawnFlashTimer: Phaser.Time.TimerEvent | null;
+  heisenScrambling: boolean;
+  heisenTimer: Phaser.Time.TimerEvent | null;
 }
 
 // ── Fake code grid ────────────────────────────────────────────────────────────
@@ -51,7 +72,7 @@ const CODE_LINES = [
   '}  // TODO: fix before prod',
 ];
 
-// ── Weighted random picker ────────────────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
 function pickBugType(): BugType {
   const total = Object.values(BUG_DEFS).reduce((s, d) => s + d.weight, 0);
@@ -63,14 +84,37 @@ function pickBugType(): BugType {
   return 'syntax';
 }
 
+/** Draw the chip background into a Graphics object (reusable for memleak color shifts) */
+function drawChipBg(gfx: Phaser.GameObjects.Graphics, color: number, alpha = 0.85): void {
+  gfx.clear();
+  gfx.fillStyle(color, alpha);
+  gfx.fillRoundedRect(-CHIP_W / 2, -CHIP_H / 2, CHIP_W, CHIP_H, CHIP_R);
+}
+
+/** Linearly interpolate between two packed RGB colors (no alpha) */
+function lerpColor(a: number, b: number, t: number): number {
+  const ar = (a >> 16) & 0xff, ag = (a >> 8) & 0xff, ab = a & 0xff;
+  const br = (b >> 16) & 0xff, bg = (b >> 8) & 0xff, bb = b & 0xff;
+  const r = Math.round(ar + (br - ar) * t);
+  const g = Math.round(ag + (bg - ag) * t);
+  const bl2 = Math.round(ab + (bb - ab) * t);
+  return (r << 16) | (g << 8) | bl2;
+}
+
+const SCRAMBLE_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
+function scramble(len: number): string {
+  return Array.from({ length: len }, () => SCRAMBLE_CHARS[Math.floor(Math.random() * SCRAMBLE_CHARS.length)]).join('');
+}
+
 // ── Scene ─────────────────────────────────────────────────────────────────────
 
 const WIN_W = 900;
 const WIN_H = 520;
-const GAME_DURATION = 30_000; // ms
+const GAME_DURATION = 30_000;
 const SPAWN_INTERVAL = 1500;
 const MAX_BUGS = 5;
 const TIMER_BAR_H = 8;
+const DESPAWN_WARN_MS = 1500;
 
 export class BugBountyScene extends Phaser.Scene {
   // UI
@@ -93,15 +137,6 @@ export class BugBountyScene extends Phaser.Scene {
   private startTime = 0;
   private lastSpawn = 0;
   private ended = false;
-  private lastMissClick = 0;
-  private timePenalty = 0;
-  private gridBg!: Phaser.GameObjects.Rectangle;
-
-  // Combo system
-  private lastCatchTime = 0;
-  private comboCount = 0;
-  private maxCombo = 0;
-  private comboText!: Phaser.GameObjects.Text;
 
   constructor() {
     super({ key: 'BugBounty' });
@@ -115,9 +150,6 @@ export class BugBountyScene extends Phaser.Scene {
     this.ended = false;
     this.startTime = 0;
     this.lastSpawn = 0;
-    this.lastCatchTime = 0;
-    this.comboCount = 0;
-    this.maxCombo = 0;
 
     AudioManager.getInstance().playMusic('bugbounty');
 
@@ -146,7 +178,6 @@ export class BugBountyScene extends Phaser.Scene {
     this.win.setDepth(10);
 
     const ca = this.win.contentArea;
-    // Absolute content-area origin in scene coords
     const caAbsX = winX + ca.x;
     const caAbsY = winY + ca.y;
 
@@ -181,26 +212,6 @@ export class BugBountyScene extends Phaser.Scene {
     this.gridY = codeStartY;
     this.gridW = ca.width - 16;
     this.gridH = CODE_LINES.length * lineH;
-
-    // ── Combo Text ───────────────────────────────────────────────────────────
-    this.comboText = this.add.text(
-      this.gridX,
-      this.gridY - 4,
-      '',
-      { fontFamily: 'monospace', fontSize: '24px', color: '#ffff00', fontStyle: 'bold' }
-    ).setOrigin(0, 1).setDepth(25).setAlpha(0);
-
-    // ── Grid Background (for misclick penalty) ────────────────────────────────
-    this.gridBg = this.add.rectangle(this.gridX, this.gridY, this.gridW, this.gridH, 0x000000, 0)
-      .setOrigin(0)
-      .setDepth(10)
-      .setInteractive();
-    
-    this.gridBg.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
-      this.handleMissClick(pointer.x, pointer.y);
-    });
-
-
   }
 
   update(time: number, _delta: number): void {
@@ -213,11 +224,11 @@ export class BugBountyScene extends Phaser.Scene {
     }
 
     const elapsed = time - this.startTime;
-    const remaining = Math.max(0, GAME_DURATION - elapsed - this.timePenalty);
-    const frac = remaining / (GAME_DURATION);
+    const remaining = Math.max(0, GAME_DURATION - elapsed);
+    const frac = remaining / GAME_DURATION;
 
     // Update timer bar
-    this.timerBar.width = this.timerBar.width = (this.win.contentArea.width) * frac;
+    this.timerBar.width = (this.win.contentArea.width) * frac;
 
     if (remaining <= 0) {
       this.endGame();
@@ -237,11 +248,17 @@ export class BugBountyScene extends Phaser.Scene {
     for (const bug of this.bugs) {
       const age = time - bug.spawnedAt;
       const def = BUG_DEFS[bug.type];
+      const timeLeft = def.despawnMs - age;
 
       // Despawn check
-      if (age >= def.despawnMs) {
+      if (timeLeft <= 0) {
         toRemove.push(bug);
         continue;
+      }
+
+      // Despawn warning: <1500ms remaining
+      if (!bug.despawnWarned && timeLeft <= DESPAWN_WARN_MS) {
+        this.startDespawnWarning(bug, def);
       }
 
       switch (bug.type) {
@@ -255,9 +272,21 @@ export class BugBountyScene extends Phaser.Scene {
         case 'race': {
           // Teleport every 2s
           if (age - bug.lastTeleport >= 2000) {
-            bug.obj.x = this.gridX + Math.random() * (this.gridW - 24);
-            bug.obj.y = this.gridY + Math.random() * (this.gridH - 24);
+            bug.obj.x = this.gridX + Math.random() * (this.gridW - CHIP_W) + CHIP_W / 2;
+            bug.obj.y = this.gridY + Math.random() * (this.gridH - CHIP_H) + CHIP_H / 2;
             bug.lastTeleport = age;
+            // Post-teleport: scale 0.5→1.0 + spin 180°
+            bug.obj.setScale(0.5);
+            bug.obj.angle = 0;
+            this.tweens.add({
+              targets: bug.obj,
+              scaleX: 1,
+              scaleY: 1,
+              angle: 180,
+              duration: 200,
+              ease: 'Quad.easeOut',
+              onComplete: () => { bug.obj.angle = 0; },
+            });
           }
           break;
         }
@@ -265,17 +294,38 @@ export class BugBountyScene extends Phaser.Scene {
           // Grow scale 1.0 → 2.0 over 5s
           const growFrac = Math.min(age / 5000, 1);
           bug.obj.setScale(1 + growFrac);
+          // Chip bg gets brighter/more saturated as it grows
+          const shiftedColor = lerpColor(def.color, def.dotColor, growFrac * 0.6);
+          drawChipBg(bug.bgGraphics, shiftedColor, 0.85 + growFrac * 0.1);
           break;
         }
         case 'heisen': {
-          // Fade when pointer is within 80px
           const dx = pointer.x - bug.obj.x;
           const dy = pointer.y - bug.obj.y;
           const dist = Math.sqrt(dx * dx + dy * dy);
-          bug.obj.setAlpha(dist < 80 ? 0.15 : 1);
+          const near = dist < 80;
+          bug.obj.setAlpha(near ? 0.15 : 1);
+
+          // Start scramble timer when cursor enters
+          if (near && !bug.heisenScrambling) {
+            bug.heisenScrambling = true;
+            const labelLen = def.label.length;
+            bug.heisenTimer = this.time.addEvent({
+              delay: 100,
+              loop: true,
+              callback: () => {
+                if (!bug.heisenScrambling) return;
+                bug.labelText.setText(scramble(labelLen));
+              },
+            });
+          } else if (!near && bug.heisenScrambling) {
+            bug.heisenScrambling = false;
+            if (bug.heisenTimer) { bug.heisenTimer.destroy(); bug.heisenTimer = null; }
+            bug.labelText.setText(def.label);
+          }
           break;
         }
-        // syntax: static, nothing to do
+        // syntax: handled by tween, nothing to do here
       }
     }
 
@@ -284,112 +334,198 @@ export class BugBountyScene extends Phaser.Scene {
     }
   }
 
-  // ── Helpers ──────────────────────────────────────────────────────────────────
+  // ── Chip factory ─────────────────────────────────────────────────────────────
+
+  private buildChip(type: BugType): {
+    container: Phaser.GameObjects.Container;
+    bgGraphics: Phaser.GameObjects.Graphics;
+    glowRect: Phaser.GameObjects.Rectangle;
+    borderRect: Phaser.GameObjects.Rectangle;
+    labelText: Phaser.GameObjects.Text;
+  } {
+    const def = BUG_DEFS[type];
+    const hw = CHIP_W / 2;
+    const hh = CHIP_H / 2;
+
+    // Glow rect (behind everything, slow pulse via tween after creation)
+    const glowRect = this.add.rectangle(0, 0, CHIP_W + 8, CHIP_H + 8, def.color, 0.08).setOrigin(0.5);
+
+    // Drop shadow (dark rect offset 2,2)
+    const shadow = this.add.rectangle(2, 2, CHIP_W, CHIP_H, 0x000000, 0.3).setOrigin(0.5);
+
+    // Background graphics (rounded rect)
+    const bgGraphics = this.add.graphics();
+    drawChipBg(bgGraphics, def.color, 0.85);
+
+    // Border rectangle (for despawn warning flash, normally invisible)
+    const borderRect = this.add.rectangle(0, 0, CHIP_W, CHIP_H, 0x000000, 0)
+      .setStrokeStyle(2, 0xffffff, 0)
+      .setOrigin(0.5);
+
+    // Severity dot (circle via graphics)
+    const dotGfx = this.add.graphics();
+    dotGfx.fillStyle(def.dotColor, 1);
+    dotGfx.fillCircle(-hw + 14, 0, 4);
+
+    // Label text
+    const labelText = this.add.text(-hw + 24, 0, def.label, {
+      fontFamily: 'monospace',
+      fontSize: '11px',
+      color: '#ffffff',
+    }).setOrigin(0, 0.5);
+
+    const container = this.add.container(0, 0, [
+      glowRect,
+      shadow,
+      bgGraphics,
+      borderRect,
+      dotGfx,
+      labelText,
+    ]);
+
+    // Hit area matches chip bounds
+    container.setInteractive(
+      new Phaser.Geom.Rectangle(-hw, -hh, CHIP_W, CHIP_H),
+      Phaser.Geom.Rectangle.Contains
+    );
+    container.input!.cursor = 'pointer';
+
+    return { container, bgGraphics, glowRect, borderRect, labelText };
+  }
+
+  // ── Spawn ─────────────────────────────────────────────────────────────────────
 
   private spawnBug(time: number): void {
     const type = pickBugType();
     const def = BUG_DEFS[type];
 
-    const x = this.gridX + Math.random() * (this.gridW - 24);
-    const y = this.gridY + Math.random() * (this.gridH - 24);
+    const x = this.gridX + CHIP_W / 2 + Math.random() * (this.gridW - CHIP_W);
+    const y = this.gridY + CHIP_H / 2 + Math.random() * (this.gridH - CHIP_H);
 
-    const obj = this.add.text(x, y, def.emoji, {
-      fontFamily: 'monospace',
-      fontSize: '20px',
-    }).setDepth(20).setInteractive({ useHandCursor: true });
+    const { container, bgGraphics, glowRect, borderRect, labelText } = this.buildChip(type);
+    container.setPosition(x, y).setDepth(20).setScale(0);
 
     const bug: ActiveBug = {
-      obj,
+      obj: container,
       type,
       spawnedAt: time,
       direction: Math.random() < 0.5 ? 1 : -1,
       lastTeleport: 0,
+      bgGraphics,
+      glowRect,
+      borderRect,
+      labelText,
+      despawnWarned: false,
+      bangText: null,
+      despawnFlashTimer: null,
+      heisenScrambling: false,
+      heisenTimer: null,
     };
 
-    obj.on('pointerdown', () => this.catchBug(bug));
+    // Spawn animation: scale 0 → 1
+    this.tweens.add({
+      targets: container,
+      scaleX: 1,
+      scaleY: 1,
+      duration: 200,
+      ease: 'Back.easeOut',
+    });
+
+    // Glow pulse
+    this.tweens.add({
+      targets: glowRect,
+      alpha: { from: 0.05, to: 0.12 },
+      duration: 2000,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut',
+    });
+
+    // Type-specific idle animations
+    switch (type) {
+      case 'syntax':
+        this.tweens.add({
+          targets: container,
+          scaleX: 1.05,
+          scaleY: 1.05,
+          duration: 600,
+          yoyo: true,
+          repeat: -1,
+          ease: 'Sine.easeInOut',
+        });
+        break;
+
+      case 'logic':
+        // Rotation wobble ±3°
+        this.tweens.add({
+          targets: container,
+          angle: { from: -3, to: 3 },
+          duration: 400,
+          yoyo: true,
+          repeat: -1,
+          ease: 'Sine.easeInOut',
+        });
+        break;
+
+      case 'heisen':
+        // y-float ±4px (tween relative to spawn y)
+        this.tweens.add({
+          targets: container,
+          y: { from: y - 4, to: y + 4 },
+          duration: 1250,
+          yoyo: true,
+          repeat: -1,
+          ease: 'Sine.easeInOut',
+        });
+        break;
+
+      // race, memleak: handled in update loop
+    }
+
+    container.on('pointerdown', () => this.catchBug(bug));
 
     this.bugs.push(bug);
   }
 
+  // ── Despawn warning ──────────────────────────────────────────────────────────
+
+  private startDespawnWarning(bug: ActiveBug, def: BugConfig): void {
+    bug.despawnWarned = true;
+
+    // Make border visible and flash it
+    bug.borderRect.setStrokeStyle(2, 0xffffff, 1);
+    let visible = true;
+    bug.despawnFlashTimer = this.time.addEvent({
+      delay: 150,
+      loop: true,
+      callback: () => {
+        visible = !visible;
+        bug.borderRect.setStrokeStyle(2, 0xffffff, visible ? 1 : 0);
+      },
+    });
+
+    // "!" badge next to label
+    bug.bangText = this.add.text(CHIP_W / 2 + 4, 0, '!', {
+      fontFamily: 'monospace',
+      fontSize: '12px',
+      color: '#ff6b6b',
+    }).setOrigin(0, 0.5);
+    bug.obj.add(bug.bangText);
+
+    void def; // suppress unused warning
+  }
+
+  // ── Catch ─────────────────────────────────────────────────────────────────────
+
   private catchBug(bug: ActiveBug): void {
     if (!this.bugs.includes(bug)) return;
 
-    const now = this.time.now;
-    if (now - this.lastCatchTime < 2000) {
-      this.comboCount++;
-    } else {
-      if (this.comboCount >= 2) {
-        // Fade out combo text when reset
-        this.tweens.add({
-          targets: this.comboText,
-          alpha: 0,
-          duration: 300,
-        });
-      }
-      this.comboCount = 1;
-    }
-    this.lastCatchTime = now;
-    if (this.comboCount > this.maxCombo) this.maxCombo = this.comboCount;
-
     const def = BUG_DEFS[bug.type];
-    const comboMultiplier = 1 + (this.comboCount - 1) * 0.25;
-    let reward = Math.floor(def.reward * comboMultiplier);
-
-    // Update combo UI
-    if (this.comboCount >= 2) {
-      this.comboText.setText(`COMBO ×${this.comboCount}`).setAlpha(1);
-      this.tweens.add({
-        targets: this.comboText,
-        scaleX: 1.2,
-        scaleY: 1.2,
-        duration: 100,
-        yoyo: true,
-      });
-    }
-
-    // Camera shake intensity scales slightly with combo
-    const shakeIntensity = 0.004 * Math.min(2, (1 + this.comboCount * 0.1));
-    if (bug.type === 'heisen') {
-      this.cameras.main.shake(120, shakeIntensity * 2);
-      // White grid flash
-      const flash = this.add.rectangle(this.gridX, this.gridY, this.gridW, this.gridH, 0xffffff, 0.3)
-        .setOrigin(0).setDepth(25);
-      this.tweens.add({
-        targets: flash,
-        alpha: 0,
-        duration: 50,
-        onComplete: () => flash.destroy()
-      });
-    } else {
-      this.cameras.main.shake(80, shakeIntensity);
-    }
-
-    // Particle burst
-    const colors = {
-      syntax: 0xff0000,
-      logic: 0xffff00,
-      race: 0x800080,
-      memleak: 0x00ff00,
-      heisen: 0xffffff
-    };
-    const particleColor = colors[bug.type] || 0xffffff;
-    for (let i = 0; i < 6; i++) {
-      const p = this.add.circle(bug.obj.x, bug.obj.y, 4, particleColor).setDepth(25);
-      const angle = Math.random() * Math.PI * 2;
-      const speed = 50 + Math.random() * 100;
-      this.tweens.add({
-        targets: p,
-        x: p.x + Math.cos(angle) * speed,
-        y: p.y + Math.sin(angle) * speed,
-        alpha: 0,
-        duration: 400,
-        onComplete: () => p.destroy()
-      });
-    }
+    let reward = def.reward;
 
     // Memory leak: bonus based on scale
     if (bug.type === 'memleak') {
-      reward = Math.floor((10 + Math.floor(bug.obj.scaleX * 10)) * comboMultiplier);
+      reward = 10 + Math.floor(bug.obj.scaleX * 10);
     }
 
     this.totalEarned += reward;
@@ -397,8 +533,7 @@ export class BugBountyScene extends Phaser.Scene {
     this.updateStats();
 
     // Flash reward text
-    const rewardStr = this.comboCount >= 2 ? `+$${reward} ×${this.comboCount}` : `+$${reward}`;
-    const flash = this.add.text(bug.obj.x, bug.obj.y - 10, rewardStr, {
+    const flash = this.add.text(bug.obj.x, bug.obj.y - 10, `+$${reward}`, {
       fontFamily: 'monospace',
       fontSize: '14px',
       color: '#ffd700',
@@ -422,100 +557,36 @@ export class BugBountyScene extends Phaser.Scene {
       yoyo: true,
     });
 
-    // Bug death animation
-    this.tweens.add({
-      targets: bug.obj,
-      scaleX: bug.obj.scaleX * 2,
-      scaleY: bug.obj.scaleY * 2,
-      angle: 360,
-      alpha: 0,
-      duration: 250,
-      onComplete: () => this.removeBug(bug, true)
-    });
+    this.removeBug(bug, true);
   }
 
-  private handleMissClick(x: number, y: number): void {
-    const now = this.time.now;
-    if (now - this.lastMissClick < 200) return;
-    this.lastMissClick = now;
-
-    this.timePenalty += 1000;
-    AudioManager.getInstance().playSFX('bug-miss');
-
-    // Red flash
-    const flash = this.add.rectangle(this.gridX, this.gridY, this.gridW, this.gridH, 0xff0000, 0.15)
-      .setOrigin(0).setDepth(25);
-    this.tweens.add({
-      targets: flash,
-      alpha: 0,
-      duration: 200,
-      onComplete: () => flash.destroy()
-    });
-
-    // Penalty text
-    const txt = this.add.text(x, y, '−1s', {
-      fontFamily: 'monospace',
-      fontSize: '16px',
-      color: '#ff0000',
-    }).setOrigin(0.5).setDepth(30);
-
-    this.tweens.add({
-      targets: txt,
-      y: y - 40,
-      alpha: 0,
-      duration: 400,
-      onComplete: () => txt.destroy()
-    });
-  }
+  // ── Remove ────────────────────────────────────────────────────────────────────
 
   private removeBug(bug: ActiveBug, caught: boolean): void {
     const idx = this.bugs.indexOf(bug);
     if (idx === -1) return;
     this.bugs.splice(idx, 1);
 
+    // Clean up timers
+    if (bug.despawnFlashTimer) { bug.despawnFlashTimer.destroy(); bug.despawnFlashTimer = null; }
+    if (bug.heisenTimer) { bug.heisenTimer.destroy(); bug.heisenTimer = null; }
+
     if (caught) {
-      bug.obj.destroy();
-    } else {
-      // Bug escape penalty resets combo
-      if (this.comboCount >= 2) {
-        this.tweens.add({
-          targets: this.comboText,
-          alpha: 0,
-          duration: 300,
-        });
-      }
-      this.comboCount = 0;
-
-      // Bug escape penalty
-      this.totalEarned = Math.max(0, this.totalEarned - 5);
-      this.updateStats();
-      AudioManager.getInstance().playSFX('bug-miss');
-
-      // Floating text
-      const txt = this.add.text(bug.obj.x, bug.obj.y, '−$5 ESCAPED', {
-        fontFamily: 'monospace',
-        fontSize: '14px',
-        color: '#ff0000',
-      }).setDepth(30);
-
-      this.tweens.add({
-        targets: txt,
-        y: txt.y - 30,
-        alpha: 0,
-        duration: 600,
-        onComplete: () => txt.destroy()
-      });
-
-      // Ghost trail: fade and drift up
       this.tweens.add({
         targets: bug.obj,
-        y: bug.obj.y - 50,
         alpha: 0,
-        duration: 500,
-        onComplete: () => bug.obj.destroy()
+        scaleX: 0,
+        scaleY: 0,
+        duration: 150,
+        ease: 'Quad.easeIn',
+        onComplete: () => bug.obj.destroy(),
       });
+    } else {
+      bug.obj.destroy();
     }
   }
+
+  // ── Stats ─────────────────────────────────────────────────────────────────────
 
   private updateStats(): void {
     this.statsText.setText(this.statsStr());
@@ -525,12 +596,18 @@ export class BugBountyScene extends Phaser.Scene {
     return `Bugs: ${this.bugCount} | Earned: $${this.totalEarned}`;
   }
 
+  // ── End game ──────────────────────────────────────────────────────────────────
+
   private endGame(): void {
     if (this.ended) return;
     this.ended = true;
 
     // Destroy remaining bugs
-    for (const bug of this.bugs) bug.obj.destroy();
+    for (const bug of this.bugs) {
+      if (bug.despawnFlashTimer) bug.despawnFlashTimer.destroy();
+      if (bug.heisenTimer) bug.heisenTimer.destroy();
+      bug.obj.destroy();
+    }
     this.bugs = [];
 
     // Apply earnings + HP bonus + mark played
@@ -540,7 +617,6 @@ export class BugBountyScene extends Phaser.Scene {
     state.budget += this.totalEarned;
     Telemetry.patchBugBounty(this.totalEarned, this.bugCount);
     state.totalBugsSquashed += this.bugCount;
-    // Only mark as played if this is a regular night session (not a bonus hunt)
     if (returnScene === 'Night') {
       state.bountyPlayedTonight = true;
     }
@@ -560,7 +636,6 @@ export class BugBountyScene extends Phaser.Scene {
     const lines: string[] = [
       "Time's up!",
       `Bugs squashed: ${this.bugCount}`,
-      `Best combo: ×${this.maxCombo}`,
       `Earned: $${this.totalEarned}`,
     ];
     if (bonusHp) lines.push('+5 HP hardware repair bonus');
@@ -575,7 +650,6 @@ export class BugBountyScene extends Phaser.Scene {
 
     const btnLabel = returnScene === 'Results' ? '[ Collect → Results ]' : '[ Collect → Night ]';
 
-    // Collect button
     const btn = this.add.text(overlayX, overlayY + 90, btnLabel, {
       fontFamily: 'monospace',
       fontSize: '16px',
@@ -585,6 +659,8 @@ export class BugBountyScene extends Phaser.Scene {
     btn.on('pointerover', () => btn.setColor('#e6edf3'));
     btn.on('pointerout', () => btn.setColor('#58a6ff'));
     btn.on('pointerdown', () => this.scene.start(returnScene));
+
+    void overlay;
   }
 
   shutdown(): void {
