@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT, COLORS, TIME_UNITS_PER_DAY } from '../utils/constants';
 import { getState } from '../systems/GameState';
-import type { Strategy } from '../systems/GameState';
+import type { Strategy, ModelTier } from '../systems/GameState';
 import { getTheme } from '../utils/themes';
 import { Window } from '../ui/Window';
 import { Taskbar } from '../ui/Taskbar';
@@ -38,6 +38,10 @@ export class PlanningScene extends Phaser.Scene {
   private synergyText!: Phaser.GameObjects.Text;
   private agentSlotLabel!: Phaser.GameObjects.Text;
 
+  // Model picker state
+  private modelRowBgs: Map<ModelTier, Phaser.GameObjects.Rectangle> = new Map();
+  private modelWinTitle!: Phaser.GameObjects.Text;
+
   constructor() {
     super({ key: 'Planning' });
   }
@@ -72,6 +76,7 @@ export class PlanningScene extends Phaser.Scene {
       fontFamily: 'monospace', fontSize: '14px', color: '#8b949e',
     });
 
+    this.modelRowBgs = new Map();
     this.cards = [];
     STRATEGIES.forEach((s, i) => {
       const cardY = 50 + sArea.y + 28 + i * 110;
@@ -112,11 +117,28 @@ export class PlanningScene extends Phaser.Scene {
       }
     });
 
-    // ── Model info panel (right side, compact) ──────────────────────────
+    // ── Model picker panel (right side, interactive) ──────────────────────────
+    const ALL_MODELS: ModelTier[] = ['free', 'sketchy', 'local', 'openSource', 'standard', 'frontier'];
+    const MODEL_STARS: Record<ModelTier, number> = {
+      free: 1, sketchy: 2, local: 2, openSource: 3, standard: 3, frontier: 5,
+    };
+    const MODEL_NAMES: Record<ModelTier, string> = {
+      free: 'Free', sketchy: 'Sketchy', local: 'Local', openSource: 'Open Source', standard: 'Standard', frontier: 'Frontier',
+    };
+
+    const isCorp = state.playerClass === 'corporateDev';
+    // For corp dev, hide locked models (they can't use them); show only unlocked
+    const visibleModels = isCorp
+      ? ALL_MODELS.filter(m => !state.lockedModels.includes(m))
+      : ALL_MODELS;
+
+    const MODEL_ROW_H = 28;
+    const MODEL_WIN_H = 42 + visibleModels.length * MODEL_ROW_H + 8;
+
     const modelWin = new Window({
       scene: this, x: 760, y: 28,
-      width: 480, height: 195,
-      title: 'Model: ' + state.model,
+      width: 480, height: MODEL_WIN_H,
+      title: 'Model Selector',
       titleIcon: '📡',
       accentColor: theme.accent,
     });
@@ -124,15 +146,63 @@ export class PlanningScene extends Phaser.Scene {
     const mArea = modelWin.contentArea;
     const mx = 760 + mArea.x;
     const my = 28 + mArea.y;
-    this.add.text(mx, my,      `Active Model: ${state.model}`, { fontFamily: 'monospace', fontSize: '13px', color: '#e6edf3' });
-    this.add.text(mx, my + 24, state.playerClass === 'corporateDev' ? '💳 Company Card' : `Budget: $${state.budget.toLocaleString()}`, { fontFamily: 'monospace', fontSize: '12px', color: '#8b949e' });
-    this.add.text(mx, my + 46, `Hardware: ${state.hardwareHp}%`, { fontFamily: 'monospace', fontSize: '12px', color: '#8b949e' });
-    this.add.text(mx, my + 68, `Agent Slots: ${state.agentSlots}`, { fontFamily: 'monospace', fontSize: '12px', color: '#8b949e' });
-    this.add.text(mx, my + 90, `Daily Cost: $${EconomySystem.getModelDayCost(state.model)}/day`, { fontFamily: 'monospace', fontSize: '12px', color: '#8b949e' });
+
+    this.add.text(mx, my, 'Select AI Model:', {
+      fontFamily: 'monospace', fontSize: '12px', color: '#8b949e',
+    });
+
+    visibleModels.forEach((model, i) => {
+      const rowY = my + 20 + i * MODEL_ROW_H;
+      const rowW = mArea.width;
+      const isUnlocked = state.unlockedModels.includes(model);
+      const isSelected = state.model === model;
+      const stars = MODEL_STARS[model];
+      const starStr = '★'.repeat(stars) + '☆'.repeat(5 - stars);
+      const dailyCost = EconomySystem.getModelDayCost(model);
+      const costLabel = isCorp ? '💳 Company Card' : `$${dailyCost}/day`;
+
+      const rowBg = this.add.rectangle(mx, rowY, rowW, MODEL_ROW_H - 2, isSelected ? 0x1c3a1c : COLORS.titleBar).setOrigin(0);
+      if (isSelected) rowBg.setStrokeStyle(1, 0x3fb950);
+
+      if (isUnlocked) {
+        rowBg.setInteractive({ useHandCursor: true });
+        this.modelRowBgs.set(model, rowBg);
+
+        rowBg.on('pointerdown', () => this.selectModel(model));
+        rowBg.on('pointerover', () => {
+          if (state.model !== model) rowBg.setFillStyle(COLORS.windowBg);
+        });
+        rowBg.on('pointerout', () => {
+          if (state.model !== model) rowBg.setFillStyle(COLORS.titleBar);
+        });
+
+        this.add.text(mx + 8, rowY + 5, `${MODEL_NAMES[model]}`, {
+          fontFamily: 'monospace', fontSize: '12px', color: isSelected ? '#3fb950' : '#e6edf3',
+        });
+        this.add.text(mx + 130, rowY + 5, starStr, {
+          fontFamily: 'monospace', fontSize: '11px', color: '#d29922',
+        });
+        this.add.text(mx + rowW - 4, rowY + 5, costLabel, {
+          fontFamily: 'monospace', fontSize: '11px', color: '#8b949e',
+        }).setOrigin(1, 0);
+      } else {
+        // Locked — show grayed with lock
+        this.add.text(mx + 8, rowY + 5, `🔒 ${MODEL_NAMES[model]}`, {
+          fontFamily: 'monospace', fontSize: '12px', color: '#484f58',
+        });
+        this.add.text(mx + 130, rowY + 5, starStr, {
+          fontFamily: 'monospace', fontSize: '11px', color: '#30363d',
+        });
+        this.add.text(mx + rowW - 4, rowY + 5, 'Buy in Token Market', {
+          fontFamily: 'monospace', fontSize: '10px', color: '#484f58',
+        }).setOrigin(1, 0);
+      }
+    });
 
     // ── Agent Dashboard (right side, interactive picker) ─────────────────
+    const agentWinY = 28 + MODEL_WIN_H + 10;
     const agentWin = new Window({
-      scene: this, x: 760, y: 238,
+      scene: this, x: 760, y: agentWinY,
       width: 480, height: 360,
       title: 'Agent Dashboard',
       titleIcon: '🤖',
@@ -141,7 +211,7 @@ export class PlanningScene extends Phaser.Scene {
 
     const aArea = agentWin.contentArea;
     const ax = 760 + aArea.x;
-    const ay = 238 + aArea.y;
+    const ay = agentWinY + aArea.y;
 
     // Slot counter label
     this.agentSlotLabel = this.add.text(ax, ay, `Select Agents  (0 / ${state.agentSlots})`, {

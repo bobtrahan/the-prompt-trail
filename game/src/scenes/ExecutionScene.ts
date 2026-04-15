@@ -45,6 +45,8 @@ export class ExecutionScene extends Phaser.Scene {
   // Event modal
   private modalGroup?: Phaser.GameObjects.Container;
   private currentEvent?: EventDef;
+  private eventCountdownTimer?: Phaser.Time.TimerEvent;
+  private eventCountdownText?: Phaser.GameObjects.Text;
 
   // Completion / Overtime
   private inOvertime: boolean = false;
@@ -61,6 +63,11 @@ export class ExecutionScene extends Phaser.Scene {
     'nginx -t && nginx -s reload',
     'ssh bastion -- uptime',
   ];
+
+  // Resource display refs (for flash feedback)
+  private budgetText!: Phaser.GameObjects.Text;
+  private hardwareText!: Phaser.GameObjects.Text;
+  private repText!: Phaser.GameObjects.Text;
 
   // Systems
   private eventEngine!: EventEngine;
@@ -194,9 +201,9 @@ export class ExecutionScene extends Phaser.Scene {
     const rX = 852 + rArea.x;
     const rY = 288 + rArea.y;
 
-    this.add.text(rX, rY, state.playerClass === 'corporateDev' ? '💳 Company Card' : `💰 Budget: $${state.budget.toLocaleString()}`, rStyle);
-    this.add.text(rX, rY + 28, `🖥️ Hardware: ${state.hardwareHp}%`, rStyle);
-    this.add.text(rX, rY + 56, `⭐ Reputation: ${state.reputation}`, rStyle);
+    this.budgetText = this.add.text(rX, rY, state.playerClass === 'corporateDev' ? '💳 Company Card' : `💰 Budget: $${state.budget.toLocaleString()}`, rStyle);
+    this.hardwareText = this.add.text(rX, rY + 28, `🖥️ Hardware: ${state.hardwareHp}%`, rStyle);
+    this.repText = this.add.text(rX, rY + 56, `⭐ Reputation: ${state.reputation}`, rStyle);
     this.add.text(rX, rY + 84, `📡 Model: ${state.model}`, rStyle);
 
     this.add.text(rX, rY + 120, '⏱️ Time Remaining:', {
@@ -368,6 +375,9 @@ export class ExecutionScene extends Phaser.Scene {
     const { title, body, choices } = evt;
     this.typingEngine.pause();
 
+    // Pause day timer while event modal is open
+    if (this.dayTimer) this.dayTimer.paused = true;
+
     this.modalGroup = this.add.container(0, 0).setDepth(200);
 
     // Dim overlay
@@ -438,6 +448,33 @@ export class ExecutionScene extends Phaser.Scene {
     this.input.keyboard!.once('keydown-TWO', () => choices.length > 1 && this.resolveEvent(1, choices[1] as EventChoice));
     this.input.keyboard!.once('keydown-THREE', () => choices.length > 2 && this.resolveEvent(2, choices[2] as EventChoice));
 
+    // ── Countdown overlay (top-right corner of modal) ──
+    const COUNTDOWN_SEC = 10;
+    let remaining = COUNTDOWN_SEC;
+    this.eventCountdownText = this.add.text(
+      dx + dw - 12, dy + 8,
+      `⏳ Day timer resumes in ${remaining}s`,
+      { fontFamily: 'monospace', fontSize: '11px', color: '#f0883e' }
+    ).setOrigin(1, 0).setDepth(210);
+    this.modalGroup!.add(this.eventCountdownText);
+
+    this.eventCountdownTimer = this.time.addEvent({
+      delay: 1000,
+      repeat: COUNTDOWN_SEC - 1,
+      callback: () => {
+        remaining--;
+        if (this.eventCountdownText) {
+          if (remaining > 0) {
+            this.eventCountdownText.setText(`⏳ Day timer resumes in ${remaining}s`);
+          } else {
+            // Auto-dismiss: no choice made — just close modal with no effect
+            this.eventCountdownText.setText('⏳ Resuming...');
+            this.time.delayedCall(300, () => this.dismissEventNoEffect());
+          }
+        }
+      },
+    });
+
     // Slide-in animation
     this.modalGroup.setAlpha(0);
     this.tweens.add({
@@ -448,8 +485,41 @@ export class ExecutionScene extends Phaser.Scene {
     });
   }
 
+  /** Auto-dismiss event modal with no effect (countdown expired, no choice made) */
+  private dismissEventNoEffect(): void {
+    if (!this.modalGroup) return;
+    this.eventCountdownTimer?.destroy();
+    this.eventCountdownTimer = undefined;
+    this.eventCountdownText = undefined;
+    // Remove keyboard listeners
+    this.input.keyboard!.removeAllListeners('keydown-ONE');
+    this.input.keyboard!.removeAllListeners('keydown-TWO');
+    this.input.keyboard!.removeAllListeners('keydown-THREE');
+    if (this.currentEvent) {
+      this.eventEngine.markFired(this.currentEvent.id, getState().day);
+      this.currentEvent = undefined;
+    }
+    this.tweens.add({
+      targets: this.modalGroup,
+      alpha: 0,
+      duration: 150,
+      onComplete: () => {
+        this.modalGroup?.destroy();
+        this.modalGroup = undefined;
+        if (this.dayTimer) this.dayTimer.paused = false;
+        this.typingEngine.resume();
+        this.taskbar.refresh();
+      },
+    });
+  }
+
   private resolveEvent(choiceIndex: number, choice: EventChoice): void {
     if (!this.modalGroup) return;
+
+    // Cancel countdown
+    this.eventCountdownTimer?.destroy();
+    this.eventCountdownTimer = undefined;
+    this.eventCountdownText = undefined;
 
     this.terminal.addLine(`> Event: chose "${choice.text}"`);
 
@@ -467,6 +537,9 @@ export class ExecutionScene extends Phaser.Scene {
     // Sync local timeUnits from state (in case event changed time)
     this.timeUnits = state.timeUnitsRemaining;
 
+    // ── Parse logs for impact feedback ──
+    this.applyImpactFeedback(logs, state);
+
     // Close modal
     this.tweens.add({
       targets: this.modalGroup,
@@ -475,10 +548,81 @@ export class ExecutionScene extends Phaser.Scene {
       onComplete: () => {
         this.modalGroup?.destroy();
         this.modalGroup = undefined;
+        if (this.dayTimer) this.dayTimer.paused = false;
         this.typingEngine.resume();
         this.taskbar.refresh();
       },
     });
+  }
+
+  /** Flash UI elements and show floating summary based on effect logs */
+  private applyImpactFeedback(logs: string[], state: ReturnType<typeof getState>): void {
+    const summaryParts: string[] = [];
+
+    for (const log of logs) {
+      if (log.startsWith('> BUDGET')) {
+        // Parse delta: "> BUDGET +$50" or "> BUDGET -$50"
+        const m = log.match(/BUDGET ([+-]\$\d+)/);
+        const label = m ? m[1] : '';
+        const isGain = log.includes('+$');
+        summaryParts.push(`${label} 💰`);
+        // Green bounce for gain, red bounce for loss
+        const color = isGain ? '#39d353' : '#f85149';
+        this.budgetText.setColor(color);
+        this.budgetText.setText(state.playerClass === 'corporateDev' ? '💳 Company Card' : `💰 Budget: $${state.budget.toLocaleString()}`);
+        this.tweens.add({
+          targets: this.budgetText,
+          scaleX: { from: 1.2, to: 1 },
+          scaleY: { from: 1.2, to: 1 },
+          duration: 300,
+          ease: 'Back.Out',
+          onComplete: () => this.budgetText.setColor('#e6edf3'),
+        });
+      } else if (log.startsWith('> TIME')) {
+        const m = log.match(/TIME ([+-]\d+)/);
+        const label = m ? `${m[1]} ⏱️` : '⏱️';
+        summaryParts.push(label);
+        // Color pulse on time bar
+        const origColor = this.timeUnits / 10 <= 0.3 ? COLORS.error : COLORS.warning;
+        this.timeBar.setFillStyle(0xffffff);
+        this.time.delayedCall(200, () => this.timeBar.setFillStyle(origColor));
+      } else if (log.startsWith('> HARDWARE')) {
+        const m = log.match(/HARDWARE ([+-]\d+)/);
+        const label = m ? `${m[1]} 🖥️` : '🖥️';
+        summaryParts.push(label);
+        this.hardwareText.setColor('#f0883e');
+        this.hardwareText.setText(`🖥️ Hardware: ${state.hardwareHp}%`);
+        this.time.delayedCall(600, () => this.hardwareText.setColor('#e6edf3'));
+      } else if (log.startsWith('> REPUTATION')) {
+        const m = log.match(/REPUTATION ([+-]\d+)/);
+        const label = m ? `${m[1]} ⭐` : '⭐';
+        summaryParts.push(label);
+        this.repText.setColor('#d29922');
+        this.repText.setText(`⭐ Reputation: ${state.reputation}`);
+        this.time.delayedCall(600, () => this.repText.setColor('#e6edf3'));
+      }
+    }
+
+    // ── Floating summary near modal center ──
+    if (summaryParts.length > 0) {
+      const summaryStr = summaryParts.join('  ');
+      const floatText = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 20, summaryStr, {
+        fontFamily: 'monospace',
+        fontSize: '18px',
+        color: '#e6edf3',
+        stroke: '#000000',
+        strokeThickness: 3,
+      }).setOrigin(0.5).setDepth(300).setAlpha(1);
+
+      this.tweens.add({
+        targets: floatText,
+        y: floatText.y - 60,
+        alpha: 0,
+        duration: 1000,
+        ease: 'Power2',
+        onComplete: () => floatText.destroy(),
+      });
+    }
   }
 
   // ── Completion Choice modal ──
