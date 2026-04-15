@@ -21,6 +21,7 @@ export class ResultsScene extends Phaser.Scene {
   private baseRepText!: Phaser.GameObjects.Text;
   private accuracyBonusText!: Phaser.GameObjects.Text;
   private strategyBonusText!: Phaser.GameObjects.Text;
+  private overtimeBonusText!: Phaser.GameObjects.Text;
   private totalRepText!: Phaser.GameObjects.Text;
   private budgetDeltaText!: Phaser.GameObjects.Text;
   private hardwareDeltaText!: Phaser.GameObjects.Text;
@@ -95,26 +96,35 @@ export class ResultsScene extends Phaser.Scene {
     this.window.add(this.accuracyBonusText);
 
     const strategyLabel = this.getStrategyLabel(state.strategy || 'justStart');
+    const hasOvertime = state.overtimeBonus > 0;
+    const yShift = hasOvertime ? 25 : 0;
+
     this.window.add(this.add.text(x + 20, y + 175, 'Strategy ♙:', labelStyle));
     this.strategyBonusText = this.add.text(x + 140, y + 175, `+0  (${strategyLabel})`, valueStyle);
     this.window.add(this.strategyBonusText);
 
+    if (hasOvertime) {
+      this.window.add(this.add.text(x + 20, y + 200, 'Production ♙:', labelStyle));
+      this.overtimeBonusText = this.add.text(x + 140, y + 200, '+0', valueStyle);
+      this.window.add(this.overtimeBonusText);
+    }
+
     // Footer Divider
-    this.window.add(this.add.text(x + width/2, y + 205, '───────────', {
+    this.window.add(this.add.text(x + width/2, y + 205 + yShift, '───────────', {
       fontFamily: 'monospace', fontSize: '12px', color: '#8b949e'
     }).setOrigin(0.5));
 
     // Total
-    this.window.add(this.add.text(x + 20, y + 230, 'Day Total:', {
+    this.window.add(this.add.text(x + 20, y + 230 + yShift, 'Day Total:', {
       fontFamily: 'monospace', fontSize: '18px', color: '#e6edf3', fontStyle: 'bold'
     }));
-    this.totalRepText = this.add.text(x + 140, y + 230, '+0 ⭐', {
+    this.totalRepText = this.add.text(x + 140, y + 230 + yShift, '+0 ⭐', {
       fontFamily: 'monospace', fontSize: '18px', color: '#f2cc60', fontStyle: 'bold'
     });
     this.window.add(this.totalRepText);
 
     // Delta Stats
-    const deltaY = y + 280;
+    const deltaY = y + 280 + yShift;
     this.window.add(this.add.text(x + 20, deltaY, `Budget Spent: $${result.budgetSpent}`, labelStyle));
     
     const hwStart = Math.round(state.dayStartHardware);
@@ -123,7 +133,7 @@ export class ResultsScene extends Phaser.Scene {
 
     // Continue Button (hidden until animation ends)
     const btnText = state.day === 13 ? '[ Final Score → ]' : '[ Continue to Night → ]';
-    this.continueBtn = this.add.text(x + width/2, y + 340, btnText, {
+    this.continueBtn = this.add.text(x + width/2, y + 340 + yShift, btnText, {
       fontFamily: 'monospace', fontSize: '16px', color: '#58a6ff'
     }).setOrigin(0.5).setInteractive({ useHandCursor: true }).setAlpha(0);
     
@@ -149,6 +159,7 @@ export class ResultsScene extends Phaser.Scene {
     const curBase = Math.floor(result.score.baseRep * factor);
     const curAccBonus = Math.floor(result.score.accuracyBonus * factor);
     const curStratBonus = Math.floor(result.score.strategyBonus * factor);
+    const curOvertime = Math.floor(state.overtimeBonus * factor);
     const curTotal = Math.floor(result.score.total * factor);
 
     this.progressText.setText(`${curProgress}%`);
@@ -158,6 +169,10 @@ export class ResultsScene extends Phaser.Scene {
     
     const strategyLabel = this.getStrategyLabel(state.strategy || 'justStart');
     this.strategyBonusText.setText(`${curStratBonus >= 0 ? '+' : ''}${curStratBonus}  (${strategyLabel})`);
+
+    if (this.overtimeBonusText) {
+      this.overtimeBonusText.setText(`+${curOvertime}`);
+    }
     
     this.totalRepText.setText(`+${curTotal} ⭐`);
 
