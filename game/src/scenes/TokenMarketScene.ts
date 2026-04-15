@@ -203,7 +203,7 @@ export class TokenMarketScene extends Phaser.Scene {
       // Description (dim, below name)
       const descText = this.add.text(colDescX, ry + 22, item.description, {
         fontFamily: 'monospace',
-        fontSize: '11px',
+        fontSize: '13px',
         color: '#8b949e',
       });
       this.marketWin.add(descText);

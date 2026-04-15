@@ -57,7 +57,7 @@ export class ClassSelectScene extends Phaser.Scene {
       // Description
       const descText = this.add.text(x, y - 90, def.description, {
         fontFamily: 'monospace',
-        fontSize: '11px',
+        fontSize: '13px',
         color: '#8b949e',
         wordWrap: { width: cardWidth - 30 },
         align: 'center',
@@ -66,7 +66,7 @@ export class ClassSelectScene extends Phaser.Scene {
       // Difficulty badge
       this.add.text(x, y - 90 + descText.height + 24, DIFFICULTY[def.id], {
         fontFamily: 'monospace',
-        fontSize: '12px',
+        fontSize: '13px',
         color: '#58a6ff',
       }).setOrigin(0.5);
 

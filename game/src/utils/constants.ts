@@ -15,7 +15,7 @@ export const COLORS = {
   windowBorder: 0x30363d,
   titleBar: 0x21262d,
   text: 0xe6edf3,
-  textDim: 0x8b949e,
+  textDim: 0x9da5b0,
   accent: 0x58a6ff,
   success: 0x3fb950,
   warning: 0xd29922,

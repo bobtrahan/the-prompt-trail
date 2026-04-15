@@ -52,7 +52,7 @@ export class TitleScene extends Phaser.Scene {
     this.add.text(cx, GAME_HEIGHT - 40, 'Gamedev.js Jam 2026 · Theme: Machines', {
       fontFamily: 'monospace',
       fontSize: '12px',
-      color: '#484f58',
+      color: '#6e7681',
     }).setOrigin(0.5);
 
     // Input
