@@ -87,43 +87,55 @@ gamedevjs-2026/
 ## Current Status (as of April 14, 2026 — end of day)
 
 ### Done ✅
-- Full game design spec (loop, events, systems, art, audio, balance)
+
+**Phase 1: Skeleton**
 - Project scaffolded (Vite + Phaser 3 + TypeScript)
-- Scene flow wired: Boot → Title → ClassSelect → Briefing → Planning → Execution → Results → Night → loop → Final
-- GameState singleton with class defs, resource tracking, event flags
-- Class select screen with 4 clickable class cards, reordered by difficulty (easy→brutal), with difficulty badges and multiplier labels
+- Scene flow: Boot → Title → ClassSelect → Briefing → Planning → Execution → Results → Night → loop → Final
+- GameState singleton, class defs, resource tracking, event flags
+- OS chrome UI: `Window`, `Taskbar`, `Terminal` components
 - Title screen with PromptOS boot animation
-- GitHub repo created (private)
-- Color/theme system ready for per-class theming
-- **OS chrome UI components** — `Window` (title bar, accent strip, close button, content area), `Taskbar` (budget/hw/rep/day), `Terminal` (scrolling output, cursor blink)
-- **Terminal typing** — three-segment colored prompt (typed=green, cursor=white blink, remaining=dim gray ghost text). `↑ type this` hint on first prompt. Difficulty scaling: easy→medium→hard prompts as you progress.
-- **Typing engine** — keyboard input, accuracy tracking, shuffled prompt queues per difficulty tier
-- **Execution scene** — full PromptOS desktop: terminal window (typing), agent manager panel (animated status), system monitor (budget/hw/rep/model + time bar), progress bar. Pulsing "START TYPING" affordance that fades on first keystroke. Day timer + events don't start until player types.
-- **Event modal system** — events fire as modal dialogs that pause typing, dim background, offer 3 choices (clickable or keyboard 1/2/3). First event fires at 5 sec to teach rhythm. Word-wrapping on long choice text.
-- **Planning scene** — strategy picker with 4 cards (Plan Then Build / Just Start / One-Shot / Vibe Code) showing risk + cost labels. Model + agent info panels with daily cost preview. Must pick strategy before launching.
-- **Class rebalance** — Tech Bro ×0.8 (easy, 2 agent slots), Corp Dev ×1.2, Indie ×1.8, Student ×3.0 (brutal)
-- **Corporate Dev restrictions** — `lockedStrategies: ['vibeCode']`, `lockedModels: ['free', 'sketchy', 'local']`. Grayed-out cards with 🔒 label. Budget displays as "💳 Company Card" everywhere.
-- **Local hardware system** — `localSlots` in GameState. Tech Bro starts with 1. Events tagged `requiresCloud`/`requiresLocal` with filtering. Local-specific events: GPU Overheating, Local Model Hallucination.
+- Class select with 4 cards, difficulty badges, multiplier labels
 
-- **Data layer (Phase 2)** — `data/projects.ts` (13 projects with difficulty curves, flavor text, max rep), `data/agents.ts` (6 agents + synergy/clash pairs), `data/events.ts` (all 55 events with kebab-case ids, class variants, chains, cooldowns), `data/items.ts` (full Token Market inventory: models, hardware, agent slots, consumables, joke items, repairs)
-- **EventEngine** (`systems/EventEngine.ts`) — weighted random selection filtered by day range, class, tags (requiresCloud/requiresLocal), chain prerequisites, cooldowns, recently-fired penalty. Applies effects (budget/time/hardware/rep/flags). Replaces all placeholder events.
-- **EconomySystem** (`systems/EconomySystem.ts`) — model daily costs (free $0 → frontier $100), strategy costs (Plan $60, Start $30, One-Shot $10, Vibe $45), daily cost deduction, Corp Dev exemption, shop price fluctuation ±20% seeded by day.
-- **ScoringSystem** (`systems/ScoringSystem.ts`) — day reputation = (progress% × maxRep) + accuracy bonus (30%) + strategy modifier (Plan +15%, Start 0%, One-Shot -10%, Vibe random). Final score = raw total × class multiplier. Ranks: S/A/B/C/D/F.
-- **BriefingScene upgrade** — "Daily Digest" app: project card with difficulty stars + flavor text, resource summary row (Corp Dev shows 💳 Company Card), scrolling AI news ticker (25 satirical headlines, 3 per day seeded).
-- **ResultsScene upgrade** — animated count-up breakdown: progress, accuracy, base rep, accuracy bonus, strategy bonus, day total. Budget spent + hardware delta. Continue button appears after animation.
-- **NightScene upgrade** — transition screen with flavor text, tomorrow's project preview + difficulty, grayed-out Phase 3 buttons (Token Market, Bug Bounty), fade-to-black sleep transition.
-- **GameState additions** — `lastDayResult` snapshot (progress, accuracy, score, budgetSpent, hardwareDelta), `dayStartBudget`/`dayStartHardware` for delta tracking.
+**Phase 2: Core Loop**
+- Terminal typing engine — three-segment prompt, accuracy tracking, difficulty scaling (easy→medium→hard)
+- Execution scene — full PromptOS desktop: terminal, agent manager, system monitor, progress bar
+- Event modal system — 55 events, modal dialogs pause typing + day timer (10s countdown), 3 choices (click or keyboard)
+- Event impact feedback — resource changes flash with color bounce + floating summary text
+- Planning scene — strategy picker (4 cards), interactive model selector (unlock/switch), interactive agent picker (6 agents, synergy/clash indicators), must fill all slots + pick strategy before launch
+- Economy system — model daily costs, strategy costs, Corp Dev exemption, bankruptcy → forced Free Tier downgrade
+- Scoring system — day rep = (progress% × maxRep) + accuracy bonus + strategy modifier + overtime bonus. Final = raw × class multiplier. Ranks: S/A/B/C/D/F
+- Model quality effects — free (-15%) through frontier (+15%) applied to progress gain
+- Agent system — speed modifiers from synergy/clash pairs, trait effects (Linter debates, Turbo auto-deploy, Scope feature creep)
+- Early finish system — at 100% progress: choose Bug Hunt Bonus (bonus BugBounty → Results) or Ship to Production (overtime typing, +3 rep/prompt, uncapped)
+- Briefing scene — project card, difficulty stars, resource summary, satirical AI news ticker
+- Results scene — animated count-up breakdown with overtime line, Vibe Code % reveal
 
-### Next Up (Phase 3: Night Phase)
-- [ ] Token Market shop (item data exists in `data/items.ts`, needs shop UI + purchase logic + upgrade effects applied to GameState)
-- [ ] Bug Bounty mini-game (click bugs in code grid, 5 bug types with different behaviors)
-- [ ] NightScene wired to Token Market / Bug Bounty choice
+**Phase 3: Night Phase**
+- Token Market shop — category tabs, item cards, buy buttons, deal-of-the-day, joke item modals, budget updates live
+- ShopSystem — purchase logic, model unlocks, hardware upgrades, consumable tracking, joke results
+- Bug Bounty mini-game — code grid, 5 bug types (Syntax/Logic/Race Condition/Memory Leak/Heisenbug), 30s timer, earnings added to budget, +5 HP bonus at 10+ bugs
+- NightScene hub — Token Market, Bug Bounty (once/night + bonus from early finish), Sleep
 
-### Phase 4+ (after night phase works)
-- [ ] Per-class OS color themes applied everywhere
-- [ ] Audio (5 tracks + SFX)
-- [ ] Agent synergy/clash system wired into Execution
-- [ ] Polish, juice, balance, deploy
+**Phase 4: Systems + Polish**
+- Per-class accent themes applied to all scenes (Window + Taskbar)
+- Hardware upgrade effects wired — Extra Monitor (+5% speed), Mechanical Keyboard (typo forgiveness), UPS/Cooling/RAM (event immunity/weight reduction in EventEngine)
+- FinalScene — animated score reveal, rank (S-F) with flavor text, stats summary, Play Again
+- Progress bar repositioned near typing prompt for tighter feedback loop
+- Terminal dynamically caps visible lines to prevent overlap
+
+**Phase 4.5: Developer Tools**
+- Telemetry system — DaySnapshot + RunLog written to `game/telemetry/` via Vite plugin. Tracks all game variables per day: strategy, model, agents, events + choices, progress, accuracy, overtime, bug bounty, budget trajectory
+- Debug menu — PromptOS system menu: Reboot (always), Skip Day, +$500, +50 Rep, Unlock All, → Final, God Mode, Export Telemetry (behind DEV_CONFIG flags)
+- DevConfig feature flags (`telemetry: true`, `debugMenu: true`) — flip to false for submission
+
+### Next Up (Phase 5: Audio + Polish)
+- [ ] Audio system — background music (per-phase or per-class), SFX (typing clicks, event chime, purchase, bug squash, day complete, score reveal)
+- [ ] Consumable effects — coffee/energy drink/API credits/rubber duck consumed at day start, apply mechanical effects
+- [ ] Bug Bounty visual polish — better bug sprites/animations, screen shake on catch, combo counter, visual juice
+- [ ] Balance tuning — use telemetry data to adjust difficulty curve, costs, event frequency scaling by day
+- [ ] Per-class visual differentiation beyond accents (wallpapers, terminal themes)
+- [ ] Deploy — itch.io, GitHub Pages, Wavedash. Vite build + test
+- [ ] README + screenshots for jam submission
 
 ### Build Milestones (from TECHPLAN.md)
 | Phase | Target Date | Focus |
