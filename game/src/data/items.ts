@@ -58,7 +58,7 @@ export const SHOP_ITEMS: ItemDef[] = [
     baseCost: 150,
     description: 'Community-driven and transparent.',
     effect: 'Reliable, low daily cost ($10/day), but 30% slower than Standard.',
-    mechanical: { type: 'unlockModel', value: 'opensource' }
+    mechanical: { type: 'unlockModel', value: 'openSource' }
   },
 
   // HARDWARE UPGRADES
