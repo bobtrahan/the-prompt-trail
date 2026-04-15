@@ -93,6 +93,11 @@ export interface GameState {
   // Flags for cross-event references
   eventFlags: Record<string, boolean>;
 
+  // Night phase state
+  activeConsumables: string[];
+  purchasedJokes: string[];
+  bountyPlayedTonight: boolean;
+
   // Class restrictions & hardware
   lockedStrategies: Strategy[];
   lockedModels: ModelTier[];
@@ -128,6 +133,9 @@ function createInitialState(): GameState {
     ownedUpgrades: [],
     dayScores: [],
     eventFlags: {},
+    activeConsumables: [],
+    purchasedJokes: [],
+    bountyPlayedTonight: false,
     lockedStrategies: [],
     lockedModels: [],
     localSlots: 0,
