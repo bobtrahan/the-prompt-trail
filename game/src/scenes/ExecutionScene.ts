@@ -146,7 +146,7 @@ export class ExecutionScene extends Phaser.Scene {
     });
 
     // ── Progress bar (bottom of terminal window content, above prompt) ──
-    const pbY = 72 + tArea.y + tArea.height - 16 - 12;
+    const pbY = 72 + tArea.y + tArea.height - 56;
     this.progressBg = this.add.rectangle(16 + tArea.x, pbY, tArea.width, 12, 0x21262d).setOrigin(0).setDepth(150);
     this.progressBar = this.add.rectangle(16 + tArea.x, pbY, 0, 12, theme.accent).setOrigin(0).setDepth(151);
     this.progressText = this.add.text(16 + tArea.x + tArea.width / 2, pbY + 1, '0%', {
