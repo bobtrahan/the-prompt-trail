@@ -5,9 +5,12 @@ import { getTheme } from '../utils/themes';
 import { Window } from '../ui/Window';
 import { Taskbar } from '../ui/Taskbar';
 import { PROJECTS } from '../data/projects';
+import { AudioManager } from '../systems/AudioManager';
 
 export class NightScene extends Phaser.Scene {
   private taskbar!: Taskbar;
+  private led!: Phaser.GameObjects.Rectangle;
+  private ledTween!: Phaser.Tweens.Tween;
 
   constructor() {
     super({ key: 'Night' });
@@ -17,6 +20,29 @@ export class NightScene extends Phaser.Scene {
     const state = getState();
     const theme = getTheme(state.playerClass ?? undefined);
     this.cameras.main.setBackgroundColor(COLORS.bg);
+
+    // A) Ambient elements (depth -5)
+    // Monitor glow
+    this.add.rectangle(100, 200, 200, 140, theme.accent, 0.015).setDepth(-5);
+    this.add.rectangle(980, 240, 180, 120, theme.accent, 0.01).setDepth(-5);
+
+    // Blinking LED
+    this.led = this.add.rectangle(120, 500, 4, 4, 0x3fb950).setAlpha(0.6).setDepth(-5);
+    this.ledTween = this.tweens.add({
+      targets: this.led,
+      alpha: 0.1,
+      duration: 2000,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut',
+    });
+
+    // Status line
+    this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 50, `System idle  ·  3 processes sleeping  ·  Hardware: ${state.hardwareHp}%`, {
+      fontFamily: 'monospace',
+      fontSize: '11px',
+      color: '#30363d'
+    }).setOrigin(0.5).setDepth(-5);
 
     // Fade in from results
     this.cameras.main.fadeIn(500, 0, 0, 0);
@@ -36,6 +62,18 @@ export class NightScene extends Phaser.Scene {
       title: `Night ── Day ${state.day} Complete`,
       titleIcon: '🌙',
       accentColor: theme.accent,
+    });
+
+    // B) Window entrance animation
+    nightWin.container.setAlpha(0);
+    nightWin.container.y += 10;
+    this.tweens.add({
+      targets: nightWin.container,
+      alpha: 1,
+      y: nightWin.container.y - 10,
+      duration: 400,
+      delay: 300,
+      ease: 'Power2.easeOut',
     });
 
     const { x: cx, y: cy, width: cw } = nightWin.contentArea;
@@ -96,7 +134,10 @@ export class NightScene extends Phaser.Scene {
       .setInteractive({ useHandCursor: true });
     nightWin.add(marketBtn);
 
-    marketBtn.on('pointerover', () => marketBtn.setBackgroundColor('#444c56'));
+    marketBtn.on('pointerover', () => {
+      marketBtn.setBackgroundColor('#444c56');
+      AudioManager.getInstance().playSFX('ui-click', 0.15);
+    });
     marketBtn.on('pointerout', () => marketBtn.setBackgroundColor('#30363d'));
     marketBtn.on('pointerdown', () => this.scene.start('TokenMarket'));
 
@@ -114,7 +155,10 @@ export class NightScene extends Phaser.Scene {
       }));
     } else {
       bountyBtn.setInteractive({ useHandCursor: true });
-      bountyBtn.on('pointerover', () => bountyBtn.setBackgroundColor('#444c56'));
+      bountyBtn.on('pointerover', () => {
+        bountyBtn.setBackgroundColor('#444c56');
+        AudioManager.getInstance().playSFX('ui-click', 0.15);
+      });
       bountyBtn.on('pointerout', () => bountyBtn.setBackgroundColor('#30363d'));
       bountyBtn.on('pointerdown', () => this.scene.start('BugBounty'));
     }
@@ -126,7 +170,10 @@ export class NightScene extends Phaser.Scene {
     }).setInteractive({ useHandCursor: true });
     nightWin.add(sleepBtn);
 
-    sleepBtn.on('pointerover', () => sleepBtn.setBackgroundColor('#2ea043'));
+    sleepBtn.on('pointerover', () => {
+      sleepBtn.setBackgroundColor('#2ea043');
+      AudioManager.getInstance().playSFX('ui-click', 0.15);
+    });
     sleepBtn.on('pointerout', () => sleepBtn.setBackgroundColor('#238636'));
     sleepBtn.on('pointerdown', () => this.advance());
   }
@@ -151,7 +198,13 @@ export class NightScene extends Phaser.Scene {
     state.modelCostDiscount = 0;
     state.consumablesUsedToday = [];
 
-    this.cameras.main.fadeOut(500, 0, 0, 0);
+    // D) Sleep transition enhancement
+    if (this.ledTween) this.ledTween.stop();
+    this.led.setAlpha(1);
+    this.time.delayedCall(200, () => {
+      this.cameras.main.fadeOut(500, 0, 0, 0);
+    });
+
     this.cameras.main.once('camerafadeoutcomplete', () => {
       this.scene.start('Briefing');
     });
