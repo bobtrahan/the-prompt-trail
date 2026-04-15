@@ -72,4 +72,7 @@ export class AgentSystem {
       .map(id => AGENT_ROSTER.find(a => a.id === id))
       .filter((a): a is AgentDef => !!a);
   }
+
+  getAllAgents(): AgentDef[] { return AGENT_ROSTER; }
+  getAgentById(id: string): AgentDef | undefined { return AGENT_ROSTER.find(a => a.id === id); }
 }

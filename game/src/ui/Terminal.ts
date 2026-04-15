@@ -145,6 +145,10 @@ export class Terminal {
     return this.typedSoFar.length >= this.currentPrompt.length && this.currentPrompt.length > 0;
   }
 
+  getCurrentPrompt(): string {
+    return this.currentPrompt;
+  }
+
   getTypedLength(): number {
     return this.typedSoFar.length;
   }
