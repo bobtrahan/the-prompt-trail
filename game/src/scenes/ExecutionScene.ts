@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT, COLORS, TIME_UNITS_PER_DAY, EVENT_INTERVAL_MS } from '../utils/constants';
 import { getState, CLASS_DEFS } from '../systems/GameState';
+import { Telemetry } from '../systems/Telemetry';
 import { getTheme } from '../utils/themes';
 import { Window } from '../ui/Window';
 import { Taskbar } from '../ui/Taskbar';
@@ -104,6 +105,7 @@ export class ExecutionScene extends Phaser.Scene {
     this.traitResults = AgentSystem.checkTraits(state.activeAgents, state.day);
     EconomySystem.applyDayCosts(state);
     state.dayStartBudget = state.budget;
+    Telemetry.logDayStart(state);
     state.dayStartHardware = state.hardwareHp;
 
     // ── Taskbar ──
@@ -337,6 +339,7 @@ export class ExecutionScene extends Phaser.Scene {
   }
 
   private tickTime(): void {
+    if ((window as any).__GOD_MODE) return;
     this.timeUnits--;
     const state = getState();
     state.timeUnitsRemaining = this.timeUnits;
@@ -525,6 +528,7 @@ export class ExecutionScene extends Phaser.Scene {
 
     const state = getState();
     const logs = this.eventEngine.applyEffects(choice, state);
+    Telemetry.logEvent(this.currentEvent?.id ?? 'unknown', choiceIndex, logs);
     for (const line of logs) {
       this.terminal.addLine(line);
     }
@@ -755,6 +759,12 @@ export class ExecutionScene extends Phaser.Scene {
       budgetSpent: state.dayStartBudget - state.budget,
       hardwareDelta: state.hardwareHp - state.dayStartHardware,
     };
+
+    Telemetry.logDayEnd(
+      state,
+      dayScore,
+      state.bugHuntReturnScene === 'Results' ? 'bugHunt' : this.inOvertime ? 'overtime' : 'none'
+    );
 
     state.overtimeBonus = this.overtimeBonus;
     state.reputation += dayScore.total;

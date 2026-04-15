@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT, COLORS } from '../utils/constants';
 import { getState } from '../systems/GameState';
+import { Telemetry } from '../systems/Telemetry';
 import { getTheme } from '../utils/themes';
 import { Window } from '../ui/Window';
 import { Taskbar } from '../ui/Taskbar';
@@ -359,6 +360,7 @@ export class BugBountyScene extends Phaser.Scene {
     const returnScene = state.bugHuntReturnScene || 'Night';
     state.bugHuntReturnScene = 'Night';
     state.budget += this.totalEarned;
+    Telemetry.patchBugBounty(this.totalEarned, this.bugCount);
     state.totalBugsSquashed += this.bugCount;
     // Only mark as played if this is a regular night session (not a bonus hunt)
     if (returnScene === 'Night') {

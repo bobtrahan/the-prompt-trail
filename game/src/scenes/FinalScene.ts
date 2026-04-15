@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT, COLORS } from '../utils/constants';
 import { CLASS_DEFS, getState, resetState } from '../systems/GameState';
+import { Telemetry } from '../systems/Telemetry';
 import { ScoringSystem } from '../systems/ScoringSystem';
 import { Window } from '../ui/Window';
 import { Taskbar } from '../ui/Taskbar';
@@ -60,6 +61,8 @@ export class FinalScene extends Phaser.Scene {
     this.multiplier = finalScoreData.multiplier;
     this.finalScore = finalScoreData.finalScore;
     this.rank = finalScoreData.rank;
+
+    Telemetry.logRunEnd(state, finalScoreData);
 
     this.cameras.main.setBackgroundColor(COLORS.bg);
     this.taskbar = new Taskbar(this);

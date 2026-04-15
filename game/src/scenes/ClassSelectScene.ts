@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT, COLORS } from '../utils/constants';
-import { CLASS_DEFS, initClassState } from '../systems/GameState';
+import { CLASS_DEFS, initClassState, getState } from '../systems/GameState';
+import { Telemetry } from '../systems/Telemetry';
 import type { PlayerClass } from '../systems/GameState';
 
 export class ClassSelectScene extends Phaser.Scene {
@@ -93,6 +94,7 @@ export class ClassSelectScene extends Phaser.Scene {
 
   private selectClass(playerClass: PlayerClass): void {
     initClassState(playerClass);
+    Telemetry.logRunStart(getState());
     this.scene.start('Briefing');
   }
 }
