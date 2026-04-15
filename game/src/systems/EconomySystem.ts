@@ -2,6 +2,25 @@ import type { GameState, ModelTier, Strategy } from './GameState';
 import type { ItemDef } from '../data/items';
 
 export class EconomySystem {
+  static getModelQualityMod(model: ModelTier): number {
+    switch (model) {
+      case 'free':
+        return -0.15;
+      case 'sketchy':
+        return -0.10;
+      case 'local':
+        return -0.05;
+      case 'openSource':
+        return 0;
+      case 'standard':
+        return 0.05;
+      case 'frontier':
+        return 0.15;
+      default:
+        return 0;
+    }
+  }
+
   static getModelDayCost(model: ModelTier): number {
     switch (model) {
       case 'free':
