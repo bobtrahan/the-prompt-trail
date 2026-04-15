@@ -358,6 +358,9 @@ export class BugBountyScene extends Phaser.Scene {
       bonusHp = true;
     }
 
+    const returnScene = state.bugHuntReturnScene || 'Night';
+    state.bugHuntReturnScene = 'Night';
+
     // Overlay
     const overlayX = GAME_WIDTH / 2;
     const overlayY = GAME_HEIGHT / 2;
@@ -380,8 +383,10 @@ export class BugBountyScene extends Phaser.Scene {
       }).setOrigin(0.5).setDepth(51);
     });
 
+    const btnLabel = returnScene === 'Results' ? '[ Collect → Results ]' : '[ Collect → Night ]';
+
     // Collect button
-    const btn = this.add.text(overlayX, overlayY + 90, '[ Collect → Night ]', {
+    const btn = this.add.text(overlayX, overlayY + 90, btnLabel, {
       fontFamily: 'monospace',
       fontSize: '16px',
       color: '#58a6ff',
@@ -389,6 +394,6 @@ export class BugBountyScene extends Phaser.Scene {
 
     btn.on('pointerover', () => btn.setColor('#e6edf3'));
     btn.on('pointerout', () => btn.setColor('#58a6ff'));
-    btn.on('pointerdown', () => this.scene.start('Night'));
+    btn.on('pointerdown', () => this.scene.start(returnScene));
   }
 }
