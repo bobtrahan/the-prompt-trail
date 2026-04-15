@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT, COLORS } from '../utils/constants';
 import { getState } from '../systems/GameState';
+import { getTheme } from '../utils/themes';
 import { Window } from '../ui/Window';
 import { Taskbar } from '../ui/Taskbar';
 
@@ -104,10 +105,13 @@ export class BugBountyScene extends Phaser.Scene {
     this.startTime = 0;
     this.lastSpawn = 0;
 
+    const state = getState();
+    const theme = getTheme(state.playerClass ?? undefined);
+
     this.cameras.main.setBackgroundColor(COLORS.bg);
 
     // Taskbar
-    this.taskbar = new Taskbar(this);
+    this.taskbar = new Taskbar(this, theme.accent);
 
     // Window — centered
     const winX = (GAME_WIDTH - WIN_W) / 2;
@@ -121,7 +125,7 @@ export class BugBountyScene extends Phaser.Scene {
       height: WIN_H,
       title: 'Bug Bounty ── Terminal',
       titleIcon: '🐛',
-      accentColor: COLORS.success,
+      accentColor: theme.accent,
     });
     this.win.setDepth(10);
 

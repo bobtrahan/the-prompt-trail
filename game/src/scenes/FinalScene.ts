@@ -1,15 +1,22 @@
 import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT, COLORS } from '../utils/constants';
 import { getState } from '../systems/GameState';
+import { getTheme } from '../utils/themes';
+import { Taskbar } from '../ui/Taskbar';
 
 export class FinalScene extends Phaser.Scene {
+  private taskbar!: Taskbar;
+
   constructor() {
     super({ key: 'Final' });
   }
 
   create(): void {
-    this.cameras.main.setBackgroundColor(COLORS.bg);
     const state = getState();
+    const theme = getTheme(state.playerClass ?? undefined);
+    this.cameras.main.setBackgroundColor(COLORS.bg);
+
+    this.taskbar = new Taskbar(this, theme.accent);
 
     this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 20, 'Final Phase', {
       fontFamily: 'monospace',

@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT, COLORS } from '../utils/constants';
 import { getState, CLASS_DEFS } from '../systems/GameState';
+import { getTheme } from '../utils/themes';
 import { Window } from '../ui/Window';
 import { Taskbar } from '../ui/Taskbar';
 import { PROJECTS } from '../data/projects';
@@ -32,16 +33,10 @@ export class ResultsScene extends Phaser.Scene {
 
   create(): void {
     const state = getState();
-    const result = state.lastDayResult;
-
-    if (!result) {
-      console.warn('No lastDayResult found in GameState!');
-      this.advance();
-      return;
-    }
+    const theme = getTheme(state.playerClass ?? undefined);
 
     this.cameras.main.setBackgroundColor(COLORS.bg);
-    this.taskbar = new Taskbar(this);
+    this.taskbar = new Taskbar(this, theme.accent);
 
     // Create Results Window
     const winWidth = 500;
@@ -54,6 +49,7 @@ export class ResultsScene extends Phaser.Scene {
       height: winHeight,
       title: `Day ${state.day} Results`,
       titleIcon: '📊',
+      accentColor: theme.accent,
     });
 
     const project = PROJECTS[state.day - 1];

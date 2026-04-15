@@ -7,6 +7,7 @@ import type { ItemDef } from '../data/items';
 import { ShopSystem } from '../systems/ShopSystem';
 import { EconomySystem } from '../systems/EconomySystem';
 import { getState } from '../systems/GameState';
+import { getTheme } from '../utils/themes';
 
 type TabCategory = 'model' | 'hardware' | 'agentSlot' | 'consumable' | 'joke';
 
@@ -45,10 +46,11 @@ export class TokenMarketScene extends Phaser.Scene {
 
   create(): void {
     const state = getState();
+    const theme = getTheme(state.playerClass ?? undefined);
     this.cameras.main.setBackgroundColor(COLORS.bg);
     this.cameras.main.fadeIn(400, 0, 0, 0);
 
-    this.taskbar = new Taskbar(this);
+    this.taskbar = new Taskbar(this, theme.accent);
 
     const winW = 900;
     const winH = 520;
@@ -63,6 +65,7 @@ export class TokenMarketScene extends Phaser.Scene {
       height: winH,
       title: `Token Market \u2500\u2500 Day ${state.day}`,
       titleIcon: '🛒',
+      accentColor: theme.accent,
     });
 
     const { x: cx, y: cy, width: cw, height: ch } = this.marketWin.contentArea;

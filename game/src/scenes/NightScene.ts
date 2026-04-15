@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT, COLORS } from '../utils/constants';
 import { getState } from '../systems/GameState';
+import { getTheme } from '../utils/themes';
 import { Window } from '../ui/Window';
 import { Taskbar } from '../ui/Taskbar';
 import { PROJECTS } from '../data/projects';
@@ -14,13 +15,14 @@ export class NightScene extends Phaser.Scene {
 
   create(): void {
     const state = getState();
+    const theme = getTheme(state.playerClass ?? undefined);
     this.cameras.main.setBackgroundColor(COLORS.bg);
 
     // Fade in from results
     this.cameras.main.fadeIn(500, 0, 0, 0);
 
     // Setup Taskbar
-    this.taskbar = new Taskbar(this);
+    this.taskbar = new Taskbar(this, theme.accent);
 
     // Create Main Night Window
     const winWidth = 600;
@@ -33,6 +35,7 @@ export class NightScene extends Phaser.Scene {
       height: winHeight,
       title: `Night ── Day ${state.day} Complete`,
       titleIcon: '🌙',
+      accentColor: theme.accent,
     });
 
     const { x: cx, y: cy, width: cw } = nightWin.contentArea;
