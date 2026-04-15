@@ -6,7 +6,6 @@ import { ScoringSystem } from '../systems/ScoringSystem';
 import { Window } from '../ui/Window';
 import { Taskbar } from '../ui/Taskbar';
 import AudioManager from '../systems/AudioManager';
-import { AudioManager } from '../systems/AudioManager';
 
 const RANK_COLORS: Record<string, string> = {
   S: '#f2cc60',

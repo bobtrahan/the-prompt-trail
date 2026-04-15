@@ -5,7 +5,7 @@ import { getTheme } from '../utils/themes';
 import { Window } from '../ui/Window';
 import { Taskbar } from '../ui/Taskbar';
 import { PROJECTS } from '../data/projects';
-import { AudioManager } from '../systems/AudioManager';
+import AudioManager from '../systems/AudioManager';
 
 export class ResultsScene extends Phaser.Scene {
   private window!: Window;

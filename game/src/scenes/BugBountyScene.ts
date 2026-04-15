@@ -5,7 +5,7 @@ import { Telemetry } from '../systems/Telemetry';
 import { getTheme } from '../utils/themes';
 import { Window } from '../ui/Window';
 import { Taskbar } from '../ui/Taskbar';
-import { AudioManager } from '../systems/AudioManager';
+import AudioManager from '../systems/AudioManager';
 
 // ── Bug type definitions ──────────────────────────────────────────────────────
 

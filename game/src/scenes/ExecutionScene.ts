@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT, COLORS, TIME_UNITS_PER_DAY, EVENT_INTERVAL_MS } from '../utils/constants';
-import { getState, CLASS_DEFS, GameState } from '../systems/GameState';
+import { getState, CLASS_DEFS, type GameState } from '../systems/GameState';
 import { Telemetry } from '../systems/Telemetry';
 import { getTheme } from '../utils/themes';
 import { Window } from '../ui/Window';
@@ -12,7 +12,7 @@ import { EventEngine } from '../systems/EventEngine';
 import { EconomySystem } from '../systems/EconomySystem';
 import { ScoringSystem } from '../systems/ScoringSystem';
 import { AgentSystem } from '../systems/AgentSystem';
-import { AudioManager } from '../systems/AudioManager';
+import AudioManager from '../systems/AudioManager';
 import type { EventDef, EventChoice } from '../data/events';
 
 
@@ -388,9 +388,9 @@ export class ExecutionScene extends Phaser.Scene {
     this.typingEngine.pause();
 
     const am = AudioManager.getInstance();
-    if (evt.severity === 'rare' || evt.severity === 'critical') {
+    if (evt.tags.includes('rare')) {
       am.playSFX('critical');
-    } else if (evt.severity === 'major') {
+    } else if (evt.category === 'technical' || evt.category === 'hardware') {
       am.playSFX('error');
     } else {
       am.playSFX('notification');
