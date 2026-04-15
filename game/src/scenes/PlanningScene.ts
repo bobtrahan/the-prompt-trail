@@ -7,6 +7,7 @@ import { Window } from '../ui/Window';
 import { Taskbar } from '../ui/Taskbar';
 import { EconomySystem } from '../systems/EconomySystem';
 import { AGENT_ROSTER, SYNERGY_PAIRS, CLASH_PAIRS } from '../data/agents';
+import AudioManager from '../systems/AudioManager';
 
 interface StrategyOption {
   id: Strategy;
@@ -107,7 +108,10 @@ export class PlanningScene extends Phaser.Scene {
       });
 
       if (!isLocked) {
-        card.on('pointerdown', () => this.selectStrategy(s, i));
+        card.on('pointerdown', () => {
+          AudioManager.getInstance().playSFX('ui-click');
+          this.selectStrategy(s, i);
+        });
         card.on('pointerover', () => {
           if (this.selectedStrategy !== s.id) card.setFillStyle(COLORS.windowBg);
         });
@@ -168,7 +172,10 @@ export class PlanningScene extends Phaser.Scene {
         rowBg.setInteractive({ useHandCursor: true });
         this.modelRowBgs.set(model, rowBg);
 
-        rowBg.on('pointerdown', () => this.selectModel(model));
+        rowBg.on('pointerdown', () => {
+          AudioManager.getInstance().playSFX('ui-click');
+          this.selectModel(model);
+        });
         rowBg.on('pointerover', () => {
           if (state.model !== model) rowBg.setFillStyle(COLORS.windowBg);
         });
@@ -251,7 +258,10 @@ export class PlanningScene extends Phaser.Scene {
       }).setOrigin(1, 1);
       this.agentCheckmarks.set(agent.id, chk);
 
-      bg.on('pointerdown', () => this.toggleAgent(agent.id));
+      bg.on('pointerdown', () => {
+        AudioManager.getInstance().playSFX('ui-click');
+        this.toggleAgent(agent.id);
+      });
       bg.on('pointerover', () => {
         if (!this.selectedAgentIds.includes(agent.id)) bg.setFillStyle(COLORS.windowBg);
       });
@@ -436,7 +446,10 @@ export class PlanningScene extends Phaser.Scene {
       this.launchBtn.setText(`[ Launch: ${option.icon} ${option.name} ]`);
       this.launchBtn.setColor('#58a6ff');
       this.launchBtn.setInteractive({ useHandCursor: true });
-      this.launchBtn.on('pointerdown', () => this.launch());
+      this.launchBtn.on('pointerdown', () => {
+        AudioManager.getInstance().playSFX('ui-click');
+        this.launch();
+      });
     }
   }
 

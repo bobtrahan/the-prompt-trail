@@ -387,6 +387,15 @@ export class ExecutionScene extends Phaser.Scene {
     const { title, body, choices } = evt;
     this.typingEngine.pause();
 
+    const am = AudioManager.getInstance();
+    if (evt.severity === 'rare' || evt.severity === 'critical') {
+      am.playSFX('critical');
+    } else if (evt.severity === 'major') {
+      am.playSFX('error');
+    } else {
+      am.playSFX('notification');
+    }
+
     // Pause day timer while event modal is open
     if (this.dayTimer) this.dayTimer.paused = true;
 
@@ -450,7 +459,10 @@ export class ExecutionScene extends Phaser.Scene {
 
       btnBg.on('pointerover', () => btnBg.setFillStyle(COLORS.windowBorder));
       btnBg.on('pointerout', () => btnBg.setFillStyle(COLORS.titleBar));
-      btnBg.on('pointerdown', () => this.resolveEvent(i, choice as EventChoice));
+      btnBg.on('pointerdown', () => {
+        AudioManager.getInstance().playSFX('choice-select');
+        this.resolveEvent(i, choice as EventChoice);
+      });
 
       cumulativeY += btnH + 8;
     });
@@ -603,6 +615,10 @@ export class ExecutionScene extends Phaser.Scene {
         const m = log.match(/HARDWARE ([+-]\d+)/);
         const label = m ? `${m[1]} 🖥️` : '🖥️';
         summaryParts.push(label);
+        const isLoss = log.includes('-');
+        if (isLoss) {
+          AudioManager.getInstance().playSFX('hw-damage');
+        }
         this.hardwareText.setColor('#f0883e');
         this.hardwareText.setText(`🖥️ Hardware: ${state.hardwareHp}%`);
         this.time.delayedCall(600, () => this.hardwareText.setColor('#e6edf3'));

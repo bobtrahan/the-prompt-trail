@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT, COLORS } from '../utils/constants';
 import { resetState } from '../systems/GameState';
-import { AudioManager } from '../systems/AudioManager';
+import AudioManager from '../systems/AudioManager';
 
 export class TitleScene extends Phaser.Scene {
   constructor() {

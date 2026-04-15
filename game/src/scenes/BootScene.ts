@@ -34,6 +34,7 @@ export class BootScene extends Phaser.Scene {
     }).setOrigin(0.5);
 
     this.time.delayedCall(1500, () => {
+      AudioManager.getInstance().playSFX('boot');
       this.scene.start('Title');
     });
   }

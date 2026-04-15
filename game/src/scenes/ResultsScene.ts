@@ -49,6 +49,8 @@ export class ResultsScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor(COLORS.bg);
     this.taskbar = new Taskbar(this, theme.accent);
 
+    AudioManager.getInstance().playSFX('day-complete');
+
     // Create Results Window
     const winWidth = 500;
     const winHeight = 420;
@@ -183,8 +185,21 @@ export class ResultsScene extends Phaser.Scene {
     
     this.totalRepText.setText(`+${curTotal} ⭐`);
 
+    // Tick SFX
+    if (this.isAnimating && Math.random() < 0.15) {
+       AudioManager.getInstance().playSFX('score-tick', 0.1);
+    }
+
     if (factor >= 1) {
       this.isAnimating = false;
+
+      const total = result.score.total;
+      if (total > 0) {
+        AudioManager.getInstance().playSFX('rep-gain');
+      } else if (total < 0) {
+        AudioManager.getInstance().playSFX('rep-loss');
+      }
+
       this.tweens.add({
         targets: this.continueBtn,
         alpha: 1,

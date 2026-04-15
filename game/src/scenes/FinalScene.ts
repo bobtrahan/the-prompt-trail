@@ -5,6 +5,7 @@ import { Telemetry } from '../systems/Telemetry';
 import { ScoringSystem } from '../systems/ScoringSystem';
 import { Window } from '../ui/Window';
 import { Taskbar } from '../ui/Taskbar';
+import AudioManager from '../systems/AudioManager';
 import { AudioManager } from '../systems/AudioManager';
 
 const RANK_COLORS: Record<string, string> = {
@@ -175,6 +176,7 @@ export class FinalScene extends Phaser.Scene {
 
     if (factor >= 1) {
       this.isAnimating = false;
+      AudioManager.getInstance().playSFX('day-complete');
       // Reveal rank, flavor, stats, and button
       this.tweens.add({ targets: this.rankText, alpha: 1, duration: 300 });
       this.tweens.add({ targets: this.flavorText, alpha: 1, duration: 400, delay: 200 });

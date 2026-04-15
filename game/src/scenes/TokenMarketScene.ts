@@ -8,6 +8,7 @@ import { ShopSystem } from '../systems/ShopSystem';
 import { EconomySystem } from '../systems/EconomySystem';
 import { getState } from '../systems/GameState';
 import { getTheme } from '../utils/themes';
+import AudioManager from '../systems/AudioManager';
 
 type TabCategory = 'model' | 'hardware' | 'agentSlot' | 'consumable' | 'joke';
 
@@ -294,6 +295,8 @@ export class TokenMarketScene extends Phaser.Scene {
     const result = ShopSystem.buyItem(state, item, price);
 
     if (!result.success) return;
+
+    AudioManager.getInstance().playSFX('purchase');
 
     this.refreshBudget();
     this.taskbar.refresh();

@@ -408,6 +408,9 @@ export class BugBountyScene extends Phaser.Scene {
 
     btn.on('pointerover', () => btn.setColor('#e6edf3'));
     btn.on('pointerout', () => btn.setColor('#58a6ff'));
+    btn.on('pointerdown', () => this.scene.start(returnScene));
+  }
+
   shutdown(): void {
     AudioManager.getInstance().playMusic('night');
   }
