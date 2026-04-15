@@ -49,25 +49,25 @@ export class PlanningScene extends Phaser.Scene {
 
     // Strategy picker window
     const stratWin = new Window({
-      scene: this, x: 40, y: 50,
-      width: 700, height: 580,
+      scene: this, x: 40, y: 28,
+      width: 700, height: 560,
       title: 'Strategy Picker',
       titleIcon: '⚙️',
       accentColor: theme.accent,
     });
 
     const sArea = stratWin.contentArea;
-    this.add.text(40 + sArea.x, 50 + sArea.y, 'Choose your approach:', {
+    this.add.text(40 + sArea.x, 28 + sArea.y, 'Choose your approach:', {
       fontFamily: 'monospace', fontSize: '14px', color: '#8b949e',
     });
 
     this.cards = [];
     STRATEGIES.forEach((s, i) => {
-      const cardY = 50 + sArea.y + 32 + i * 120;
+      const cardY = 28 + sArea.y + 28 + i * 110;
       const cardX = 40 + sArea.x;
       const isLocked = state.lockedStrategies.includes(s.id);
 
-      const card = this.add.rectangle(cardX, cardY, sArea.width, 100, isLocked ? 0x1a1a1a : COLORS.titleBar).setOrigin(0);
+      const card = this.add.rectangle(cardX, cardY, sArea.width, 90, isLocked ? 0x1a1a1a : COLORS.titleBar).setOrigin(0);
       if (!isLocked) {
         card.setInteractive({ useHandCursor: true });
         this.cards.push(card);
@@ -103,7 +103,7 @@ export class PlanningScene extends Phaser.Scene {
 
     // Model info panel (right side)
     const modelWin = new Window({
-      scene: this, x: 760, y: 50,
+      scene: this, x: 760, y: 28,
       width: 480, height: 280,
       title: 'Model: ' + state.model,
       titleIcon: '📡',
@@ -111,25 +111,25 @@ export class PlanningScene extends Phaser.Scene {
     });
 
     const mArea = modelWin.contentArea;
-    this.add.text(760 + mArea.x, 50 + mArea.y, `Active Model: ${state.model}`, {
+    this.add.text(760 + mArea.x, 28 + mArea.y, `Active Model: ${state.model}`, {
       fontFamily: 'monospace', fontSize: '14px', color: '#e6edf3',
     });
-    this.add.text(760 + mArea.x, 50 + mArea.y + 28, state.playerClass === 'corporateDev' ? '💳 Company Card' : `Budget: $${state.budget.toLocaleString()}`, {
+    this.add.text(760 + mArea.x, 28 + mArea.y + 28, state.playerClass === 'corporateDev' ? '💳 Company Card' : `Budget: $${state.budget.toLocaleString()}`, {
       fontFamily: 'monospace', fontSize: '13px', color: '#8b949e',
     });
-    this.add.text(760 + mArea.x, 50 + mArea.y + 52, `Hardware: ${state.hardwareHp}%`, {
+    this.add.text(760 + mArea.x, 28 + mArea.y + 52, `Hardware: ${state.hardwareHp}%`, {
       fontFamily: 'monospace', fontSize: '13px', color: '#8b949e',
     });
-    this.add.text(760 + mArea.x, 50 + mArea.y + 80, `Agent Slots: ${state.agentSlots}`, {
+    this.add.text(760 + mArea.x, 28 + mArea.y + 80, `Agent Slots: ${state.agentSlots}`, {
       fontFamily: 'monospace', fontSize: '13px', color: '#8b949e',
     });
-    this.add.text(760 + mArea.x, 50 + mArea.y + 104, `Daily Cost: $${EconomySystem.getModelDayCost(state.model)}/day`, {
+    this.add.text(760 + mArea.x, 28 + mArea.y + 104, `Daily Cost: $${EconomySystem.getModelDayCost(state.model)}/day`, {
       fontFamily: 'monospace', fontSize: '13px', color: '#8b949e',
     });
 
     // Agent slot (right side)
     const agentWin = new Window({
-      scene: this, x: 760, y: 350,
+      scene: this, x: 760, y: 328,
       width: 480, height: 280,
       title: 'Agent Dashboard',
       titleIcon: '🤖',
@@ -137,11 +137,11 @@ export class PlanningScene extends Phaser.Scene {
     });
 
     const aArea = agentWin.contentArea;
-    this.add.text(760 + aArea.x, 350 + aArea.y, 'Active Agents:', {
+    this.add.text(760 + aArea.x, 328 + aArea.y, 'Active Agents:', {
       fontFamily: 'monospace', fontSize: '13px', color: '#8b949e',
     });
     // Default agent
-    this.add.text(760 + aArea.x, 350 + aArea.y + 28, '🤖 Turbo — Fast & sloppy. Ships at all costs.', {
+    this.add.text(760 + aArea.x, 328 + aArea.y + 28, '🤖 Turbo — Fast & sloppy. Ships at all costs.', {
       fontFamily: 'monospace', fontSize: '13px', color: '#e6edf3',
     });
     if (state.activeAgents.length === 0) {
