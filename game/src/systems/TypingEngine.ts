@@ -62,6 +62,7 @@ export class TypingEngine {
   private easyQueue: string[] = [];
   private mediumQueue: string[] = [];
   private hardQueue: string[] = [];
+  private overridePool?: string[];
   private active = false;
   private paused = false;
   private onPromptComplete?: () => void;
@@ -123,7 +124,15 @@ export class TypingEngine {
     return total === 0 ? 1 : this.stats.correct / total;
   }
 
+  /** Replace the active prompt pool with a custom set (e.g. overtime production prompts) */
+  setPromptPool(prompts: string[]): void {
+    this.overridePool = Phaser.Utils.Array.Shuffle([...prompts]);
+    // Immediately load next from new pool
+    if (this.active && !this.paused) this.nextPrompt();
+  }
+
   private getNextPromptPool(): string[] {
+    if (this.overridePool) return this.overridePool;
     const completed = this.stats.promptsCompleted;
     if (completed < 3) return this.easyQueue;
     if (completed < 7) return this.mediumQueue;
@@ -134,7 +143,11 @@ export class TypingEngine {
     const pool = this.getNextPromptPool();
     if (pool.length === 0) {
       // Refill
-      if (pool === this.easyQueue) this.easyQueue = Phaser.Utils.Array.Shuffle([...PROMPTS_EASY]);
+      if (this.overridePool && pool === this.overridePool) {
+        // Reshuffle the same set
+        const src = this.overridePool;
+        this.overridePool = Phaser.Utils.Array.Shuffle([...src]);
+      } else if (pool === this.easyQueue) this.easyQueue = Phaser.Utils.Array.Shuffle([...PROMPTS_EASY]);
       else if (pool === this.mediumQueue) this.mediumQueue = Phaser.Utils.Array.Shuffle([...PROMPTS_MEDIUM]);
       else this.hardQueue = Phaser.Utils.Array.Shuffle([...PROMPTS_HARD]);
     }

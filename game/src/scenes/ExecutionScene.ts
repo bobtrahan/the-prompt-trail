@@ -44,6 +44,22 @@ export class ExecutionScene extends Phaser.Scene {
   private modalGroup?: Phaser.GameObjects.Container;
   private currentEvent?: EventDef;
 
+  // Completion / Overtime
+  private inOvertime: boolean = false;
+  private overtimeBonus: number = 0;
+  private completionShown: boolean = false;
+  private overtimeText?: Phaser.GameObjects.Text;
+  private overtimePrompts: string[] = [
+    'kubectl rollout status',
+    'tail -f /var/log/prod.log',
+    'curl -I https://api.prod',
+    'systemctl restart app',
+    'grafana alert silence',
+    'pg_dump --format=custom',
+    'nginx -t && nginx -s reload',
+    'ssh bastion -- uptime',
+  ];
+
   // Systems
   private eventEngine!: EventEngine;
 
@@ -244,6 +260,15 @@ export class ExecutionScene extends Phaser.Scene {
     const gain = 8 + Math.floor(accuracy * 7);
     this.progress = Math.min(100, this.progress + gain);
     this.updateProgressBar();
+
+    if (this.progress >= 100 && !this.completionShown && !this.inOvertime) {
+      this.showCompletionChoice();
+    } else if (this.inOvertime) {
+      this.overtimeBonus = Math.min(20, this.overtimeBonus + 1);
+      if (this.overtimeText) {
+        this.overtimeText.setText(`Production ♙: +${this.overtimeBonus}`);
+      }
+    }
   }
 
   private tickTime(): void {
@@ -258,6 +283,11 @@ export class ExecutionScene extends Phaser.Scene {
     this.taskbar.refresh();
 
     if (this.timeUnits <= 0) {
+      // If completion modal is still open when time runs out, dismiss and end normally
+      if (this.completionShown && this.modalGroup) {
+        this.modalGroup.destroy();
+        this.modalGroup = undefined;
+      }
       this.endDay();
     }
   }
@@ -393,16 +423,114 @@ export class ExecutionScene extends Phaser.Scene {
     });
   }
 
-  private updateProgressBar(): void {
-    const frac = this.progress / 100;
-    this.progressBar.width = this.progressBg.width * frac;
-    this.progressText.setText(`${this.progress}%`);
-    if (this.progress >= 100) {
-      this.progressBar.setFillStyle(COLORS.success);
-    }
+  // ── Completion Choice modal ──
+
+  private showCompletionChoice(): void {
+    this.completionShown = true;
+    this.typingEngine.pause();
+
+    const dw = 480;
+    const dh = 260;
+    const dx = (GAME_WIDTH - dw) / 2;
+    const dy = (GAME_HEIGHT - dh) / 2 - 20;
+
+    this.modalGroup = this.add.container(0, 0).setDepth(200);
+
+    // Dim overlay
+    const overlay = this.add.rectangle(0, 0, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.6).setOrigin(0).setInteractive();
+    this.modalGroup.add(overlay);
+
+    // Border
+    const border = this.add.rectangle(dx - 1, dy - 1, dw + 2, dh + 2, COLORS.windowBorder).setOrigin(0);
+    this.modalGroup.add(border);
+
+    // Background
+    const bg = this.add.rectangle(dx, dy, dw, dh, COLORS.windowBg).setOrigin(0);
+    this.modalGroup.add(bg);
+
+    // Title bar
+    const tb = this.add.rectangle(dx, dy, dw, 28, COLORS.titleBar).setOrigin(0);
+    this.modalGroup.add(tb);
+
+    // Accent strip
+    const strip = this.add.rectangle(dx, dy + 28, dw, 2, COLORS.success).setOrigin(0);
+    this.modalGroup.add(strip);
+
+    // Title
+    const titleObj = this.add.text(dx + 12, dy + 6, '✅ Project Complete!', {
+      fontFamily: 'monospace', fontSize: '13px', color: '#e6edf3',
+    });
+    this.modalGroup.add(titleObj);
+
+    // Body
+    const bodyObj = this.add.text(dx + 20, dy + 48, 'You finished early. What now?', {
+      fontFamily: 'monospace', fontSize: '14px', color: '#e6edf3',
+      lineSpacing: 6, wordWrap: { width: dw - 40 },
+    });
+    this.modalGroup.add(bodyObj);
+
+    // Button 1 — Bug Hunt
+    const btn1Y = dy + 130;
+    const btn1Bg = this.add.rectangle(dx + 20, btn1Y, dw - 40, 40, COLORS.titleBar).setOrigin(0).setInteractive({ useHandCursor: true });
+    this.modalGroup.add(btn1Bg);
+    const btn1Text = this.add.text(dx + 32, btn1Y + 12, '[ 🐛 Bug Hunt Bonus ]', {
+      fontFamily: 'monospace', fontSize: '13px', color: '#58a6ff',
+    });
+    this.modalGroup.add(btn1Text);
+    btn1Bg.on('pointerover', () => btn1Bg.setFillStyle(COLORS.windowBorder));
+    btn1Bg.on('pointerout', () => btn1Bg.setFillStyle(COLORS.titleBar));
+    btn1Bg.on('pointerdown', () => this.chooseBugHunt());
+
+    // Button 2 — Overtime
+    const btn2Y = dy + 180;
+    const btn2Bg = this.add.rectangle(dx + 20, btn2Y, dw - 40, 40, COLORS.titleBar).setOrigin(0).setInteractive({ useHandCursor: true });
+    this.modalGroup.add(btn2Bg);
+    const btn2Text = this.add.text(dx + 32, btn2Y + 12, '[ 🚀 Ship to Production ]', {
+      fontFamily: 'monospace', fontSize: '13px', color: '#58a6ff',
+    });
+    this.modalGroup.add(btn2Text);
+    btn2Bg.on('pointerover', () => btn2Bg.setFillStyle(COLORS.windowBorder));
+    btn2Bg.on('pointerout', () => btn2Bg.setFillStyle(COLORS.titleBar));
+    btn2Bg.on('pointerdown', () => this.chooseOvertime());
+
+    this.modalGroup.setAlpha(0);
+    this.tweens.add({ targets: this.modalGroup, alpha: 1, duration: 200, ease: 'Power2' });
   }
 
-  private endDay(): void {
+  private chooseBugHunt(): void {
+    this.modalGroup?.destroy();
+    this.modalGroup = undefined;
+
+    const state = getState();
+    state.bugHuntReturnScene = 'Results';
+    this.scoreDayAndStore();
+    this.scene.start('BugBounty');
+  }
+
+  private chooseOvertime(): void {
+    this.modalGroup?.destroy();
+    this.modalGroup = undefined;
+
+    this.inOvertime = true;
+    this.typingEngine.resume();
+    this.terminal.addLine('Deploying to production...');
+
+    // Swap prompt pool
+    this.typingEngine.setPromptPool(this.overtimePrompts);
+
+    // Show overtime counter overlay in terminal window corner
+    const tArea = this.terminalWindow.contentArea;
+    this.overtimeText = this.add.text(
+      16 + tArea.x + tArea.width - 8,
+      72 + tArea.y - 14,
+      'Production ♙: +0',
+      { fontFamily: 'monospace', fontSize: '11px', color: '#f0883e' }
+    ).setOrigin(1, 0).setDepth(100);
+  }
+
+  // ── Scoring ──
+
+  private scoreDayAndStore(): void {
     this.typingEngine.stop();
     this.eventTimer?.destroy();
 
@@ -415,6 +543,9 @@ export class ExecutionScene extends Phaser.Scene {
       state.day
     );
 
+    // Add overtime bonus to total
+    dayScore.total += this.overtimeBonus;
+
     state.lastDayResult = {
       progress: this.progress,
       accuracy: this.typingEngine.getAccuracy(),
@@ -423,9 +554,22 @@ export class ExecutionScene extends Phaser.Scene {
       hardwareDelta: state.hardwareHp - state.dayStartHardware,
     };
 
+    state.overtimeBonus = this.overtimeBonus;
     state.reputation += dayScore.total;
     state.dayScores.push(dayScore.total);
+  }
 
+  private updateProgressBar(): void {
+    const frac = this.progress / 100;
+    this.progressBar.width = this.progressBg.width * frac;
+    this.progressText.setText(`${this.progress}%`);
+    if (this.progress >= 100) {
+      this.progressBar.setFillStyle(COLORS.success);
+    }
+  }
+
+  private endDay(): void {
+    this.scoreDayAndStore();
     this.scene.start('Results');
   }
 
