@@ -257,5 +257,85 @@ export class BriefingScene extends Phaser.Scene {
 
     // Make sure button label is above bg
     btnLabel.setDepth(1);
+
+    // ── RISK ASSESSMENT PANEL ────────────────────────────────────────────────
+    const riskY = btnY + btnH + 30;
+
+    win.add(this.add.text(cx, riskY, '── RISK ASSESSMENT ──', {
+      fontFamily: 'monospace', fontSize: '13px', color: '#9da5b0', letterSpacing: 1,
+    }));
+
+    // Determine risk values from difficulty
+    const diff = project.difficulty;
+    const barFillPct = diff === 'easy' ? 0.33 : diff === 'medium' ? 0.66 : 1.0;
+    const barColor = diff === 'easy' ? 0x3fb950 : diff === 'medium' ? 0xd29922 : 0xf85149;
+    const riskLabel = diff === 'easy' ? 'Low Risk' : diff === 'medium' ? 'Moderate Risk' : 'High Risk';
+    const riskLabelColor = diff === 'easy' ? '#3fb950' : diff === 'medium' ? '#d29922' : '#f85149';
+    const riskTip = diff === 'easy'
+      ? '💡 A good day to experiment with risky strategies.'
+      : diff === 'medium'
+      ? '💡 Balance speed and caution. Watch your budget.'
+      : '💡 Consider Plan Then Build. Every time unit counts.';
+
+    const barBarY = riskY + 22;
+    const barTotalW = 240;
+    const barH = 12;
+    // Bar track (background)
+    const barTrack = this.add.rectangle(cx, barBarY, barTotalW, barH, 0x21262d).setOrigin(0);
+    win.add(barTrack);
+    // Bar fill
+    const barFillW = Math.round(barTotalW * barFillPct);
+    if (barFillW > 0) {
+      const barFill = this.add.rectangle(cx, barBarY, barFillW, barH, barColor).setOrigin(0);
+      win.add(barFill);
+    }
+    // Risk label to the right of bar
+    win.add(this.add.text(cx + barTotalW + 12, barBarY, riskLabel, {
+      fontFamily: 'monospace', fontSize: '12px', color: riskLabelColor,
+    }).setOrigin(0, 0));
+    // Tip text
+    win.add(this.add.text(cx, barBarY + barH + 8, riskTip, {
+      fontFamily: 'monospace', fontSize: '12px', color: '#9da5b0', fontStyle: 'italic',
+    }));
+
+    // ── AGENT RECOMMENDATION ─────────────────────────────────────────────────
+    const agentRecY = riskY + 50;
+
+    win.add(this.add.text(cx, agentRecY, '── RECOMMENDED AGENTS ──', {
+      fontFamily: 'monospace', fontSize: '13px', color: '#9da5b0', letterSpacing: 1,
+    }));
+
+    const agentNames = diff === 'easy'
+      ? '🤖 Turbo  ·  🤖 Parrot'
+      : '🤖 Oracle  ·  🤖 Linter';
+    const agentTip = diff === 'easy'
+      ? 'Speed matters more than caution.'
+      : diff === 'medium'
+      ? 'Reliability over speed today.'
+      : 'You need bulletproof code.';
+
+    win.add(this.add.text(cx, agentRecY + 20, agentNames, {
+      fontFamily: 'monospace', fontSize: '13px', color: '#e6edf3',
+    }));
+    win.add(this.add.text(cx, agentRecY + 38, agentTip, {
+      fontFamily: 'monospace', fontSize: '12px', color: '#9da5b0', fontStyle: 'italic',
+    }));
+
+    // ── EVENT FORECAST ───────────────────────────────────────────────────────
+    const forecastY = agentRecY + 50;
+
+    win.add(this.add.text(cx, forecastY, '── EVENT FORECAST ──', {
+      fontFamily: 'monospace', fontSize: '13px', color: '#9da5b0', letterSpacing: 1,
+    }));
+
+    const forecastLine = state.day <= 4
+      ? '📡 Light chatter expected. Focus on building.'
+      : state.day <= 9
+      ? '📡 Increased activity. Expect interruptions.'
+      : '📡 Heavy interference. Brace for chaos.';
+
+    win.add(this.add.text(cx, forecastY + 20, forecastLine, {
+      fontFamily: 'monospace', fontSize: '13px', color: '#9da5b0',
+    }));
   }
 }

@@ -54,7 +54,7 @@ export class ResultsScene extends Phaser.Scene {
 
     // Create Results Window
     const winWidth = 500;
-    const winHeight = 420;
+    const winHeight = 460;
     this.window = new Window({
       scene: this,
       x: (GAME_WIDTH - winWidth) / 2,
@@ -129,7 +129,7 @@ export class ResultsScene extends Phaser.Scene {
       fontFamily: 'monospace', fontSize: '18px', color: '#e6edf3', fontStyle: 'bold'
     }));
     this.totalRepText = this.add.text(x + 140, y + 230 + yShift, '+0 ⭐', {
-      fontFamily: 'monospace', fontSize: '18px', color: '#f2cc60', fontStyle: 'bold'
+      fontFamily: 'monospace', fontSize: '18px', color: '#e6edf3', fontStyle: 'bold'
     });
     this.window.add(this.totalRepText);
 
@@ -143,11 +143,14 @@ export class ResultsScene extends Phaser.Scene {
 
     // Continue Button (hidden until animation ends)
     const btnText = state.day === 13 ? '[ Final Score → ]' : '[ Continue to Night → ]';
-    this.continueBtn = this.add.text(x + width/2, y + 340 + yShift, btnText, {
-      fontFamily: 'monospace', fontSize: '16px', color: '#58a6ff'
+    this.continueBtn = this.add.text(x + width/2, y + 370 + yShift, btnText, {
+      fontFamily: 'monospace', fontSize: '14px', color: '#e6edf3',
+      backgroundColor: '#238636', padding: { x: 14, y: 8 },
     }).setOrigin(0.5).setInteractive({ useHandCursor: true }).setAlpha(0);
     
     this.continueBtn.on('pointerdown', () => this.advance());
+    this.continueBtn.on('pointerover', () => this.continueBtn.setBackgroundColor('#2ea043'));
+    this.continueBtn.on('pointerout', () => this.continueBtn.setBackgroundColor('#238636'));
     this.window.add(this.continueBtn);
 
     // Start Animation
@@ -191,6 +194,18 @@ export class ResultsScene extends Phaser.Scene {
        AudioManager.getInstance().playSFX('score-tick', 0.1);
     }
 
+    // Update total color dynamically
+    const curTotalForColor = Math.floor(result.score.total * factor);
+    if (curTotalForColor >= 40) {
+      this.totalRepText.setColor('#f2cc60');
+    } else if (curTotalForColor >= 20) {
+      this.totalRepText.setColor('#3fb950');
+    } else if (curTotalForColor >= 0) {
+      this.totalRepText.setColor('#e6edf3');
+    } else {
+      this.totalRepText.setColor('#f85149');
+    }
+
     if (factor >= 1) {
       this.isAnimating = false;
 
@@ -199,6 +214,50 @@ export class ResultsScene extends Phaser.Scene {
         AudioManager.getInstance().playSFX('rep-gain');
       } else if (total < 0) {
         AudioManager.getInstance().playSFX('rep-loss');
+      }
+
+      // C) Border flash on high score
+      if (total >= 40) {
+        const { x: wx, y: wy } = this.window.contentArea;
+        const winX = wx - 20; // approximate window origin offset
+        const flashRect = this.add.rectangle(
+          this.window.container.x + winWidth / 2,
+          this.window.container.y + winHeight / 2,
+          winWidth, winHeight
+        ).setStrokeStyle(2, theme.accent).setFillStyle(0, 0).setDepth(50).setAlpha(0);
+        this.tweens.add({
+          targets: flashRect,
+          alpha: 0.8,
+          duration: 400,
+          yoyo: true,
+          ease: 'Sine.easeInOut',
+          onComplete: () => flashRect.destroy(),
+        });
+      }
+
+      // A) Vibe Code % reveal
+      if (state.strategy === 'vibeCode') {
+        const { x: cx2, y: cy2, width: cw } = this.window.contentArea;
+        const vibePercent = result.progress >= 100
+          ? Math.floor(50 + Math.random() * 50)
+          : Math.floor(Math.random() * 40);
+        const vibeText = this.add.text(cx2 + cw / 2, cy2 + 265 + yShift, '', {
+          fontFamily: 'monospace', fontSize: '16px', color: '#d29922', fontStyle: 'bold',
+        }).setOrigin(0.5).setAlpha(0);
+        this.window.add(vibeText);
+
+        // Rapid cycling for 1 second
+        this.time.addEvent({
+          delay: 50,
+          repeat: 19,
+          callback: () => {
+            vibeText.setText(`✨ Vibe Code: ${Math.floor(Math.random() * 100)}% ✨`);
+          },
+        });
+        this.time.delayedCall(1000, () => {
+          vibeText.setText(`✨ Vibe Code: ${vibePercent}% ✨`);
+        });
+        this.tweens.add({ targets: vibeText, alpha: 1, duration: 200, delay: 200 });
       }
 
       this.tweens.add({
