@@ -128,24 +128,45 @@ gamedevjs-2026/
 - Debug menu — PromptOS system menu: Reboot (always), Skip Day, +$500, +50 Rep, Unlock All, → Final, God Mode, Export Telemetry (behind DEV_CONFIG flags)
 - DevConfig feature flags (`telemetry: true`, `debugMenu: true`) — flip to false for submission
 
-### Next Up (Phase 5: Audio + Polish)
-- [ ] Audio system — background music (per-phase or per-class), SFX (typing clicks, event chime, purchase, bug squash, day complete, score reveal)
-- [ ] Consumable effects — coffee/energy drink/API credits/rubber duck consumed at day start, apply mechanical effects
-- [ ] Bug Bounty visual polish — better bug sprites/animations, screen shake on catch, combo counter, visual juice
-- [ ] Balance tuning — use telemetry data to adjust difficulty curve, costs, event frequency scaling by day
-- [ ] Per-class visual differentiation beyond accents (wallpapers, terminal themes)
+**Phase 5: Audio** ✅ (Apr 14)
+- [x] AudioManager singleton — crossfade music, fire-and-forget SFX, localStorage volume persistence
+- [x] 5 music tracks generated (MiniMax 2.6) — title, execution, execution-late (cover), night, bugbounty
+- [x] 16 SFX generated (procedural ffmpeg) — keystrokes, events, UI, bug bounty, economy, boot chime
+- [x] Music triggers wired to all 9 scenes (execution-late auto-swaps on day ≥ 11)
+- [x] SFX triggers wired throughout (typing, events, choices, purchases, results, bug bounty)
+- [x] Volume mute toggle in Taskbar
+- [x] Audio telemetry fields in DaySnapshot (musicTrack, audioMuted, sfxVolume, musicVolume)
+- [x] Music candidate tracks preserved in `public/assets/audio/music/candidates/` for A/B comparison
+- [x] Generation scripts: `scripts/gen-exec.mjs` (MiniMax 2.6 + cover), `scripts/gen-music-batch2.mjs` (batch), `scripts/gen-sfx.sh` (procedural)
+
+**Phase 5.5: Consumables** ✅ (Apr 14)
+- [x] All 5 consumable effects wired — coffee (+5% speed), energy drink (+10% speed / 20% jitter), cloud backup (data loss protection), API credits (-50% model cost), rubber duck (auto-resolve stuck events)
+- [x] Consumable activation UI — sequential notifications at day start with fade in/hold/fade out
+- [x] Consumable telemetry — consumablesUsed tracked in DaySnapshot
+
+### In Progress (dispatched to Route, not yet landed)
+- [ ] Bug Bounty visual overhaul — IDE error chip sprites replacing emoji (Task 13, Forge)
+- [ ] Miss penalties + catch effects — misclick time penalty, escape $ penalty, camera shake, particle burst (Task 11, Patch)
+- [ ] Combo counter — sequential catch multiplier, combo UI, max combo tracking (Task 12, Patch)
+
+### Remaining
+- [ ] Balance tuning — play 2-3 runs, review telemetry, adjust difficulty curve, costs, event frequency
+- [ ] Per-class visual differentiation — wallpapers, terminal themes beyond accent colors
 - [ ] Deploy — itch.io, GitHub Pages, Wavedash. Vite build + test
 - [ ] README + screenshots for jam submission
+- [ ] Voice narrator (stretch goal) — TTS for class intros, day intros, rare events
 
 ### Build Milestones (from TECHPLAN.md)
-| Phase | Target Date | Focus |
-|-------|------------|-------|
-| 1: Skeleton | Apr 14-15 | Scaffolding, scene flow, OS chrome, typing engine |
-| 2: Core Loop | Apr 16-18 | Execution scene, events, planning, economy, scoring |
-| 3: Night Phase | Apr 18-19 | Token Market shop, Bug Bounty mini-game |
-| 4: Polish | Apr 20-22 | All 55 events, class themes, audio, agent synergy |
-| 5: Juice + Deploy | Apr 23-25 | Effects, balance, voice (stretch), deploy to all platforms |
-| Buffer | Apr 26 | Bug fixes, submission |
+| Phase | Target Date | Status |
+|-------|------------|--------|
+| 1: Skeleton | Apr 14-15 | ✅ Complete |
+| 2: Core Loop | Apr 16-18 | ✅ Complete |
+| 3: Night Phase | Apr 18-19 | ✅ Complete |
+| 4: Polish | Apr 20-22 | ✅ Complete (phases 4 + 4.5) |
+| 5: Audio + Consumables | Apr 14 | ✅ Complete (ahead of schedule) |
+| 5.5: Bug Bounty Polish | Apr 14-15 | 🔄 In progress |
+| 6: Balance + Visuals | Apr 15-16 | Next up |
+| 7: Deploy + Submit | Apr 25-26 | Pending |
 
 ## Standards
 

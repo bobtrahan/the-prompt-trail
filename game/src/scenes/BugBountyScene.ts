@@ -93,6 +93,9 @@ export class BugBountyScene extends Phaser.Scene {
   private startTime = 0;
   private lastSpawn = 0;
   private ended = false;
+  private lastMissClick = 0;
+  private timePenalty = 0;
+  private gridBg!: Phaser.GameObjects.Rectangle;
 
   constructor() {
     super({ key: 'BugBounty' });
@@ -170,6 +173,16 @@ export class BugBountyScene extends Phaser.Scene {
     this.gridW = ca.width - 16;
     this.gridH = CODE_LINES.length * lineH;
 
+    // ── Grid Background (for misclick penalty) ────────────────────────────────
+    this.gridBg = this.add.rectangle(this.gridX, this.gridY, this.gridW, this.gridH, 0x000000, 0)
+      .setOrigin(0)
+      .setDepth(10)
+      .setInteractive();
+    
+    this.gridBg.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+      this.handleMissClick(pointer.x, pointer.y);
+    });
+
 
   }
 
@@ -183,8 +196,8 @@ export class BugBountyScene extends Phaser.Scene {
     }
 
     const elapsed = time - this.startTime;
-    const remaining = Math.max(0, GAME_DURATION - elapsed);
-    const frac = remaining / GAME_DURATION;
+    const remaining = Math.max(0, GAME_DURATION - elapsed - this.timePenalty);
+    const frac = remaining / (GAME_DURATION);
 
     // Update timer bar
     this.timerBar.width = this.timerBar.width = (this.win.contentArea.width) * frac;
@@ -287,6 +300,45 @@ export class BugBountyScene extends Phaser.Scene {
     const def = BUG_DEFS[bug.type];
     let reward = def.reward;
 
+    // Camera shake
+    if (bug.type === 'heisen') {
+      this.cameras.main.shake(120, 0.008);
+      // White grid flash
+      const flash = this.add.rectangle(this.gridX, this.gridY, this.gridW, this.gridH, 0xffffff, 0.3)
+        .setOrigin(0).setDepth(25);
+      this.tweens.add({
+        targets: flash,
+        alpha: 0,
+        duration: 50,
+        onComplete: () => flash.destroy()
+      });
+    } else {
+      this.cameras.main.shake(80, 0.004);
+    }
+
+    // Particle burst
+    const colors = {
+      syntax: 0xff0000,
+      logic: 0xffff00,
+      race: 0x800080,
+      memleak: 0x00ff00,
+      heisen: 0xffffff
+    };
+    const particleColor = colors[bug.type] || 0xffffff;
+    for (let i = 0; i < 6; i++) {
+      const p = this.add.circle(bug.obj.x, bug.obj.y, 4, particleColor).setDepth(25);
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 50 + Math.random() * 100;
+      this.tweens.add({
+        targets: p,
+        x: p.x + Math.cos(angle) * speed,
+        y: p.y + Math.sin(angle) * speed,
+        alpha: 0,
+        duration: 400,
+        onComplete: () => p.destroy()
+      });
+    }
+
     // Memory leak: bonus based on scale
     if (bug.type === 'memleak') {
       reward = 10 + Math.floor(bug.obj.scaleX * 10);
@@ -321,7 +373,50 @@ export class BugBountyScene extends Phaser.Scene {
       yoyo: true,
     });
 
-    this.removeBug(bug, true);
+    // Bug death animation
+    this.tweens.add({
+      targets: bug.obj,
+      scaleX: bug.obj.scaleX * 2,
+      scaleY: bug.obj.scaleY * 2,
+      angle: 360,
+      alpha: 0,
+      duration: 250,
+      onComplete: () => this.removeBug(bug, true)
+    });
+  }
+
+  private handleMissClick(x: number, y: number): void {
+    const now = this.time.now;
+    if (now - this.lastMissClick < 200) return;
+    this.lastMissClick = now;
+
+    this.timePenalty += 1000;
+    AudioManager.getInstance().playSFX('bug-miss');
+
+    // Red flash
+    const flash = this.add.rectangle(this.gridX, this.gridY, this.gridW, this.gridH, 0xff0000, 0.15)
+      .setOrigin(0).setDepth(25);
+    this.tweens.add({
+      targets: flash,
+      alpha: 0,
+      duration: 200,
+      onComplete: () => flash.destroy()
+    });
+
+    // Penalty text
+    const txt = this.add.text(x, y, '−1s', {
+      fontFamily: 'monospace',
+      fontSize: '16px',
+      color: '#ff0000',
+    }).setOrigin(0.5).setDepth(30);
+
+    this.tweens.add({
+      targets: txt,
+      y: y - 40,
+      alpha: 0,
+      duration: 400,
+      onComplete: () => txt.destroy()
+    });
   }
 
   private removeBug(bug: ActiveBug, caught: boolean): void {
@@ -330,15 +425,36 @@ export class BugBountyScene extends Phaser.Scene {
     this.bugs.splice(idx, 1);
 
     if (caught) {
-      // Brief flash then destroy
+      bug.obj.destroy();
+    } else {
+      // Bug escape penalty
+      this.totalEarned = Math.max(0, this.totalEarned - 5);
+      this.updateStats();
+      AudioManager.getInstance().playSFX('bug-miss');
+
+      // Floating text
+      const txt = this.add.text(bug.obj.x, bug.obj.y, '−$5 ESCAPED', {
+        fontFamily: 'monospace',
+        fontSize: '14px',
+        color: '#ff0000',
+      }).setDepth(30);
+
+      this.tweens.add({
+        targets: txt,
+        y: txt.y - 30,
+        alpha: 0,
+        duration: 600,
+        onComplete: () => txt.destroy()
+      });
+
+      // Ghost trail: fade and drift up
       this.tweens.add({
         targets: bug.obj,
+        y: bug.obj.y - 50,
         alpha: 0,
-        duration: 150,
-        onComplete: () => bug.obj.destroy(),
+        duration: 500,
+        onComplete: () => bug.obj.destroy()
       });
-    } else {
-      bug.obj.destroy();
     }
   }
 
