@@ -96,6 +96,14 @@ export class BugBountyScene extends Phaser.Scene {
   }
 
   create(): void {
+    // Reset all game state first (critical for scene re-entry)
+    this.bugs = [];
+    this.bugCount = 0;
+    this.totalEarned = 0;
+    this.ended = false;
+    this.startTime = 0;
+    this.lastSpawn = 0;
+
     this.cameras.main.setBackgroundColor(COLORS.bg);
 
     // Taskbar
@@ -154,13 +162,7 @@ export class BugBountyScene extends Phaser.Scene {
     this.gridW = ca.width - 16;
     this.gridH = CODE_LINES.length * lineH;
 
-    // Reset all game state (critical for scene re-entry)
-    this.bugs = [];
-    this.bugCount = 0;
-    this.totalEarned = 0;
-    this.ended = false;
-    this.startTime = 0;
-    this.lastSpawn = 0;
+
   }
 
   update(time: number, _delta: number): void {
