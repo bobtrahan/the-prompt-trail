@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT, COLORS } from '../utils/constants';
 import { getState } from '../systems/GameState';
+import { DebugMenu } from './DebugMenu';
 
 const TASKBAR_HEIGHT = 32;
 
@@ -16,6 +17,7 @@ export class Taskbar {
   private repText!: Phaser.GameObjects.Text;
   private clockText!: Phaser.GameObjects.Text;
   private accentColor: number;
+  private activeMenu: DebugMenu | null = null;
 
   constructor(scene: Phaser.Scene, accentColor?: number) {
     this.scene = scene;
@@ -42,7 +44,8 @@ export class Taskbar {
     // Left side — system items
     const startBtn = scene.add.text(8, 8, '◆ PromptOS', {
       ...style, color: Phaser.Display.Color.IntegerToColor(this.accentColor).rgba,
-    });
+    }).setInteractive({ useHandCursor: true });
+    startBtn.on('pointerdown', () => this._openMenu());
     this.container.add(startBtn);
 
     // Right side — indicators
@@ -61,6 +64,19 @@ export class Taskbar {
     this.healthText.setText(`🖥️ HW: ${s.hardwareHp}%`);
     this.repText.setText(`⭐ Rep: ${s.reputation}`);
     this.clockText.setText(`Day ${s.day}/13`);
+  }
+
+  private _openMenu(): void {
+    if (this.activeMenu) {
+      this.activeMenu.destroy();
+      this.activeMenu = null;
+    }
+    const menu = new DebugMenu(this.scene, { refresh: () => this.refresh() });
+    this.activeMenu = menu;
+    // Clear ref when menu self-dismisses
+    menu.once('destroy', () => {
+      if (this.activeMenu === menu) this.activeMenu = null;
+    });
   }
 
   destroy(): void {
