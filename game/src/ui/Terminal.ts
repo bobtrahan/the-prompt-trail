@@ -55,7 +55,7 @@ export class Terminal {
     this.container.add(this.bg);
 
     // Prompt segments (at bottom of terminal area)
-    const promptY = config.height - LINE_HEIGHT - 8;
+    const promptY = config.height - LINE_HEIGHT - 20;
     this.typedText = config.scene.add.text(8, promptY, '', {
       fontFamily: 'monospace',
       fontSize: '14px',
