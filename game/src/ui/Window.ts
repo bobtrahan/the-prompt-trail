@@ -40,6 +40,14 @@ export class Window {
 
     this.container = config.scene.add.container(config.x, config.y);
 
+    // Drop shadow (must be first child so it renders behind everything)
+    const shadow = config.scene.add.rectangle(
+      4, 4,
+      config.width + 2, config.height + 2,
+      0x000000
+    ).setOrigin(0).setAlpha(0.3);
+    this.container.add(shadow);
+
     // Border (slightly larger rect behind everything)
     this.border = config.scene.add.rectangle(0, 0, config.width, config.height, COLORS.windowBorder)
       .setOrigin(0);
