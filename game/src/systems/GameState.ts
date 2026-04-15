@@ -111,6 +111,8 @@ export interface GameState {
     budgetSpent: number;
     hardwareDelta: number;
   };
+  overtimeBonus: number;
+  bugHuntReturnScene: string;
   dayStartBudget: number;
   dayStartHardware: number;
 }
@@ -139,6 +141,8 @@ function createInitialState(): GameState {
     lockedStrategies: [],
     lockedModels: [],
     localSlots: 0,
+    overtimeBonus: 0,
+    bugHuntReturnScene: 'Night',
     dayStartBudget: 0,
     dayStartHardware: 100,
   };
