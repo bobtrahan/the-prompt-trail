@@ -1,4 +1,5 @@
-import { AGENT_ROSTER, SYNERGY_PAIRS, CLASH_PAIRS, AgentDef } from '../data/agents';
+import { AGENT_ROSTER, SYNERGY_PAIRS, CLASH_PAIRS } from '../data/agents';
+import type { AgentDef } from '../data/agents';
 
 export class AgentSystem {
 

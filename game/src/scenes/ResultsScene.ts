@@ -33,6 +33,14 @@ export class ResultsScene extends Phaser.Scene {
 
   create(): void {
     const state = getState();
+    const result = state.lastDayResult;
+
+    if (!result) {
+      console.warn('No lastDayResult found in GameState!');
+      this.advance();
+      return;
+    }
+
     const theme = getTheme(state.playerClass ?? undefined);
 
     this.cameras.main.setBackgroundColor(COLORS.bg);
