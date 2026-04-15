@@ -17,7 +17,7 @@ function makeLCG(seed: number): () => number {
  * Draw a procedural class-specific desktop wallpaper pattern at depth -10.
  * Call after setBackgroundColor, before window/taskbar creation.
  */
-export function drawWallpaper(scene: Phaser.Scene, playerClass?: string): void {
+export function drawWallpaper(scene: Phaser.Scene, playerClass?: string | null): void {
   if (!playerClass) return;
 
   switch (playerClass) {

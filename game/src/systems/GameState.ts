@@ -2,6 +2,7 @@ import type { DayScore } from './ScoringSystem';
 import type { ClassDef } from '../data/classes';
 import { CLASS_DEFS } from '../data/classes';
 
+import type { PlayerClass, Strategy, ModelTier } from '../utils/playerClass';
 export type { PlayerClass, Strategy, ModelTier } from '../utils/playerClass';
 
 
