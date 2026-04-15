@@ -10,7 +10,7 @@ export interface TerminalConfig {
 }
 
 const LINE_HEIGHT = 18;
-const MAX_VISIBLE_LINES = 20;
+const RESERVED_BOTTOM = 72; // space for progress bar + prompt + hint
 
 /**
  * PromptOS Terminal — renders scrolling output lines + an active typing prompt.
@@ -39,6 +39,7 @@ export class Terminal {
   private typedSoFar = '';
   private promptPrefix = '> ';
   private firstPromptShown = false;
+  private maxVisibleLines: number;
 
   constructor(config: TerminalConfig) {
     this.scene = config.scene;
@@ -46,6 +47,7 @@ export class Terminal {
     this.y = config.y;
     this.width = config.width;
     this.height = config.height;
+    this.maxVisibleLines = Math.floor((config.height - RESERVED_BOTTOM) / LINE_HEIGHT);
 
     this.container = config.scene.add.container(config.x, config.y);
 
@@ -96,7 +98,7 @@ export class Terminal {
   addLine(text: string, color = '#39d353'): void {
     this.lines.push(text);
     // Keep only visible lines
-    if (this.lines.length > MAX_VISIBLE_LINES) {
+    if (this.lines.length > this.maxVisibleLines) {
       this.lines.shift();
     }
     this.renderLines();
@@ -157,7 +159,7 @@ export class Terminal {
     this.lineTexts = [];
 
     const startY = 8;
-    const visible = this.lines.slice(-MAX_VISIBLE_LINES);
+    const visible = this.lines.slice(-this.maxVisibleLines);
     visible.forEach((line, i) => {
       const t = this.scene.add.text(8, startY + i * LINE_HEIGHT, line, {
         fontFamily: 'monospace',
