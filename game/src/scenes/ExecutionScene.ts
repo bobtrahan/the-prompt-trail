@@ -92,35 +92,104 @@ export class ExecutionScene extends Phaser.Scene {
       switch (id) {
         case 'con-coffee':
           this.typingEngine.speedModifier += 0.05;
-          msg = "☕ Coffee Boost Active!";
+          msg = "";
           break;
         case 'con-energy':
           this.typingEngine.speedModifier += 0.1;
           this.typingEngine.jitterChance = 0.2;
-          msg = "⚡ Energy Drink Active!";
+          msg = "";
           break;
         case 'con-backup':
           state.hasBackupProtection = true;
-          msg = "☁️ Cloud Backup Active!";
+          msg = "";
           break;
         case 'con-api':
           state.modelCostDiscount = 0.5;
-          msg = "💳 API Credits Active!";
+          msg = "";
           break;
         case 'con-duck':
           state.hasDuckProtection = true;
-          msg = "🦆 Rubber Duck Active!";
+          msg = "";
           break;
       }
 
-      if (msg) {
-        AudioManager.getInstance().playSFX('notification');
-        this.showFlashMessage(msg);
-        state.consumablesUsedToday.push(id);
-      }
+      // Just track which consumables were used; UI notifications are shown separately
+      state.consumablesUsedToday.push(id);
     });
 
     state.activeConsumables = [];
+  }
+
+  /** Show sequential UI notifications for each activated consumable. Returns a promise that resolves when all are done. */
+  private async showConsumableNotifications(): Promise<void> {
+    const state = getState();
+    if (!state.consumablesUsedToday || state.consumablesUsedToday.length === 0) {
+      return Promise.resolve();
+    }
+
+    // Map consumable IDs to their display text
+    const consumableTexts: Record<string, string> = {
+      'con-coffee': '☕ Coffee Boost — +5% Speed',
+      'con-energy': '⚡ Energy Drink — +10% Speed, Jitters Active',
+      'con-backup': '☁️ Cloud Backup — Protection Active',
+      'con-api': '💳 API Credits — Model Costs -50%',
+      'con-duck': '🦆 Rubber Duck — Auto-Resolve Ready',
+    };
+
+    // Show each notification sequentially (1.5 seconds per notification: 0.3s fade in, 0.9s hold, 0.3s fade out)
+    for (const consumableId of state.consumablesUsedToday) {
+      const text = consumableTexts[consumableId];
+      if (!text) continue;
+
+      await this.showSingleConsumableNotification(text);
+    }
+  }
+
+  /** Show a single consumable notification with fade in/hold/fade out (1.5 seconds total). Returns a promise. */
+  private showSingleConsumableNotification(text: string): Promise<void> {
+    return new Promise(resolve => {
+      // Play SFX
+      AudioManager.getInstance().playSFX('notification');
+
+      // Create centered text notification
+      const notificationText = this.add.text(
+        GAME_WIDTH / 2,
+        GAME_HEIGHT / 2,
+        text,
+        {
+          fontFamily: 'monospace',
+          fontSize: '20px',
+          color: '#58a6ff',
+          stroke: '#000000',
+          strokeThickness: 4,
+          align: 'center',
+        }
+      ).setOrigin(0.5).setDepth(500).setAlpha(0);
+
+      // Fade in (0.3s)
+      this.tweens.add({
+        targets: notificationText,
+        alpha: 1,
+        duration: 300,
+        ease: 'Power2.out',
+        onComplete: () => {
+          // Hold (0.9s)
+          this.time.delayedCall(900, () => {
+            // Fade out (0.3s)
+            this.tweens.add({
+              targets: notificationText,
+              alpha: 0,
+              duration: 300,
+              ease: 'Power2.in',
+              onComplete: () => {
+                notificationText.destroy();
+                resolve();
+              },
+            });
+          });
+        },
+      });
+    });
   }
 
   private showFlashMessage(text: string): void {
@@ -328,22 +397,6 @@ export class ExecutionScene extends Phaser.Scene {
     this.timeUnits = state.timeUnitsRemaining;
     this.updateProgressBar();
 
-    // ── "START TYPING" hint ──
-    this.typeHint = this.add.text(
-      16 + tArea.x + tArea.width / 2,
-      72 + tArea.y + tArea.height / 2 - 20,
-      '⌨️  START TYPING TO BUILD  ⌨️',
-      { fontFamily: 'monospace', fontSize: '20px', color: '#58a6ff', fontStyle: 'bold' }
-    ).setOrigin(0.5).setDepth(50);
-
-    this.typeHintTween = this.tweens.add({
-      targets: this.typeHint,
-      alpha: { from: 1, to: 0.3 },
-      duration: 800,
-      yoyo: true,
-      repeat: -1,
-    });
-
     // ── Typing engine — timers start on first keystroke ──
     this.typingEngine = new TypingEngine(this, this.terminal, () => {
       this.onPromptComplete();
@@ -351,9 +404,29 @@ export class ExecutionScene extends Phaser.Scene {
       this.onFirstKeystroke();
     }, this.typoForgiveness);
 
+    // ── Process consumables and show notification sequence before typing begins ──
     this.processConsumables();
     
-    this.typingEngine.start();
+    // Show consumable notifications, then show typing hint
+    this.showConsumableNotifications().then(() => {
+      // After notifications complete, show the "START TYPING" hint
+      this.typeHint = this.add.text(
+        16 + tArea.x + tArea.width / 2,
+        72 + tArea.y + tArea.height / 2 - 20,
+        '⌨️  START TYPING TO BUILD  ⌨️',
+        { fontFamily: 'monospace', fontSize: '20px', color: '#58a6ff', fontStyle: 'bold' }
+      ).setOrigin(0.5).setDepth(50);
+
+      this.typeHintTween = this.tweens.add({
+        targets: this.typeHint,
+        alpha: { from: 1, to: 0.3 },
+        duration: 800,
+        yoyo: true,
+        repeat: -1,
+      });
+
+      this.typingEngine.start();
+    });
   }
 
   /** Called once on the very first keystroke */

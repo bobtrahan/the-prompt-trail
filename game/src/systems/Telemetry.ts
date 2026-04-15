@@ -40,6 +40,7 @@ export interface DaySnapshot {
   audioMuted: boolean;
   sfxVolume: number;
   musicVolume: number;
+  consumablesUsed: string[];
 }
 
 export interface RunLog {
@@ -137,6 +138,7 @@ export class Telemetry {
       audioMuted: AudioManager.getInstance().isMuted,
       sfxVolume: AudioManager.getInstance().sfxVolume,
       musicVolume: AudioManager.getInstance().musicVolume,
+      consumablesUsed: [...state.consumablesUsedToday],
     };
 
     (currentRun.days ??= []).push(snapshot);
