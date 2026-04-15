@@ -322,18 +322,17 @@ export class TokenMarketScene extends Phaser.Scene {
   }
 
   private showJokeModal(message: string): void {
-    const { x: cx, y: cy, width: cw, height: ch } = this.marketWin.contentArea;
     const mw = 500;
     const mh = 160;
-    const mx = cx + (cw - mw) / 2;
-    const my = cy + (ch - mh) / 2;
+    const mx = (GAME_WIDTH - mw) / 2;
+    const my = (GAME_HEIGHT - mh) / 2;
 
-    const overlay = this.add.rectangle(cx - 8, cy - 8, cw + 16, ch + 16, 0x000000, 0.65)
+    const overlay = this.add.rectangle(0, 0, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.65)
+      .setOrigin(0).setDepth(300).setInteractive();
+    const border = this.add.rectangle(mx - 1, my - 1, mw + 2, mh + 2, COLORS.windowBorder)
       .setOrigin(0).setDepth(300);
     const box = this.add.rectangle(mx, my, mw, mh, COLORS.windowBg)
       .setOrigin(0).setDepth(301);
-    const border = this.add.rectangle(mx - 1, my - 1, mw + 2, mh + 2, COLORS.windowBorder)
-      .setOrigin(0).setDepth(300);
 
     const msgText = this.add.text(mx + 16, my + 16, message, {
       fontFamily: 'monospace',

@@ -350,16 +350,18 @@ export class BugBountyScene extends Phaser.Scene {
 
     // Apply earnings + HP bonus + mark played
     const state = getState();
+    const returnScene = state.bugHuntReturnScene || 'Night';
+    state.bugHuntReturnScene = 'Night';
     state.budget += this.totalEarned;
-    state.bountyPlayedTonight = true;
+    // Only mark as played if this is a regular night session (not a bonus hunt)
+    if (returnScene === 'Night') {
+      state.bountyPlayedTonight = true;
+    }
     let bonusHp = false;
     if (this.bugCount >= 10) {
       state.hardwareHp = Math.min(100, state.hardwareHp + 5);
       bonusHp = true;
     }
-
-    const returnScene = state.bugHuntReturnScene || 'Night';
-    state.bugHuntReturnScene = 'Night';
 
     // Overlay
     const overlayX = GAME_WIDTH / 2;
