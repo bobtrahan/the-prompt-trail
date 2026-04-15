@@ -159,7 +159,7 @@ export class PlanningScene extends Phaser.Scene {
       const stars = MODEL_STARS[model];
       const starStr = '★'.repeat(stars) + '☆'.repeat(5 - stars);
       const dailyCost = EconomySystem.getModelDayCost(model);
-      const costLabel = isCorp ? '💳 Company Card' : `$${dailyCost}/day`;
+      const costLabel = isCorp ? '💳 Company Card — no daily cost' : `$${dailyCost}/day`;
 
       const rowBg = this.add.rectangle(mx, rowY, rowW, MODEL_ROW_H - 2, isSelected ? 0x1c3a1c : COLORS.titleBar).setOrigin(0);
       if (isSelected) rowBg.setStrokeStyle(1, 0x3fb950);
@@ -380,7 +380,11 @@ export class PlanningScene extends Phaser.Scene {
       const mod = EconomySystem.getStrategyModifier(option.id);
       const totalDayCost = EconomySystem.getModelDayCost(state.model) + mod.strategyCost;
       const qualityLabel = option.id === 'vibeCode' ? '???' : `${mod.qualityMult.toFixed(1)}x`;
-      this.strategyPreviewText.setText(`Daily cost: $${totalDayCost} (model $${EconomySystem.getModelDayCost(state.model)} + strategy $${mod.strategyCost}) · Quality: ${qualityLabel}`);
+      if (state.playerClass === 'corporateDev') {
+        this.strategyPreviewText.setText(`Daily cost: 💳 Company Card · Quality: ${qualityLabel}`);
+      } else {
+        this.strategyPreviewText.setText(`Daily cost: $${totalDayCost} (model $${EconomySystem.getModelDayCost(state.model)} + strategy $${mod.strategyCost}) · Quality: ${qualityLabel}`);
+      }
     }
   }
 
@@ -401,7 +405,11 @@ export class PlanningScene extends Phaser.Scene {
     const mod = EconomySystem.getStrategyModifier(option.id);
     const totalDayCost = EconomySystem.getModelDayCost(state.model) + mod.strategyCost;
     const qualityLabel = option.id === 'vibeCode' ? '???' : `${mod.qualityMult.toFixed(1)}x`;
-    this.strategyPreviewText.setText(`Daily cost: $${totalDayCost} (model $${EconomySystem.getModelDayCost(state.model)} + strategy $${mod.strategyCost}) · Quality: ${qualityLabel}`);
+    if (state.playerClass === 'corporateDev') {
+      this.strategyPreviewText.setText(`Daily cost: 💳 Company Card · Quality: ${qualityLabel}`);
+    } else {
+      this.strategyPreviewText.setText(`Daily cost: $${totalDayCost} (model $${EconomySystem.getModelDayCost(state.model)} + strategy $${mod.strategyCost}) · Quality: ${qualityLabel}`);
+    }
   }
 
   private updateLaunchState(): void {
