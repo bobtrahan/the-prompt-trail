@@ -8,6 +8,7 @@ import { Taskbar } from '../ui/Taskbar';
 import { EconomySystem } from '../systems/EconomySystem';
 import { AGENT_ROSTER, SYNERGY_PAIRS, CLASH_PAIRS } from '../data/agents';
 import AudioManager from '../systems/AudioManager';
+import { drawWallpaper } from '../ui/DesktopWallpaper';
 
 interface StrategyOption {
   id: Strategy;
@@ -51,6 +52,7 @@ export class PlanningScene extends Phaser.Scene {
     const state = getState();
     const theme = getTheme(state.playerClass ?? undefined);
     this.cameras.main.setBackgroundColor(COLORS.bg);
+    drawWallpaper(this, state.playerClass);
     this.selectedStrategy = null;
     this.selectedAgentIds = [];
     this.agentRowBgs = new Map();

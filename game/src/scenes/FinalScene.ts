@@ -7,6 +7,7 @@ import { ScoringSystem } from '../systems/ScoringSystem';
 import { Window } from '../ui/Window';
 import { Taskbar } from '../ui/Taskbar';
 import AudioManager from '../systems/AudioManager';
+import { drawWallpaper } from '../ui/DesktopWallpaper';
 
 const RANK_COLORS: Record<string, string> = {
   S: '#f2cc60',
@@ -71,6 +72,7 @@ export class FinalScene extends Phaser.Scene {
     Telemetry.logRunEnd(state, finalScoreData);
 
     this.cameras.main.setBackgroundColor(COLORS.bg);
+    drawWallpaper(this, state.playerClass);
     this.taskbar = new Taskbar(this);
 
     const winWidth = 700;

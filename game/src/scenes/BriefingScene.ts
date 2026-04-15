@@ -5,6 +5,7 @@ import { PROJECTS } from '../data/projects';
 import { getTheme } from '../utils/themes';
 import { Window } from '../ui/Window';
 import { Taskbar } from '../ui/Taskbar';
+import { drawWallpaper } from '../ui/DesktopWallpaper';
 
 // ─── 25 Funny AI Headlines ───────────────────────────────────────────────────
 const AI_HEADLINES: string[] = [
@@ -88,6 +89,7 @@ export class BriefingScene extends Phaser.Scene {
     state.timeUnitsRemaining = TIME_UNITS_PER_DAY;
     
     this.cameras.main.setBackgroundColor(COLORS.bg);
+    drawWallpaper(this, state.playerClass);
 
     // Clear ticker state from previous visits
     this.tickerTexts = [];

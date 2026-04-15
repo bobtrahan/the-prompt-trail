@@ -6,6 +6,7 @@ import { Window } from '../ui/Window';
 import { Taskbar } from '../ui/Taskbar';
 import { PROJECTS } from '../data/projects';
 import { AudioManager } from '../systems/AudioManager';
+import { drawWallpaper } from '../ui/DesktopWallpaper';
 
 export class NightScene extends Phaser.Scene {
   private taskbar!: Taskbar;
@@ -20,6 +21,7 @@ export class NightScene extends Phaser.Scene {
     const state = getState();
     const theme = getTheme(state.playerClass ?? undefined);
     this.cameras.main.setBackgroundColor(COLORS.bg);
+    drawWallpaper(this, state.playerClass);
 
     // A) Ambient elements (depth -5)
     // Monitor glow

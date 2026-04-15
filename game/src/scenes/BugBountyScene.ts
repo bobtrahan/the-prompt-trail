@@ -6,6 +6,7 @@ import { getTheme } from '../utils/themes';
 import { Window } from '../ui/Window';
 import { Taskbar } from '../ui/Taskbar';
 import AudioManager from '../systems/AudioManager';
+import { drawWallpaper } from '../ui/DesktopWallpaper';
 
 // ── Bug type definitions ──────────────────────────────────────────────────────
 
@@ -171,6 +172,7 @@ export class BugBountyScene extends Phaser.Scene {
     const theme = getTheme(state.playerClass ?? undefined);
 
     this.cameras.main.setBackgroundColor(COLORS.bg);
+    drawWallpaper(this, state.playerClass);
 
     // Taskbar
     this.taskbar = new Taskbar(this, theme.accent);

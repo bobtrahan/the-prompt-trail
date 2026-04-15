@@ -7,6 +7,7 @@ import { Window } from '../ui/Window';
 import { Taskbar } from '../ui/Taskbar';
 import { PROJECTS } from '../data/projects';
 import AudioManager from '../systems/AudioManager';
+import { drawWallpaper } from '../ui/DesktopWallpaper';
 
 export class ResultsScene extends Phaser.Scene {
   private window!: Window;
@@ -55,6 +56,7 @@ export class ResultsScene extends Phaser.Scene {
     this.themeAccent = theme.accent;
 
     this.cameras.main.setBackgroundColor(COLORS.bg);
+    drawWallpaper(this, state.playerClass);
     this.taskbar = new Taskbar(this, theme.accent);
 
     AudioManager.getInstance().playSFX('day-complete');

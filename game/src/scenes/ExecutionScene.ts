@@ -15,6 +15,7 @@ import { ScoringSystem } from '../systems/ScoringSystem';
 import { AgentSystem } from '../systems/AgentSystem';
 import AudioManager from '../systems/AudioManager';
 import type { EventDef, EventChoice } from '../data/events';
+import { drawWallpaper } from '../ui/DesktopWallpaper';
 
 
 
@@ -72,6 +73,12 @@ export class ExecutionScene extends Phaser.Scene {
   private budgetText!: Phaser.GameObjects.Text;
   private hardwareText!: Phaser.GameObjects.Text;
   private repText!: Phaser.GameObjects.Text;
+
+  // Hardware bar (live update)
+  private hwBar!: Phaser.GameObjects.Rectangle;
+  private hwBarBg!: Phaser.GameObjects.Rectangle;
+  private lastHw: number = -1;
+  private hwBarFlashing: boolean = false;
 
   // Systems
   private eventEngine!: EventEngine;
@@ -224,6 +231,7 @@ export class ExecutionScene extends Phaser.Scene {
     }
 
     this.cameras.main.setBackgroundColor(COLORS.bg);
+    drawWallpaper(this, state.playerClass);
     this.progress = 0;
     this.timeUnits = state.timeUnitsRemaining;
     this.startedTyping = false;
@@ -307,15 +315,17 @@ export class ExecutionScene extends Phaser.Scene {
     const agentDefs = AgentSystem.getAgentDefs(activeAgentIds);
     const aArea = this.agentWindow.contentArea;
     agentDefs.forEach((agent, i) => {
+      const rowBaseY = 72 + aArea.y + i * 48;
+
       const label = this.add.text(
-        852 + aArea.x, 72 + aArea.y + i * 40,
+        852 + aArea.x, rowBaseY,
         `🤖 ${agent.name}`,
         { fontFamily: 'monospace', fontSize: '14px', color: '#e6edf3' }
       );
       this.agentWindow.add(label);
 
       const status = this.add.text(
-        852 + aArea.x + 140, 72 + aArea.y + i * 40,
+        852 + aArea.x + 140, rowBaseY,
         '⚡ Working...',
         { fontFamily: 'monospace', fontSize: '12px', color: '#39d353' }
       );
@@ -326,7 +336,40 @@ export class ExecutionScene extends Phaser.Scene {
         delay: 600 + i * 200, loop: true,
         callback: () => { dots = (dots + 1) % 4; status.setText('⚡ Working' + '.'.repeat(dots)); },
       });
+
+      // Speed bar: 5 × 8×8 rectangles, 2px gap
+      for (let s = 0; s < 5; s++) {
+        const filled = s < agent.speed;
+        const speedRect = this.add.rectangle(
+          852 + aArea.x + s * 10,
+          rowBaseY + 22,
+          8, 8,
+          filled ? theme.accent : 0x21262d
+        ).setOrigin(0);
+        this.agentWindow.add(speedRect);
+      }
+
+      // Trait label
+      const traitLabel = this.add.text(
+        852 + aArea.x + 58,
+        rowBaseY + 21,
+        agent.trait,
+        { fontFamily: 'monospace', fontSize: '11px', color: '#9da5b0' }
+      );
+      this.agentWindow.add(traitLabel);
     });
+
+    // Hint if only 1 agent
+    if (agentDefs.length === 1) {
+      const hintY = 72 + aArea.y + 1 * 48 + 8;
+      const slotHint = this.add.text(
+        852 + aArea.x,
+        hintY,
+        '💡 Buy agent slots at Token Market',
+        { fontFamily: 'monospace', fontSize: '11px', color: '#9da5b0', fontStyle: 'italic' }
+      );
+      this.agentWindow.add(slotHint);
+    }
 
     // ── Resource Panel ──
     this.resourceWindow = new Window({
@@ -344,14 +387,31 @@ export class ExecutionScene extends Phaser.Scene {
 
     this.budgetText = this.add.text(rX, rY, state.playerClass === 'corporateDev' ? '💳 Company Card' : `💰 Budget: $${state.budget.toLocaleString()}`, rStyle);
     this.hardwareText = this.add.text(rX, rY + 28, `🖥️ Hardware: ${state.hardwareHp}%`, rStyle);
-    this.repText = this.add.text(rX, rY + 56, `⭐ Reputation: ${state.reputation}`, rStyle);
-    this.add.text(rX, rY + 84, `📡 Model: ${state.model}`, rStyle);
 
-    this.add.text(rX, rY + 120, '⏱️ Time Remaining:', {
+    // Hardware health bar
+    const hwPct = state.hardwareHp / 100;
+    const hwBarColor = state.hardwareHp >= 60 ? 0x3fb950 : state.hardwareHp >= 30 ? 0xd29922 : 0xf85149;
+    this.hwBarBg = this.add.rectangle(rX, rY + 42, 160, 6, 0x21262d).setOrigin(0);
+    this.hwBar = this.add.rectangle(rX, rY + 42, Math.round(hwPct * 160), 6, hwBarColor).setOrigin(0);
+    this.lastHw = state.hardwareHp;
+
+    this.repText = this.add.text(rX, rY + 56, `⭐ Reputation: ${state.reputation}`, rStyle);
+
+    // Model text + quality indicator tag
+    this.add.text(rX, rY + 84, `📡 Model: ${state.model}`, rStyle);
+    const qualityMod = EconomySystem.getModelQualityMod(state.model);
+    const qualityPct = Math.round(qualityMod * 100);
+    const qualityTag = qualityPct > 0 ? `[+${qualityPct}%]` : qualityPct < 0 ? `[${qualityPct}%]` : '[+0%]';
+    const qualityColor = qualityPct > 0 ? '#3fb950' : qualityPct < 0 ? '#f85149' : '#9da5b0';
+    this.add.text(rX + 170, rY + 84, qualityTag, {
+      fontFamily: 'monospace', fontSize: '12px', color: qualityColor,
+    });
+
+    this.add.text(rX, rY + 106, '⏱️ Time Remaining:', {
       fontFamily: 'monospace', fontSize: '12px', color: '#9da5b0',
     });
-    this.timeBg = this.add.rectangle(rX, rY + 140, rArea.width - 16, 14, 0x21262d).setOrigin(0);
-    this.timeBar = this.add.rectangle(rX, rY + 140, rArea.width - 16, 14, COLORS.warning).setOrigin(0);
+    this.timeBg = this.add.rectangle(rX, rY + 120, rArea.width - 16, 14, 0x21262d).setOrigin(0);
+    this.timeBar = this.add.rectangle(rX, rY + 120, rArea.width - 16, 14, COLORS.warning).setOrigin(0);
 
     // ── Terminal boot text ──
     this.terminal.addLine('PromptOS Terminal v1.3.7');
@@ -953,6 +1013,28 @@ export class ExecutionScene extends Phaser.Scene {
     );
     state.reputation += dayScore.total;
     state.dayScores.push(dayScore.total);
+  }
+
+  update(): void {
+    const state = getState();
+    const hw = state.hardwareHp;
+    if (this.hwBar && hw !== this.lastHw) {
+      const hwPct = hw / 100;
+      const hwBarColor = hw >= 60 ? 0x3fb950 : hw >= 30 ? 0xd29922 : 0xf85149;
+      this.hwBar.width = Math.round(hwPct * 160);
+      if (hw < this.lastHw && !this.hwBarFlashing) {
+        // Flash white for 200ms on damage
+        this.hwBarFlashing = true;
+        this.hwBar.setFillStyle(0xffffff);
+        this.time.delayedCall(200, () => {
+          if (this.hwBar) this.hwBar.setFillStyle(hwBarColor);
+          this.hwBarFlashing = false;
+        });
+      } else if (!this.hwBarFlashing) {
+        this.hwBar.setFillStyle(hwBarColor);
+      }
+      this.lastHw = hw;
+    }
   }
 
   private updateProgressBar(): void {

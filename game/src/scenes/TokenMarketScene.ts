@@ -9,6 +9,7 @@ import { EconomySystem } from '../systems/EconomySystem';
 import { getState } from '../systems/GameState';
 import { getTheme } from '../utils/themes';
 import AudioManager from '../systems/AudioManager';
+import { drawWallpaper } from '../ui/DesktopWallpaper';
 
 type TabCategory = 'model' | 'hardware' | 'agentSlot' | 'consumable' | 'joke';
 
@@ -49,6 +50,7 @@ export class TokenMarketScene extends Phaser.Scene {
     const state = getState();
     const theme = getTheme(state.playerClass ?? undefined);
     this.cameras.main.setBackgroundColor(COLORS.bg);
+    drawWallpaper(this, state.playerClass);
     this.cameras.main.fadeIn(400, 0, 0, 0);
 
     this.taskbar = new Taskbar(this, theme.accent);
