@@ -1,31 +1,230 @@
-/**
- * Telemetry — lightweight session data collector.
- * Stores arbitrary JSON-serialisable events during a run.
- * downloadJson() triggers a browser download; returns null if no data.
- */
+import { DEV_CONFIG } from '../utils/devConfig';
+import type { GameState } from './GameState';
+import type { FinalScore } from './ScoringSystem';
+import type { DayScore } from './ScoringSystem';
 
-const _events: Record<string, unknown>[] = [];
+// ─── Exported Types ───────────────────────────────────────────────────────────
 
-export const Telemetry = {
-  record(event: Record<string, unknown>): void {
-    _events.push({ ts: Date.now(), ...event });
-  },
+export interface EventLog {
+  id: string;
+  choiceIndex: number;
+  effects: string[];
+}
 
-  downloadJson(): null | true {
-    if (_events.length === 0) return null;
-    const blob = new Blob([JSON.stringify(_events, null, 2)], { type: 'application/json' });
+export interface DaySnapshot {
+  timestamp: string; // ISO
+  day: number;
+  playerClass: string;
+  strategy: string;
+  model: string;
+  agents: string[];
+  progress: number; // 0-100
+  accuracy: number; // 0-1
+  timeUnitsRemaining: number;
+  baseRep: number;
+  accuracyBonus: number;
+  strategyBonus: number;
+  overtimeBonus: number;
+  totalRep: number;
+  budgetStart: number;
+  budgetEnd: number;
+  hardwareStart: number;
+  hardwareEnd: number;
+  events: EventLog[];
+  earlyFinishPath: 'bugHunt' | 'overtime' | 'none';
+  bugBountyEarnings: number;
+  bugsSquashed: number;
+}
+
+export interface RunLog {
+  startedAt: string;
+  endedAt: string;
+  playerClass: string;
+  finalScore: number;
+  rank: string;
+  classMultiplier: number;
+  totalPlaytimeMs: number;
+  days: DaySnapshot[];
+  budgetTrajectory: number[];
+  worstDay: { day: number; progress: number };
+}
+
+// ─── Private Module State ─────────────────────────────────────────────────────
+
+let currentRun: Partial<RunLog> = {};
+let currentDayEvents: EventLog[] = [];
+let dayStartBudget = 0;
+let dayStartHardware = 0;
+let runStartTime = 0;
+
+// ─── Telemetry Class ──────────────────────────────────────────────────────────
+
+export class Telemetry {
+  /** Initialize a new run. Call at the start of a new game. */
+  static logRunStart(state: GameState): void {
+    if (!DEV_CONFIG.telemetry) return;
+
+    runStartTime = Date.now();
+    currentRun = {
+      startedAt: new Date().toISOString(),
+      playerClass: state.playerClass ?? 'unknown',
+      days: [],
+      budgetTrajectory: [],
+    };
+    currentDayEvents = [];
+  }
+
+  /** Snapshot budget/hardware at day start. */
+  static logDayStart(state: GameState): void {
+    if (!DEV_CONFIG.telemetry) return;
+
+    dayStartBudget = state.budget;
+    dayStartHardware = state.hardwareHp;
+    currentDayEvents = [];
+  }
+
+  /** Record a player event choice. */
+  static logEvent(eventId: string, choiceIndex: number, effects: string[]): void {
+    if (!DEV_CONFIG.telemetry) return;
+
+    currentDayEvents.push({ id: eventId, choiceIndex, effects });
+  }
+
+  /**
+   * Finalize the day snapshot and fire-and-forget POST to /__telemetry/day.
+   * overtimeBonus defaults to 0 if not in dayScore (not currently part of DayScore type).
+   */
+  static logDayEnd(
+    state: GameState,
+    dayScore: DayScore,
+    earlyFinishPath: 'bugHunt' | 'overtime' | 'none'
+  ): void {
+    if (!DEV_CONFIG.telemetry) return;
+
+    const snapshot: DaySnapshot = {
+      timestamp: new Date().toISOString(),
+      day: state.day,
+      playerClass: state.playerClass ?? 'unknown',
+      strategy: state.strategy ?? 'unknown',
+      model: state.model,
+      agents: [...state.activeAgents],
+      progress: state.lastDayResult?.progress ?? 0,
+      accuracy: state.lastDayResult?.accuracy ?? 0,
+      timeUnitsRemaining: state.timeUnitsRemaining,
+      baseRep: dayScore.baseRep,
+      accuracyBonus: dayScore.accuracyBonus,
+      strategyBonus: dayScore.strategyBonus,
+      overtimeBonus: 0,
+      totalRep: dayScore.total,
+      budgetStart: dayStartBudget,
+      budgetEnd: state.budget,
+      hardwareStart: dayStartHardware,
+      hardwareEnd: state.hardwareHp,
+      events: [...currentDayEvents],
+      earlyFinishPath,
+      bugBountyEarnings: 0,
+      bugsSquashed: 0,
+    };
+
+    (currentRun.days ??= []).push(snapshot);
+    (currentRun.budgetTrajectory ??= []).push(state.budget);
+
+    fetch('/__telemetry/day', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(snapshot),
+    }).catch(() => {});
+  }
+
+  /** Update the most recent day snapshot with bug bounty results and re-POST. */
+  static patchBugBounty(earnings: number, bugsSquashed: number): void {
+    if (!DEV_CONFIG.telemetry) return;
+
+    const days = currentRun.days;
+    if (!days || days.length === 0) return;
+
+    const last = days[days.length - 1];
+    last.bugBountyEarnings = earnings;
+    last.bugsSquashed = bugsSquashed;
+
+    fetch('/__telemetry/day', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(last),
+    }).catch(() => {});
+  }
+
+  /** Finalize the run, POST to /__telemetry/run, expose on window. */
+  static logRunEnd(state: GameState, finalScoreData: FinalScore): void {
+    if (!DEV_CONFIG.telemetry) return;
+
+    const endedAt = new Date().toISOString();
+    const totalPlaytimeMs = Date.now() - runStartTime;
+
+    const days = currentRun.days ?? [];
+    let worstDay = { day: 1, progress: 100 };
+    for (const d of days) {
+      if (d.progress < worstDay.progress) {
+        worstDay = { day: d.day, progress: d.progress };
+      }
+    }
+
+    const runLog: RunLog = {
+      startedAt: currentRun.startedAt ?? endedAt,
+      endedAt,
+      playerClass: state.playerClass ?? 'unknown',
+      finalScore: finalScoreData.finalScore,
+      rank: finalScoreData.rank,
+      classMultiplier: finalScoreData.multiplier,
+      totalPlaytimeMs,
+      days,
+      budgetTrajectory: currentRun.budgetTrajectory ?? [],
+      worstDay,
+    };
+
+    // Expose for debugging
+    console.log('[Telemetry] RunLog:', runLog);
+    (window as any).__TELEMETRY = runLog;
+
+    // Store finalized run
+    currentRun = runLog;
+
+    fetch('/__telemetry/run', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(runLog),
+    }).catch(() => {});
+  }
+
+  /** Return the current (possibly partial) run log. */
+  static getRunLog(): RunLog | null {
+    if (!currentRun.startedAt) return null;
+    return currentRun as RunLog;
+  }
+
+  /**
+   * Trigger a browser file download of the current RunLog as JSON.
+   * Filename: prompt-trail-{class}-{rank}-{date}.json
+   */
+  static downloadJson(): void {
+    if (!DEV_CONFIG.telemetry) return;
+
+    const runLog = Telemetry.getRunLog();
+    if (!runLog) return;
+
+    const dateStr = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+    const rank = runLog.rank ?? 'X';
+    const cls = runLog.playerClass ?? 'unknown';
+    const filename = `prompt-trail-${cls}-${rank}-${dateStr}.json`;
+
+    const blob = new Blob([JSON.stringify(runLog, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
+
     const a = document.createElement('a');
     a.href = url;
-    a.download = `telemetry-${Date.now()}.json`;
+    a.download = filename;
     a.click();
+
     URL.revokeObjectURL(url);
-    return true;
-  },
-
-  clear(): void {
-    _events.length = 0;
-  },
-};
-
-export default Telemetry;
+  }
+}
