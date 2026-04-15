@@ -44,26 +44,26 @@ export class PlanningScene extends Phaser.Scene {
 
     // Header
     this.add.text(12, 8, `PromptOS  ·  Day ${state.day}/13  ·  Planning`, {
-      fontFamily: 'monospace', fontSize: '12px', color: '#30363d',
+      fontFamily: 'monospace', fontSize: '12px', color: '#8b949e',
     });
 
     // Strategy picker window
     const stratWin = new Window({
-      scene: this, x: 40, y: 28,
-      width: 700, height: 560,
+      scene: this, x: 40, y: 50,
+      width: 700, height: 500,
       title: 'Strategy Picker',
       titleIcon: '⚙️',
       accentColor: theme.accent,
     });
 
     const sArea = stratWin.contentArea;
-    this.add.text(40 + sArea.x, 28 + sArea.y, 'Choose your approach:', {
+    this.add.text(40 + sArea.x, 50 + sArea.y, 'Choose your approach:', {
       fontFamily: 'monospace', fontSize: '14px', color: '#8b949e',
     });
 
     this.cards = [];
     STRATEGIES.forEach((s, i) => {
-      const cardY = 28 + sArea.y + 28 + i * 110;
+      const cardY = 50 + sArea.y + 28 + i * 110;
       const cardX = 40 + sArea.x;
       const isLocked = state.lockedStrategies.includes(s.id);
 
@@ -179,6 +179,7 @@ export class PlanningScene extends Phaser.Scene {
 
     const mod = EconomySystem.getStrategyModifier(option.id);
     const totalDayCost = EconomySystem.getModelDayCost(state.model) + mod.strategyCost;
-    this.strategyPreviewText.setText(`Daily cost: $${totalDayCost} (model $${EconomySystem.getModelDayCost(state.model)} + strategy $${mod.strategyCost}) · Quality: ${mod.qualityMult.toFixed(1)}x`);
+    const qualityLabel = option.id === 'vibeCode' ? '???' : `${mod.qualityMult.toFixed(1)}x`;
+    this.strategyPreviewText.setText(`Daily cost: $${totalDayCost} (model $${EconomySystem.getModelDayCost(state.model)} + strategy $${mod.strategyCost}) · Quality: ${qualityLabel}`);
   }
 }

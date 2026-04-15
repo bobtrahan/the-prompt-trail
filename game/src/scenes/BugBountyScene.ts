@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT, COLORS } from '../utils/constants';
+import { getState } from '../systems/GameState';
 import { Window } from '../ui/Window';
 import { Taskbar } from '../ui/Taskbar';
 
@@ -341,12 +342,13 @@ export class BugBountyScene extends Phaser.Scene {
     for (const bug of this.bugs) bug.obj.destroy();
     this.bugs = [];
 
-    // Apply HP bonus if earned
-    const state = this.registry.get('gameState') as Record<string, any> | undefined;
+    // Apply earnings + HP bonus + mark played
+    const state = getState();
+    state.budget += this.totalEarned;
+    state.bountyPlayedTonight = true;
     let bonusHp = false;
-    if (this.bugCount >= 10 && state) {
-      state.hardwareHp = Math.min(100, (state.hardwareHp ?? 100) + 5);
-      this.registry.set('gameState', state);
+    if (this.bugCount >= 10) {
+      state.hardwareHp = Math.min(100, state.hardwareHp + 5);
       bonusHp = true;
     }
 
