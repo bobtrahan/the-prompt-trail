@@ -172,11 +172,18 @@ export class ResultsScene extends Phaser.Scene {
   }
 
   private getStrategyLabel(strat: string): string {
+    const result = getState().lastDayResult;
     switch (strat) {
       case 'planThenBuild': return 'Plan Then Build +15%';
       case 'justStart': return 'Just Start +0%';
       case 'oneShot': return 'One-Shot -10%';
-      case 'vibeCode': return 'Vibe Code ?%';
+      case 'vibeCode': {
+        if (result && result.score.baseRep > 0) {
+          const pct = Math.round((result.score.strategyBonus / result.score.baseRep) * 100);
+          return `Vibe Code ${pct >= 0 ? '+' : ''}${pct}%`;
+        }
+        return 'Vibe Code ???';
+      }
       default: return 'Standard';
     }
   }
