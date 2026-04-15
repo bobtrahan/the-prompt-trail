@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT, COLORS } from '../utils/constants';
-import { getState, CLASS_DEFS } from '../systems/GameState';
+import { getState } from '../systems/GameState';
+import { CLASS_DEFS } from '../data/classes';
 import { getTheme } from '../utils/themes';
 import { Window } from '../ui/Window';
 import { Taskbar } from '../ui/Taskbar';

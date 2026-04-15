@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT, COLORS, TIME_UNITS_PER_DAY, EVENT_INTERVAL_MS } from '../utils/constants';
-import { getState, CLASS_DEFS, type GameState } from '../systems/GameState';
+import { getState, type GameState } from '../systems/GameState';
+import { CLASS_DEFS } from '../data/classes';
 import { Telemetry } from '../systems/Telemetry';
 import { getTheme } from '../utils/themes';
 import { Window } from '../ui/Window';

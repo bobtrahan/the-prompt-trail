@@ -1,5 +1,6 @@
 import { PROJECTS } from '../data/projects';
-import type { Strategy, ClassDef } from './GameState';
+import type { Strategy } from './GameState';
+import type { ClassDef } from '../data/classes';
 
 export interface DayScore {
   baseRep: number;

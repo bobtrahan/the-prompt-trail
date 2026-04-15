@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT, COLORS } from '../utils/constants';
-import { CLASS_DEFS, getState, resetState } from '../systems/GameState';
+import { getState, resetState } from '../systems/GameState';
+import { CLASS_DEFS } from '../data/classes';
 import { Telemetry } from '../systems/Telemetry';
 import { ScoringSystem } from '../systems/ScoringSystem';
 import { Window } from '../ui/Window';
