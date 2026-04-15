@@ -65,6 +65,8 @@ export class TypingEngine {
   private overridePool?: string[];
   private active = false;
   private paused = false;
+  private typoForgiveness = 0;
+  private currentWrongCount = 0;
   private onPromptComplete?: () => void;
   private onFirstKeystroke?: () => void;
   private hasTypedOnce = false;
@@ -74,11 +76,13 @@ export class TypingEngine {
     terminal: Terminal,
     onPromptComplete?: () => void,
     onFirstKeystroke?: () => void,
+    typoForgiveness = 0,
   ) {
     this.scene = scene;
     this.terminal = terminal;
     this.onPromptComplete = onPromptComplete;
     this.onFirstKeystroke = onFirstKeystroke;
+    this.typoForgiveness = typoForgiveness;
 
     this.easyQueue = Phaser.Utils.Array.Shuffle([...PROMPTS_EASY]);
     this.mediumQueue = Phaser.Utils.Array.Shuffle([...PROMPTS_MEDIUM]);
@@ -153,6 +157,7 @@ export class TypingEngine {
     }
     const activePool = this.getNextPromptPool();
     const prompt = activePool.pop() ?? 'npm start';
+    this.currentWrongCount = 0;
     this.terminal.setPrompt(prompt);
   }
 
@@ -182,8 +187,12 @@ export class TypingEngine {
         });
       }
     } else if (event.key !== 'Backspace') {
-      this.stats.incorrect++;
-      this.terminal.showError();
+      if (this.currentWrongCount < this.typoForgiveness) {
+        this.currentWrongCount++;
+      } else {
+        this.stats.incorrect++;
+        this.terminal.showError();
+      }
     }
   };
 

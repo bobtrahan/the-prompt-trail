@@ -64,6 +64,7 @@ export class ExecutionScene extends Phaser.Scene {
   // Systems
   private eventEngine!: EventEngine;
   private speedMod: number = 0;
+  private modelQualityMod: number = 0;
   private traitResults: { agentId: string; trait: string; fired: boolean; description: string }[] = [];
 
   constructor() {
@@ -82,6 +83,7 @@ export class ExecutionScene extends Phaser.Scene {
     // Initialise systems
     this.eventEngine = new EventEngine(state);
     this.speedMod = AgentSystem.getSpeedModifier(state.activeAgents);
+    this.modelQualityMod = EconomySystem.getModelQualityMod(state.model);
     this.traitResults = AgentSystem.checkTraits(state.activeAgents, state.day);
     EconomySystem.applyDayCosts(state);
     state.dayStartBudget = state.budget;
@@ -197,6 +199,15 @@ export class ExecutionScene extends Phaser.Scene {
     this.terminal.addLine('PromptOS Terminal v1.3.7');
     this.terminal.addLine(`Loading project: ${projectName}...`);
     this.terminal.addLine(`Agent${agentDefs.length > 1 ? 's' : ''} online: ${agentDefs.map(a => a.name).join(', ')}`);
+    
+    const modPct = Math.round(this.modelQualityMod * 100);
+    const modSign = modPct >= 0 ? '+' : '';
+    let modText = `📡 Model: ${state.model} (${modSign}${modPct}% quality)`;
+    if (state.model === 'free') {
+      modText += ' — upgrade at Token Market';
+    }
+    this.terminal.addLine(modText);
+
     if (state.eventFlags['broke']) {
       this.terminal.addLine('⚠️ BUDGET DEPLETED — API credits revoked. Downgraded to Free Tier.');
     }
@@ -294,7 +305,7 @@ export class ExecutionScene extends Phaser.Scene {
 
   private onPromptComplete(): void {
     const accuracy = this.typingEngine.getAccuracy();
-    const gain = Math.round((8 + Math.floor(accuracy * 7)) * (1 + this.speedMod));
+    const gain = Math.round((8 + Math.floor(accuracy * 7)) * (1 + this.speedMod) * (1 + this.modelQualityMod));
     this.progress = Math.min(100, this.progress + gain);
     this.updateProgressBar();
 
