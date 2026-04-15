@@ -250,6 +250,9 @@ export class PlanningScene extends Phaser.Scene {
 
     // Synergy / clash check
     this.updateSynergyIndicator();
+
+    // Re-evaluate launch readiness
+    this.updateLaunchState();
   }
 
   private updateSynergyIndicator(): void {
@@ -299,12 +302,7 @@ export class PlanningScene extends Phaser.Scene {
       c.setAlpha(i === index ? 0.3 : 1);
     });
 
-    // Enable launch
-    this.launchBtn.setText(`[ Launch: ${option.icon} ${option.name} ]`);
-    this.launchBtn.setColor('#58a6ff');
-    this.launchBtn.setInteractive({ useHandCursor: true });
-    this.launchBtn.off('pointerdown');
-    this.launchBtn.on('pointerdown', () => this.launch());
+    this.updateLaunchState();
 
     const mod = EconomySystem.getStrategyModifier(option.id);
     const totalDayCost = EconomySystem.getModelDayCost(state.model) + mod.strategyCost;
@@ -312,10 +310,37 @@ export class PlanningScene extends Phaser.Scene {
     this.strategyPreviewText.setText(`Daily cost: $${totalDayCost} (model $${EconomySystem.getModelDayCost(state.model)} + strategy $${mod.strategyCost}) · Quality: ${qualityLabel}`);
   }
 
+  private updateLaunchState(): void {
+    const state = getState();
+    const hasStrategy = this.selectedStrategy !== null;
+    const agentsFull = this.selectedAgentIds.length === state.agentSlots;
+
+    this.launchBtn.off('pointerdown');
+    this.launchBtn.disableInteractive();
+
+    if (!hasStrategy && !agentsFull) {
+      const remaining = state.agentSlots - this.selectedAgentIds.length;
+      this.launchBtn.setText(`[ Select strategy and ${remaining} agent${remaining > 1 ? 's' : ''} ]`);
+      this.launchBtn.setColor('#30363d');
+    } else if (!hasStrategy) {
+      this.launchBtn.setText('[ Select a strategy to continue ]');
+      this.launchBtn.setColor('#30363d');
+    } else if (!agentsFull) {
+      const remaining = state.agentSlots - this.selectedAgentIds.length;
+      this.launchBtn.setText(`[ Select ${remaining} more agent${remaining > 1 ? 's' : ''} ]`);
+      this.launchBtn.setColor('#30363d');
+    } else {
+      const option = STRATEGIES.find(s => s.id === this.selectedStrategy)!;
+      this.launchBtn.setText(`[ Launch: ${option.icon} ${option.name} ]`);
+      this.launchBtn.setColor('#58a6ff');
+      this.launchBtn.setInteractive({ useHandCursor: true });
+      this.launchBtn.on('pointerdown', () => this.launch());
+    }
+  }
+
   private launch(): void {
     const state = getState();
-    // Write selected agents, default to turbo if none chosen
-    state.activeAgents = this.selectedAgentIds.length > 0 ? [...this.selectedAgentIds] : ['turbo'];
+    state.activeAgents = [...this.selectedAgentIds];
     this.scene.start('Execution');
   }
 }
