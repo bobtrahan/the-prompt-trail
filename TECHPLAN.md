@@ -130,14 +130,27 @@ gamedevjs-2026/
 - [ ] Morning briefing news ticker
 - [ ] Class select with character descriptions
 
-### Phase 5: Juice + Deploy (Days 10-12, Apr 23-25)
-- [ ] Screen effects (glitch for errors, screen shake, CRT scanlines for rare events)
-- [ ] Balance pass (playtesting, tuning numbers)
-- [ ] Voice narration (stretch goal — TTS for key moments)
-- [ ] Final score / epilogue screen
+### Phase 5.5: Bug Bounty Polish ✅ (Apr 14)
+- [x] IDE error chip visuals, per-type animations, combo counter, miss penalties, catch effects
+
+### Phase 5.6: Visual Audit ✅ (Apr 15)
+- [x] 18 UI improvement tasks across 3 tiers — all landed and verified
+
+### Phase 6: Code Crusades ✅ (Apr 15)
+- [x] arch → test → dead → type (size/naming skipped — low ROI)
+- [x] vitest: 110 tests, `strict: true`, zero TS errors
+- [x] Caught `openSource` casing bug in item data
+
+### Phase 6.5: Balance + Remaining Visual Polish (Apr 16+)
+- [ ] Balance pass (playtesting, telemetry review, tuning)
+- [ ] Per-class terminal themes
+- [ ] Voice narration (stretch goal)
+
+### Phase 7: Deploy + Submit (Apr 25-26)
+- [ ] Vite production build + test
 - [ ] Deploy to itch.io, GitHub Pages, Wavedash
 - [ ] README, screenshots, jam page description
-- [ ] Submit to challenges
+- [ ] Submit to all 3 challenges
 
 ### Day 13 (Apr 26) — Buffer
 - Bug fixes, last-minute polish, submission

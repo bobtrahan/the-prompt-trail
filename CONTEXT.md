@@ -155,11 +155,25 @@ gamedevjs-2026/
 - [x] Combo counter — 2s window, ×0.25 multiplier per chain, "COMBO ×N" UI, shake scales with combo
 - [x] End screen shows misclicks (red), escaped bugs (red), HP bonus (green), best combo (green) with dynamic height
 
+**Phase 5.6: Visual Audit** ✅ (Apr 15)
+- [x] Screenshot all 14 screens, vision model analysis
+- [x] 18 prioritized UI improvement tasks across 3 tiers — all landed and verified
+- [x] Tier 1 (T1-T6): BIOS POST boot, class card identity, text contrast, title polish, system tray, grade slam
+- [x] Tier 2 (T7-T12): procedural wallpapers, briefing density, execution panels, token market detail, results overhaul, night atmosphere
+- [x] Tier 3 (T13-T18): window drop shadows, button FX, scanline overlay, ticker redesign, bug bounty contrast, grid lines
+- [x] Specs in VISUAL-AUDIT.md, TASKS-VISUAL-T1-T6.md, T7-T12.md, T13-T18.md. Screenshots in audit-screenshots/
+
+**Phase 6: Code Crusades** ✅ (Apr 15)
+- [x] **arch-crusade** — Tasks A-E: extract TypingTarget interface, move PlayerClass/Strategy/ModelTier to playerClass.ts, remove duplicate AgentDef, move ClassDef to classes.ts, add AgentSystem/ProjectSystem thin accessors
+- [x] **test-crusade** — vitest installed, 110 tests across 7 suites (ShopSystem, EconomySystem, ScoringSystem, AgentSystem, projects, agents, items). Caught real bug: `openSource` vs `opensource` ModelTier casing mismatch in item data.
+- [x] **dead-crusade** — removed PlaceholderEvent/EventTag dead exports, orphaned ProjectSystem.ts, 4 unguarded console.logs. 23 lines buried.
+- [x] **type-crusade** — `strict: true` in tsconfig, exhaustive `never` switches in all system files, eliminated 5 `any` types and 12 `as` casts, added `isModelTier()` type guard, `global.d.ts` for window extensions
+- [x] size/naming crusades skipped (low ROI for jam pace)
+- [x] TS build: zero errors. Test suite: 110 passing.
+
 ### Remaining
-- [ ] Visual audit — screenshot all 14 screens, vision model analysis, prioritized UI improvement plan
-- [ ] Code crusades (Church plugin) — planned order: arch, test, dead, type, size, naming
 - [ ] Balance tuning — play 2-3 runs, review telemetry, adjust difficulty curve, costs, event frequency
-- [ ] Per-class visual differentiation — wallpapers, terminal themes beyond accent colors
+- [ ] Per-class visual differentiation — terminal themes beyond accent colors (wallpapers already done in T7)
 - [ ] Deploy — itch.io, GitHub Pages, Wavedash. Vite build + test
 - [ ] README + screenshots for jam submission
 - [ ] Voice narrator (stretch goal) — TTS for class intros, day intros, rare events
@@ -173,15 +187,16 @@ gamedevjs-2026/
 | 4: Polish | Apr 20-22 | ✅ Complete (phases 4 + 4.5) |
 | 5: Audio + Consumables | Apr 14 | ✅ Complete (ahead of schedule) |
 | 5.5: Bug Bounty Polish | Apr 14 | ✅ Complete |
-| 5.6: Visual Audit | Apr 15 | Next up |
-| 6: Crusades + Balance + Visuals | Apr 15-16 | Pending |
+| 5.6: Visual Audit | Apr 15 | ✅ Complete (18 tasks, 3 tiers) |
+| 6: Code Crusades | Apr 15 | ✅ Complete (arch, test, dead, type) |
+| 6.5: Balance + Visuals | Apr 16+ | Pending |
 | 7: Deploy + Submit | Apr 25-26 | Pending |
 
 ## Standards
 
 - Every code change → `git add` + `git commit`. Uncommitted = unfinished.
-- TypeScript strict (but noUnusedLocals/Params off for jam speed).
-- No unit tests (jam pace). Manual playtesting after each phase.
+- TypeScript `strict: true` (noUnusedLocals/Params off for jam speed).
+- Vitest test suite: 110 tests across 7 files. Run `npm test` in game/.
 - Agents handle implementation: Forge (complex/multi-file), Patch (clear-spec single-file), Chip (trivial). Route dispatches.
 
 ## Workflow
