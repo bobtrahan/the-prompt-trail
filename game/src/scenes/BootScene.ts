@@ -11,9 +11,12 @@ export class BootScene extends Phaser.Scene {
     // For now, just show a loading bar
     AudioManager.preload(this);
     const { width, height } = this.cameras.main;
-    const bar = this.add.rectangle(width / 2, height / 2, 0, 4, 0x58a6ff);
+    const barWidth = 300;
+    const barX = (width - barWidth) / 2;
+    const barBg = this.add.rectangle(width / 2, height / 2, barWidth, 4, 0x21262d).setOrigin(0.5);
+    const bar = this.add.rectangle(barX, height / 2, 0, 4, 0x58a6ff).setOrigin(0, 0.5);
     this.load.on('progress', (value: number) => {
-      bar.width = 300 * value;
+      bar.width = barWidth * value;
     });
   }
 
