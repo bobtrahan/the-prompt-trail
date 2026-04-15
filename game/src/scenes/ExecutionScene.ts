@@ -333,7 +333,7 @@ export class ExecutionScene extends Phaser.Scene {
       this.showCompletionChoice();
     } else if (this.inOvertime) {
       this.overtimePromptsCompleted++;
-      this.overtimeBonus = Math.min(20, this.overtimeBonus + 1);
+      this.overtimeBonus += 3;
       if (this.overtimeText) {
         this.overtimeText.setText(`Production ♙: +${this.overtimeBonus}`);
       }
