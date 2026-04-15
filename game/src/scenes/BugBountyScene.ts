@@ -136,6 +136,8 @@ export class BugBountyScene extends Phaser.Scene {
   private totalEarned = 0;
   private lastMissClick = 0;
   private timePenalty = 0;
+  private missClicks = 0;
+  private escapedBugs = 0;
   private startTime = 0;
   private lastCatchTime = 0;
   private comboCount = 0;
@@ -155,6 +157,8 @@ export class BugBountyScene extends Phaser.Scene {
     this.totalEarned = 0;
     this.lastMissClick = 0;
     this.timePenalty = 0;
+    this.missClicks = 0;
+    this.escapedBugs = 0;
     this.lastSpawn = 0;
     this.lastCatchTime = 0;
     this.comboCount = 0;
@@ -238,6 +242,7 @@ export class BugBountyScene extends Phaser.Scene {
     this.lastMissClick = now;
 
     this.timePenalty += 1000;
+    this.missClicks++;
     AudioManager.getInstance().playSFX('bug-miss');
 
     const flash = this.add.rectangle(this.gridX, this.gridY, this.gridW, this.gridH, 0xff0000, 0.15)
@@ -659,6 +664,7 @@ export class BugBountyScene extends Phaser.Scene {
       });
     } else {
       this.totalEarned = Math.max(0, this.totalEarned - 5);
+      this.escapedBugs++;
       this.updateStats();
       AudioManager.getInstance().playSFX('bug-miss');
 
@@ -718,28 +724,34 @@ export class BugBountyScene extends Phaser.Scene {
     const overlayX = GAME_WIDTH / 2;
     const overlayY = GAME_HEIGHT / 2;
 
-    const overlay = this.add.rectangle(overlayX, overlayY, WIN_W - 40, 260, 0x0f1117, 0.95)
+    type LineEntry = { text: string; color: string; size: string };
+    const lines: LineEntry[] = [
+      { text: "Time's up!", color: '#58a6ff', size: '26px' },
+      { text: `Bugs squashed: ${this.bugCount}`, color: '#e6edf3', size: '16px' },
+      { text: `Earned: $${this.totalEarned}`, color: '#e6edf3', size: '16px' },
+    ];
+    if (this.missClicks > 0) lines.push({ text: `Misclicks: ${this.missClicks} (−${this.missClicks}s)`, color: '#f85149', size: '14px' });
+    if (this.escapedBugs > 0) lines.push({ text: `Escaped: ${this.escapedBugs} (−$${this.escapedBugs * 5})`, color: '#f85149', size: '14px' });
+    if (bonusHp) lines.push({ text: '+5 HP hardware repair bonus', color: '#3fb950', size: '16px' });
+    if (this.maxCombo >= 2) lines.push({ text: `Best combo: ×${this.maxCombo}`, color: '#3fb950', size: '16px' });
+
+    const overlayH = 120 + lines.length * 34;
+    const overlay = this.add.rectangle(overlayX, overlayY, WIN_W - 40, overlayH, 0x0f1117, 0.95)
       .setDepth(50).setStrokeStyle(1, COLORS.windowBorder);
 
-    const lines: string[] = [
-      "Time's up!",
-      `Bugs squashed: ${this.bugCount}`,
-      `Earned: $${this.totalEarned}`,
-    ];
-    if (bonusHp) lines.push('+5 HP hardware repair bonus');
-    if (this.maxCombo >= 2) lines.push(`Best combo: ×${this.maxCombo}`);
-
+    const startY = overlayY - (lines.length * 34) / 2;
     lines.forEach((line, i) => {
-      this.add.text(overlayX, overlayY - 70 + i * 34, line, {
+      this.add.text(overlayX, startY + i * 34, line.text, {
         fontFamily: 'monospace',
-        fontSize: i === 0 ? '26px' : '16px',
-        color: i === 0 ? '#58a6ff' : bonusHp && i === lines.length - 1 ? '#3fb950' : '#e6edf3',
+        fontSize: line.size,
+        color: line.color,
       }).setOrigin(0.5).setDepth(51);
     });
 
     const btnLabel = returnScene === 'Results' ? '[ Collect → Results ]' : '[ Collect → Night ]';
 
-    const btn = this.add.text(overlayX, overlayY + 90, btnLabel, {
+    const btnY = startY + lines.length * 34 + 20;
+    const btn = this.add.text(overlayX, btnY, btnLabel, {
       fontFamily: 'monospace',
       fontSize: '16px',
       color: '#58a6ff',
