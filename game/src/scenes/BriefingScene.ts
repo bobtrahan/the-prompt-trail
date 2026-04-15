@@ -192,16 +192,25 @@ export class BriefingScene extends Phaser.Scene {
       fontFamily: 'monospace', fontSize: '13px', color: '#9da5b0', letterSpacing: 1,
     }));
 
-    // Ticker band
+    // Ticker band — dark background with border
     const bandY = tickerY + 22;
     const bandH = 28;
-    const band = this.add.rectangle(cx, bandY, ca.width, bandH, 0x0d1117).setOrigin(0);
+    const band = this.add.rectangle(cx, bandY, ca.width, bandH, 0x161b22).setOrigin(0);
+    band.setStrokeStyle(1, 0x30363d);
     win.add(band);
 
-    // Mask so text scrolls inside the band
+    // Static 📰 label at left edge of ticker band
+    const tickerLabel = this.add.text(
+      WIN_X + cx + 4, WIN_Y + bandY + 6,
+      '📰',
+      { fontFamily: 'monospace', fontSize: '13px', color: '#9da5b0' }
+    );
+    win.add(tickerLabel);
+
+    // Mask so text scrolls inside the band, starting ~24px after the emoji label
     const maskShape = this.add.graphics();
     maskShape.fillStyle(0xffffff);
-    maskShape.fillRect(WIN_X + cx, WIN_Y + bandY, ca.width, bandH);
+    maskShape.fillRect(WIN_X + cx + 24, WIN_Y + bandY, ca.width - 24, bandH);
     const mask = maskShape.createGeometryMask();
 
     const headlines = getHeadlinesForDay(state.day);
