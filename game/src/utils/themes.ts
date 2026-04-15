@@ -1,5 +1,5 @@
 import { COLORS, CLASS_THEMES } from './constants';
-import type { PlayerClass } from '../systems/GameState';
+import type { PlayerClass } from './playerClass';
 
 export interface Theme {
   bg: number;

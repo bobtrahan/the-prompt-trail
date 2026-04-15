@@ -1,8 +1,6 @@
 import type { DayScore } from './ScoringSystem';
 
-export type PlayerClass = 'techBro' | 'indieHacker' | 'collegeStudent' | 'corporateDev';
-export type Strategy = 'planThenBuild' | 'justStart' | 'oneShot' | 'vibeCode';
-export type ModelTier = 'free' | 'standard' | 'frontier' | 'local' | 'sketchy' | 'openSource';
+export type { PlayerClass, Strategy, ModelTier } from '../utils/playerClass';
 
 export interface ClassDef {
   id: PlayerClass;

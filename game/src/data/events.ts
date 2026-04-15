@@ -1,4 +1,4 @@
-import type { PlayerClass } from '../systems/GameState';
+import type { PlayerClass } from '../utils/playerClass';
 
 export interface EventEffect {
   type: 'budget' | 'time' | 'hardware' | 'reputation' | 'flag' | 'agentSpeed' | 'modelSwitch';
