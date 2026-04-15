@@ -49,7 +49,7 @@ export class NightScene extends Phaser.Scene {
     nightWin.add(this.add.text(cx, cy + 35, '(Your hardware hums in the dark.)', {
       fontFamily: 'monospace',
       fontSize: '14px',
-      color: '#8b949e',
+      color: '#9da5b0',
       fontStyle: 'italic',
     }));
 
@@ -72,7 +72,7 @@ export class NightScene extends Phaser.Scene {
       nightWin.add(this.add.text(cx, cy + 135, `Difficulty: ${stars}`, {
         fontFamily: 'monospace',
         fontSize: '16px',
-        color: '#8b949e',
+        color: '#9da5b0',
       }));
     } else {
       nightWin.add(this.add.text(cx, cy + 110, `The Final Stretch...`, {
@@ -110,7 +110,7 @@ export class NightScene extends Phaser.Scene {
       nightWin.add(this.add.text(cx + 160, cy + 258, '(Already played tonight)', {
         fontFamily: 'monospace',
         fontSize: '12px',
-        color: '#8b949e',
+        color: '#9da5b0',
       }));
     } else {
       bountyBtn.setInteractive({ useHandCursor: true });

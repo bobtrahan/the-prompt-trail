@@ -116,7 +116,7 @@ export class TokenMarketScene extends Phaser.Scene {
       const text = this.add.text(tabX, tabY, label, {
         fontFamily: 'monospace',
         fontSize: '13px',
-        color: isActive ? '#e6edf3' : '#8b949e',
+        color: isActive ? '#e6edf3' : '#9da5b0',
       }).setInteractive({ useHandCursor: true });
 
       const underline = this.add.rectangle(
@@ -129,7 +129,7 @@ export class TokenMarketScene extends Phaser.Scene {
         if (category !== this.activeTab) text.setColor('#c9d1d9');
       });
       text.on('pointerout', () => {
-        if (category !== this.activeTab) text.setColor('#8b949e');
+        if (category !== this.activeTab) text.setColor('#9da5b0');
       });
       text.on('pointerdown', () => this.selectTab(category));
 
@@ -144,7 +144,7 @@ export class TokenMarketScene extends Phaser.Scene {
     this.activeTab = category;
     this.tabObjects.forEach(({ category: cat, text, underline }) => {
       const active = cat === category;
-      text.setColor(active ? '#e6edf3' : '#8b949e');
+      text.setColor(active ? '#e6edf3' : '#9da5b0');
       underline.setVisible(active);
     });
     this.renderItems();
@@ -204,7 +204,7 @@ export class TokenMarketScene extends Phaser.Scene {
       const descText = this.add.text(colDescX, ry + 22, item.description, {
         fontFamily: 'monospace',
         fontSize: '13px',
-        color: '#8b949e',
+        color: '#9da5b0',
       });
       this.marketWin.add(descText);
       this.itemListObjects.push(descText);
@@ -283,7 +283,7 @@ export class TokenMarketScene extends Phaser.Scene {
       const emptyText = this.add.text(cx, listStartY + 20, 'No items available yet.', {
         fontFamily: 'monospace',
         fontSize: '13px',
-        color: '#8b949e',
+        color: '#9da5b0',
       });
       this.marketWin.add(emptyText);
       this.itemListObjects.push(emptyText);

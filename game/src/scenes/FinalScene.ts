@@ -91,16 +91,16 @@ export class FinalScene extends Phaser.Scene {
     }).setOrigin(0.5, 0));
 
     this.window.add(this.add.text(x + width / 2, y + 38, `Class: ${classDef.name}`, {
-      fontFamily: 'monospace', fontSize: '14px', color: '#8b949e',
+      fontFamily: 'monospace', fontSize: '14px', color: '#9da5b0',
     }).setOrigin(0.5, 0));
 
     // Divider
     this.window.add(this.add.text(x + width / 2, y + 68, '── SCORE BREAKDOWN ──', {
-      fontFamily: 'monospace', fontSize: '12px', color: '#8b949e',
+      fontFamily: 'monospace', fontSize: '12px', color: '#9da5b0',
     }).setOrigin(0.5, 0));
 
     // Score breakdown labels
-    const labelStyle = { fontFamily: 'monospace', fontSize: '14px', color: '#8b949e' };
+    const labelStyle = { fontFamily: 'monospace', fontSize: '14px', color: '#9da5b0' };
     const valueStyle = { fontFamily: 'monospace', fontSize: '14px', color: '#e6edf3' };
 
     this.window.add(this.add.text(x + 20, y + 95, 'Raw Reputation:', labelStyle));
@@ -131,7 +131,7 @@ export class FinalScene extends Phaser.Scene {
     // Flavor text
     const flavor = RANK_FLAVOR[this.rank] ?? '';
     this.flavorText = this.add.text(x + width / 2, y + 205, flavor, {
-      fontFamily: 'monospace', fontSize: '14px', color: '#8b949e',
+      fontFamily: 'monospace', fontSize: '14px', color: '#9da5b0',
       wordWrap: { width: width - 40 }, align: 'center',
     }).setOrigin(0.5, 0).setAlpha(0);
     this.window.add(this.flavorText);
@@ -140,7 +140,7 @@ export class FinalScene extends Phaser.Scene {
     const totalBudgetSpent = classDef.startingBudget - state.budget;
     const statsLine = `Days Survived: ${Math.min(state.day, 13)}   ·   Budget Spent: $${totalBudgetSpent.toLocaleString()}   ·   Bugs Squashed: ${state.totalBugsSquashed}`;
     this.statsText = this.add.text(x + width / 2, y + 340, statsLine, {
-      fontFamily: 'monospace', fontSize: '13px', color: '#8b949e',
+      fontFamily: 'monospace', fontSize: '13px', color: '#9da5b0',
     }).setOrigin(0.5, 0).setAlpha(0);
     this.window.add(this.statsText);
 

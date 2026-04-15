@@ -39,7 +39,7 @@ export class Taskbar {
     const style: Phaser.Types.GameObjects.Text.TextStyle = {
       fontFamily: 'monospace',
       fontSize: '12px',
-      color: '#8b949e',
+      color: '#9da5b0',
     };
 
     // Left side — system items

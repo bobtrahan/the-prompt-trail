@@ -82,11 +82,11 @@ export class ResultsScene extends Phaser.Scene {
 
     // Divider
     this.window.add(this.add.text(x + width/2, y + 45, '── BREAKDOWN ──', {
-      fontFamily: 'monospace', fontSize: '12px', color: '#8b949e'
+      fontFamily: 'monospace', fontSize: '12px', color: '#9da5b0'
     }).setOrigin(0.5));
 
     // Stats Labels
-    const labelStyle = { fontFamily: 'monospace', fontSize: '14px', color: '#8b949e' };
+    const labelStyle = { fontFamily: 'monospace', fontSize: '14px', color: '#9da5b0' };
     const valueStyle = { fontFamily: 'monospace', fontSize: '14px', color: '#e6edf3' };
 
     this.window.add(this.add.text(x + 20, y + 75, 'Progress:', labelStyle));
@@ -121,7 +121,7 @@ export class ResultsScene extends Phaser.Scene {
 
     // Footer Divider
     this.window.add(this.add.text(x + width/2, y + 205 + yShift, '───────────', {
-      fontFamily: 'monospace', fontSize: '12px', color: '#8b949e'
+      fontFamily: 'monospace', fontSize: '12px', color: '#9da5b0'
     }).setOrigin(0.5));
 
     // Total

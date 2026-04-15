@@ -60,7 +60,7 @@ export class PlanningScene extends Phaser.Scene {
 
     // Header
     this.add.text(12, 8, `PromptOS  ·  Day ${state.day}/13  ·  Planning`, {
-      fontFamily: 'monospace', fontSize: '12px', color: '#8b949e',
+      fontFamily: 'monospace', fontSize: '12px', color: '#9da5b0',
     });
 
     // ── Strategy picker window ──────────────────────────────────────────
@@ -74,7 +74,7 @@ export class PlanningScene extends Phaser.Scene {
 
     const sArea = stratWin.contentArea;
     this.add.text(40 + sArea.x, 50 + sArea.y, 'Choose your approach:', {
-      fontFamily: 'monospace', fontSize: '14px', color: '#8b949e',
+      fontFamily: 'monospace', fontSize: '14px', color: '#9da5b0',
     });
 
     this.modelRowBgs = new Map();
@@ -99,7 +99,7 @@ export class PlanningScene extends Phaser.Scene {
         });
       }
       this.add.text(cardX + 50, cardY + 38, s.desc, {
-        fontFamily: 'monospace', fontSize: '12px', color: '#8b949e',
+        fontFamily: 'monospace', fontSize: '12px', color: '#9da5b0',
         wordWrap: { width: sArea.width - 80 },
       });
       this.add.text(cardX + sArea.width - 120, cardY + 12, s.riskLabel, {
@@ -152,7 +152,7 @@ export class PlanningScene extends Phaser.Scene {
     const my = 28 + mArea.y;
 
     this.add.text(mx, my, 'Select AI Model:', {
-      fontFamily: 'monospace', fontSize: '12px', color: '#8b949e',
+      fontFamily: 'monospace', fontSize: '12px', color: '#9da5b0',
     });
 
     visibleModels.forEach((model, i) => {
@@ -190,7 +190,7 @@ export class PlanningScene extends Phaser.Scene {
           fontFamily: 'monospace', fontSize: '11px', color: '#d29922',
         });
         this.add.text(mx + rowW - 4, rowY + 5, costLabel, {
-          fontFamily: 'monospace', fontSize: '11px', color: '#8b949e',
+          fontFamily: 'monospace', fontSize: '11px', color: '#9da5b0',
         }).setOrigin(1, 0);
       } else {
         // Locked — show grayed with lock
@@ -222,7 +222,7 @@ export class PlanningScene extends Phaser.Scene {
 
     // Slot counter label
     this.agentSlotLabel = this.add.text(ax, ay, `Select Agents  (0 / ${state.agentSlots})`, {
-      fontFamily: 'monospace', fontSize: '12px', color: '#8b949e',
+      fontFamily: 'monospace', fontSize: '12px', color: '#9da5b0',
     });
 
     // Agent rows
@@ -247,7 +247,7 @@ export class PlanningScene extends Phaser.Scene {
         fontFamily: 'monospace', fontSize: '10px', color: '#6e7681',
       });
       this.add.text(ax + rowW - 8, rowY + 4, agent.traitEffect.split('.')[0], {
-        fontFamily: 'monospace', fontSize: '9px', color: '#8b949e',
+        fontFamily: 'monospace', fontSize: '9px', color: '#9da5b0',
         wordWrap: { width: 160 },
         align: 'right',
       }).setOrigin(1, 0);
@@ -283,7 +283,7 @@ export class PlanningScene extends Phaser.Scene {
     }).setOrigin(0.5);
 
     this.strategyPreviewText = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 55, '', {
-      fontFamily: 'monospace', fontSize: '12px', color: '#8b949e',
+      fontFamily: 'monospace', fontSize: '12px', color: '#9da5b0',
     }).setOrigin(0.5);
   }
 

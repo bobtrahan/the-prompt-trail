@@ -85,14 +85,14 @@ export class BootScene extends Phaser.Scene {
           const textObj = this.add.text(postX + prefixObj.width, y, line.text, {
             fontFamily: 'monospace',
             fontSize: '13px',
-            color: '#8b949e',
+            color: '#9da5b0',
           });
           allTextObjects.push(prefixObj, textObj);
         } else {
           const textObj = this.add.text(postX, y, line.text, {
             fontFamily: 'monospace',
             fontSize: '13px',
-            color: '#8b949e',
+            color: '#9da5b0',
           });
           allTextObjects.push(textObj);
         }
@@ -121,7 +121,7 @@ export class BootScene extends Phaser.Scene {
       const version = this.add.text(0, 20, 'v1.0.13', {
         fontFamily: 'monospace',
         fontSize: '14px',
-        color: '#8b949e',
+        color: '#9da5b0',
       }).setOrigin(0.5);
       
       splashContainer.add([title, version]);

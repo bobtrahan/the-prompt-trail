@@ -23,7 +23,7 @@ export class ClassSelectScene extends Phaser.Scene {
     this.add.text(GAME_WIDTH / 2, 70, 'Select your developer profile:', {
       fontFamily: 'monospace',
       fontSize: '14px',
-      color: '#8b949e',
+      color: '#9da5b0',
     }).setOrigin(0.5);
 
     const classes = ['techBro', 'corporateDev', 'indieHacker', 'collegeStudent'].map(id => CLASS_DEFS[id as PlayerClass]);
@@ -58,7 +58,7 @@ export class ClassSelectScene extends Phaser.Scene {
       const descText = this.add.text(x, y - 90, def.description, {
         fontFamily: 'monospace',
         fontSize: '13px',
-        color: '#8b949e',
+        color: '#9da5b0',
         wordWrap: { width: cardWidth - 30 },
         align: 'center',
       }).setOrigin(0.5, 0);

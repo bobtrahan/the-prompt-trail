@@ -83,10 +83,10 @@ export class Window {
       this.closeBtn = config.scene.add.text(
         config.width - this.BORDER_WIDTH - 24, this.BORDER_WIDTH + 5,
         '✕',
-        { fontFamily: 'monospace', fontSize: '14px', color: '#8b949e' }
+        { fontFamily: 'monospace', fontSize: '14px', color: '#9da5b0' }
       ).setInteractive({ useHandCursor: true });
       this.closeBtn.on('pointerover', () => this.closeBtn?.setColor('#f85149'));
-      this.closeBtn.on('pointerout', () => this.closeBtn?.setColor('#8b949e'));
+      this.closeBtn.on('pointerout', () => this.closeBtn?.setColor('#9da5b0'));
       this.closeBtn.on('pointerdown', () => config.onClose?.());
       this.container.add(this.closeBtn);
     }

@@ -125,7 +125,7 @@ export class BriefingScene extends Phaser.Scene {
     const project = PROJECTS[Math.min(state.day - 1, PROJECTS.length - 1)];
 
     win.add(this.add.text(cx, ca.y, '📋 TODAY\'S PROJECT', {
-      fontFamily: 'monospace', fontSize: '13px', color: '#8b949e', letterSpacing: 1,
+      fontFamily: 'monospace', fontSize: '13px', color: '#9da5b0', letterSpacing: 1,
     }));
 
     const projectCardY = ca.y + 22;
@@ -150,7 +150,7 @@ export class BriefingScene extends Phaser.Scene {
 
     // Flavor text
     win.add(this.add.text(cx + 12, projectCardY + 38, `"${project.flavor}"`, {
-      fontFamily: 'monospace', fontSize: '12px', color: '#8b949e', fontStyle: 'italic',
+      fontFamily: 'monospace', fontSize: '12px', color: '#9da5b0', fontStyle: 'italic',
       wordWrap: { width: ca.width - 180 },
     }));
 
@@ -163,7 +163,7 @@ export class BriefingScene extends Phaser.Scene {
     const resY = projectCardY + projectCardH + 20;
 
     win.add(this.add.text(cx, resY, '📊 RESOURCES', {
-      fontFamily: 'monospace', fontSize: '13px', color: '#8b949e', letterSpacing: 1,
+      fontFamily: 'monospace', fontSize: '13px', color: '#9da5b0', letterSpacing: 1,
     }));
 
     const isCorp = state.playerClass === 'corporateDev';
@@ -186,7 +186,7 @@ export class BriefingScene extends Phaser.Scene {
     const tickerY = resY + 65;
 
     win.add(this.add.text(cx, tickerY, '📰 AI NEWS TICKER', {
-      fontFamily: 'monospace', fontSize: '13px', color: '#8b949e', letterSpacing: 1,
+      fontFamily: 'monospace', fontSize: '13px', color: '#9da5b0', letterSpacing: 1,
     }));
 
     // Ticker band

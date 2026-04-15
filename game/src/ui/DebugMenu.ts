@@ -131,7 +131,7 @@ export class DebugMenu extends Phaser.GameObjects.Container {
 
     // ── Skip to Day ──
     const skipLabel = () => `[ Skip to Day ${this.skipDay}${this.skipPending ? ' ✓' : ''} ]`;
-    makeButton(scene, this, skipLabel(), innerX, curY, '#8b949e', (txt) => {
+    makeButton(scene, this, skipLabel(), innerX, curY, '#9da5b0', (txt) => {
       if (!this.skipPending) {
         // First click: increment day
         this.skipDay = this.skipDay >= 14 ? 1 : this.skipDay + 1;
@@ -147,28 +147,28 @@ export class DebugMenu extends Phaser.GameObjects.Container {
     curY += BTN_H + 4;
 
     // ── +$500 ──
-    makeButton(scene, this, '[ +$500 ]', innerX, curY, '#8b949e', () => {
+    makeButton(scene, this, '[ +$500 ]', innerX, curY, '#9da5b0', () => {
       getState().budget += 500;
       this.taskbarRef?.refresh();
     });
     curY += BTN_H + 4;
 
     // ── +50 Rep ──
-    makeButton(scene, this, '[ +50 Rep ]', innerX, curY, '#8b949e', () => {
+    makeButton(scene, this, '[ +50 Rep ]', innerX, curY, '#9da5b0', () => {
       getState().reputation += 50;
       this.taskbarRef?.refresh();
     });
     curY += BTN_H + 4;
 
     // ── Unlock All Models ──
-    makeButton(scene, this, '[ Unlock All Models ]', innerX, curY, '#8b949e', () => {
+    makeButton(scene, this, '[ Unlock All Models ]', innerX, curY, '#9da5b0', () => {
       const s = getState();
       s.unlockedModels = ['free', 'standard', 'frontier', 'local', 'sketchy', 'openSource'];
     });
     curY += BTN_H + 4;
 
     // ── Unlock All Items ──
-    makeButton(scene, this, '[ Unlock All Items ]', innerX, curY, '#8b949e', () => {
+    makeButton(scene, this, '[ Unlock All Items ]', innerX, curY, '#9da5b0', () => {
       const s = getState();
       const hwIds = SHOP_ITEMS
         .filter(i => i.category === 'hardware')
@@ -181,7 +181,7 @@ export class DebugMenu extends Phaser.GameObjects.Container {
     curY += BTN_H + 4;
 
     // ── Final Scene ──
-    makeButton(scene, this, '[ → Final Scene ]', innerX, curY, '#8b949e', () => {
+    makeButton(scene, this, '[ → Final Scene ]', innerX, curY, '#9da5b0', () => {
       scene.scene.start('Final');
     });
     curY += BTN_H + 4;
@@ -190,7 +190,7 @@ export class DebugMenu extends Phaser.GameObjects.Container {
     const godLabel = () =>
       (window as any).__GOD_MODE ? '[ God Mode: ON ]' : '[ God Mode: OFF ]';
     const godColor = () =>
-      (window as any).__GOD_MODE ? '#3fb950' : '#8b949e';
+      (window as any).__GOD_MODE ? '#3fb950' : '#9da5b0';
 
     makeButton(scene, this, godLabel(), innerX, curY, godColor(), (txt) => {
       (window as any).__GOD_MODE = !(window as any).__GOD_MODE;
@@ -200,13 +200,13 @@ export class DebugMenu extends Phaser.GameObjects.Container {
     curY += BTN_H + 4;
 
     // ── Export Telemetry ──
-    makeButton(scene, this, '[ 📊 Export Telemetry ]', innerX, curY, '#8b949e', (txt) => {
+    makeButton(scene, this, '[ 📊 Export Telemetry ]', innerX, curY, '#9da5b0', (txt) => {
       const result = Telemetry.downloadJson();
       if (result === null) {
         const orig = txt.text;
         txt.setText('No data').setColor('#f85149');
         scene.time.delayedCall(1500, () => {
-          txt.setText(orig).setColor('#8b949e');
+          txt.setText(orig).setColor('#9da5b0');
         });
       }
     });

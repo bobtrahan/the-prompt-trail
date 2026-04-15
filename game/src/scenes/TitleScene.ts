@@ -29,7 +29,7 @@ export class TitleScene extends Phaser.Scene {
     this.add.text(cx, cy - 20, 'An AI Developer Survival Simulator', {
       fontFamily: 'monospace',
       fontSize: '18px',
-      color: '#8b949e',
+      color: '#9da5b0',
     }).setOrigin(0.5);
 
     // Start prompt

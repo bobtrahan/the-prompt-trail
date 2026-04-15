@@ -348,7 +348,7 @@ export class ExecutionScene extends Phaser.Scene {
     this.add.text(rX, rY + 84, `📡 Model: ${state.model}`, rStyle);
 
     this.add.text(rX, rY + 120, '⏱️ Time Remaining:', {
-      fontFamily: 'monospace', fontSize: '12px', color: '#8b949e',
+      fontFamily: 'monospace', fontSize: '12px', color: '#9da5b0',
     });
     this.timeBg = this.add.rectangle(rX, rY + 140, rArea.width - 16, 14, 0x21262d).setOrigin(0);
     this.timeBar = this.add.rectangle(rX, rY + 140, rArea.width - 16, 14, COLORS.warning).setOrigin(0);
