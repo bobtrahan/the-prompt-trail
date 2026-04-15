@@ -355,6 +355,7 @@ export class BugBountyScene extends Phaser.Scene {
     const returnScene = state.bugHuntReturnScene || 'Night';
     state.bugHuntReturnScene = 'Night';
     state.budget += this.totalEarned;
+    state.totalBugsSquashed += this.bugCount;
     // Only mark as played if this is a regular night session (not a bonus hunt)
     if (returnScene === 'Night') {
       state.bountyPlayedTonight = true;

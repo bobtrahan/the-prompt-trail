@@ -103,6 +103,9 @@ export interface GameState {
   lockedModels: ModelTier[];
   localSlots: number;
 
+  // Final stats tracking
+  totalBugsSquashed: number;
+
   // Last day results snapshot
   lastDayResult?: {
     progress: number;
@@ -141,6 +144,7 @@ function createInitialState(): GameState {
     lockedStrategies: [],
     lockedModels: [],
     localSlots: 0,
+    totalBugsSquashed: 0,
     overtimeBonus: 0,
     bugHuntReturnScene: 'Night',
     dayStartBudget: 0,
