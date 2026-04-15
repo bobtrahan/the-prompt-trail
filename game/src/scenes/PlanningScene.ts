@@ -6,6 +6,7 @@ import { getTheme } from '../utils/themes';
 import { Window } from '../ui/Window';
 import { Taskbar } from '../ui/Taskbar';
 import { EconomySystem } from '../systems/EconomySystem';
+import { AGENT_ROSTER, SYNERGY_PAIRS, CLASH_PAIRS } from '../data/agents';
 
 interface StrategyOption {
   id: Strategy;
@@ -30,6 +31,13 @@ export class PlanningScene extends Phaser.Scene {
   private cards: Phaser.GameObjects.Rectangle[] = [];
   private strategyPreviewText!: Phaser.GameObjects.Text;
 
+  // Agent picker state
+  private selectedAgentIds: string[] = [];
+  private agentRowBgs: Map<string, Phaser.GameObjects.Rectangle> = new Map();
+  private agentCheckmarks: Map<string, Phaser.GameObjects.Text> = new Map();
+  private synergyText!: Phaser.GameObjects.Text;
+  private agentSlotLabel!: Phaser.GameObjects.Text;
+
   constructor() {
     super({ key: 'Planning' });
   }
@@ -39,6 +47,9 @@ export class PlanningScene extends Phaser.Scene {
     const theme = getTheme(state.playerClass ?? undefined);
     this.cameras.main.setBackgroundColor(COLORS.bg);
     this.selectedStrategy = null;
+    this.selectedAgentIds = [];
+    this.agentRowBgs = new Map();
+    this.agentCheckmarks = new Map();
 
     this.taskbar = new Taskbar(this, theme.accent);
 
@@ -47,7 +58,7 @@ export class PlanningScene extends Phaser.Scene {
       fontFamily: 'monospace', fontSize: '12px', color: '#8b949e',
     });
 
-    // Strategy picker window
+    // ── Strategy picker window ──────────────────────────────────────────
     const stratWin = new Window({
       scene: this, x: 40, y: 50,
       width: 700, height: 500,
@@ -101,54 +112,92 @@ export class PlanningScene extends Phaser.Scene {
       }
     });
 
-    // Model info panel (right side)
+    // ── Model info panel (right side, compact) ──────────────────────────
     const modelWin = new Window({
       scene: this, x: 760, y: 28,
-      width: 480, height: 280,
+      width: 480, height: 195,
       title: 'Model: ' + state.model,
       titleIcon: '📡',
       accentColor: theme.accent,
     });
 
     const mArea = modelWin.contentArea;
-    this.add.text(760 + mArea.x, 28 + mArea.y, `Active Model: ${state.model}`, {
-      fontFamily: 'monospace', fontSize: '14px', color: '#e6edf3',
-    });
-    this.add.text(760 + mArea.x, 28 + mArea.y + 28, state.playerClass === 'corporateDev' ? '💳 Company Card' : `Budget: $${state.budget.toLocaleString()}`, {
-      fontFamily: 'monospace', fontSize: '13px', color: '#8b949e',
-    });
-    this.add.text(760 + mArea.x, 28 + mArea.y + 52, `Hardware: ${state.hardwareHp}%`, {
-      fontFamily: 'monospace', fontSize: '13px', color: '#8b949e',
-    });
-    this.add.text(760 + mArea.x, 28 + mArea.y + 80, `Agent Slots: ${state.agentSlots}`, {
-      fontFamily: 'monospace', fontSize: '13px', color: '#8b949e',
-    });
-    this.add.text(760 + mArea.x, 28 + mArea.y + 104, `Daily Cost: $${EconomySystem.getModelDayCost(state.model)}/day`, {
-      fontFamily: 'monospace', fontSize: '13px', color: '#8b949e',
-    });
+    const mx = 760 + mArea.x;
+    const my = 28 + mArea.y;
+    this.add.text(mx, my,      `Active Model: ${state.model}`, { fontFamily: 'monospace', fontSize: '13px', color: '#e6edf3' });
+    this.add.text(mx, my + 24, state.playerClass === 'corporateDev' ? '💳 Company Card' : `Budget: $${state.budget.toLocaleString()}`, { fontFamily: 'monospace', fontSize: '12px', color: '#8b949e' });
+    this.add.text(mx, my + 46, `Hardware: ${state.hardwareHp}%`, { fontFamily: 'monospace', fontSize: '12px', color: '#8b949e' });
+    this.add.text(mx, my + 68, `Agent Slots: ${state.agentSlots}`, { fontFamily: 'monospace', fontSize: '12px', color: '#8b949e' });
+    this.add.text(mx, my + 90, `Daily Cost: $${EconomySystem.getModelDayCost(state.model)}/day`, { fontFamily: 'monospace', fontSize: '12px', color: '#8b949e' });
 
-    // Agent slot (right side)
+    // ── Agent Dashboard (right side, interactive picker) ─────────────────
     const agentWin = new Window({
-      scene: this, x: 760, y: 328,
-      width: 480, height: 280,
+      scene: this, x: 760, y: 238,
+      width: 480, height: 360,
       title: 'Agent Dashboard',
       titleIcon: '🤖',
       accentColor: theme.accent,
     });
 
     const aArea = agentWin.contentArea;
-    this.add.text(760 + aArea.x, 328 + aArea.y, 'Active Agents:', {
-      fontFamily: 'monospace', fontSize: '13px', color: '#8b949e',
-    });
-    // Default agent
-    this.add.text(760 + aArea.x, 328 + aArea.y + 28, '🤖 Turbo — Fast & sloppy. Ships at all costs.', {
-      fontFamily: 'monospace', fontSize: '13px', color: '#e6edf3',
-    });
-    if (state.activeAgents.length === 0) {
-      state.activeAgents = ['turbo'];
-    }
+    const ax = 760 + aArea.x;
+    const ay = 238 + aArea.y;
 
-    // Launch button
+    // Slot counter label
+    this.agentSlotLabel = this.add.text(ax, ay, `Select Agents  (0 / ${state.agentSlots})`, {
+      fontFamily: 'monospace', fontSize: '12px', color: '#8b949e',
+    });
+
+    // Agent rows
+    const ROW_H = 42;
+    AGENT_ROSTER.forEach((agent, i) => {
+      const rowY = ay + 22 + i * ROW_H;
+      const rowW = aArea.width;
+
+      // Background rect (clickable)
+      const bg = this.add.rectangle(ax, rowY, rowW, ROW_H - 3, COLORS.titleBar).setOrigin(0);
+      bg.setInteractive({ useHandCursor: true });
+      this.agentRowBgs.set(agent.id, bg);
+
+      // Speed / quality stars
+      const speedStars = '★'.repeat(agent.speed) + '☆'.repeat(5 - agent.speed);
+      const qualStars  = '★'.repeat(agent.quality) + '☆'.repeat(5 - agent.quality);
+
+      this.add.text(ax + 10, rowY + 4, `🤖 ${agent.name}`, {
+        fontFamily: 'monospace', fontSize: '13px', color: '#e6edf3',
+      });
+      this.add.text(ax + 10, rowY + 22, `${agent.personality}  ·  Spd:${speedStars}  Qual:${qualStars}`, {
+        fontFamily: 'monospace', fontSize: '10px', color: '#6e7681',
+      });
+      this.add.text(ax + rowW - 8, rowY + 4, agent.traitEffect.split('.')[0], {
+        fontFamily: 'monospace', fontSize: '9px', color: '#8b949e',
+        wordWrap: { width: 160 },
+        align: 'right',
+      }).setOrigin(1, 0);
+
+      // Checkmark (hidden until selected)
+      const chk = this.add.text(ax + rowW - 8, rowY + ROW_H - 10, '', {
+        fontFamily: 'monospace', fontSize: '14px', color: '#3fb950',
+      }).setOrigin(1, 1);
+      this.agentCheckmarks.set(agent.id, chk);
+
+      bg.on('pointerdown', () => this.toggleAgent(agent.id));
+      bg.on('pointerover', () => {
+        if (!this.selectedAgentIds.includes(agent.id)) bg.setFillStyle(COLORS.windowBg);
+      });
+      bg.on('pointerout', () => {
+        if (!this.selectedAgentIds.includes(agent.id)) bg.setFillStyle(COLORS.titleBar);
+      });
+    });
+
+    // Synergy / clash indicator
+    const synergyY = ay + 22 + AGENT_ROSTER.length * ROW_H + 6;
+    this.synergyText = this.add.text(ax, synergyY, '', {
+      fontFamily: 'monospace', fontSize: '12px', color: '#3fb950',
+      wordWrap: { width: aArea.width },
+    });
+
+    // ── Launch button ───────────────────────────────────────────────────
     this.launchBtn = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 80, '[ Select a strategy to continue ]', {
       fontFamily: 'monospace', fontSize: '16px', color: '#30363d',
     }).setOrigin(0.5);
@@ -157,6 +206,86 @@ export class PlanningScene extends Phaser.Scene {
       fontFamily: 'monospace', fontSize: '12px', color: '#8b949e',
     }).setOrigin(0.5);
   }
+
+  // ── Agent picker logic ────────────────────────────────────────────────
+
+  private toggleAgent(agentId: string): void {
+    const state = getState();
+    const maxSlots = state.agentSlots;
+    const idx = this.selectedAgentIds.indexOf(agentId);
+
+    if (idx >= 0) {
+      // Deselect
+      this.selectedAgentIds.splice(idx, 1);
+    } else {
+      if (this.selectedAgentIds.length >= maxSlots) {
+        // Deselect oldest (first in array)
+        const evicted = this.selectedAgentIds.shift()!;
+        this.applyRowStyle(evicted, false);
+      }
+      this.selectedAgentIds.push(agentId);
+    }
+
+    this.refreshAgentUI();
+  }
+
+  private applyRowStyle(agentId: string, selected: boolean): void {
+    const bg  = this.agentRowBgs.get(agentId);
+    const chk = this.agentCheckmarks.get(agentId);
+    if (bg) {
+      bg.setFillStyle(selected ? 0x1c3a1c : COLORS.titleBar);
+      bg.setStrokeStyle(selected ? 1 : 0, selected ? 0x3fb950 : 0x000000);
+    }
+    if (chk) chk.setText(selected ? '✔' : '');
+  }
+
+  private refreshAgentUI(): void {
+    const state = getState();
+
+    // Update row styles
+    AGENT_ROSTER.forEach(a => this.applyRowStyle(a.id, this.selectedAgentIds.includes(a.id)));
+
+    // Update slot label
+    this.agentSlotLabel.setText(`Select Agents  (${this.selectedAgentIds.length} / ${state.agentSlots})`);
+
+    // Synergy / clash check
+    this.updateSynergyIndicator();
+  }
+
+  private updateSynergyIndicator(): void {
+    if (this.selectedAgentIds.length < 2) {
+      this.synergyText.setText('');
+      return;
+    }
+
+    // Check synergies
+    for (const pair of SYNERGY_PAIRS) {
+      const allPresent = pair.agents.every(id => this.selectedAgentIds.includes(id));
+      if (allPresent) {
+        const names = pair.agents.map(id => AGENT_ROSTER.find(a => a.id === id)?.name ?? id).join(' + ');
+        const pct = Math.round(pair.effect * 100);
+        this.synergyText.setColor('#3fb950');
+        this.synergyText.setText(`✨ Synergy: ${names} (+${pct}% speed)`);
+        return;
+      }
+    }
+
+    // Check clashes
+    for (const pair of CLASH_PAIRS) {
+      const allPresent = pair.agents.every(id => this.selectedAgentIds.includes(id));
+      if (allPresent) {
+        const names = pair.agents.map(id => AGENT_ROSTER.find(a => a.id === id)?.name ?? id).join(' + ');
+        const pct = Math.round(Math.abs(pair.effect) * 100);
+        this.synergyText.setColor('#f85149');
+        this.synergyText.setText(`⚡ Clash: ${names} (-${pct}% speed)`);
+        return;
+      }
+    }
+
+    this.synergyText.setText('');
+  }
+
+  // ── Strategy selection ────────────────────────────────────────────────
 
   private selectStrategy(option: StrategyOption, index: number): void {
     this.selectedStrategy = option.id;
@@ -175,11 +304,18 @@ export class PlanningScene extends Phaser.Scene {
     this.launchBtn.setColor('#58a6ff');
     this.launchBtn.setInteractive({ useHandCursor: true });
     this.launchBtn.off('pointerdown');
-    this.launchBtn.on('pointerdown', () => this.scene.start('Execution'));
+    this.launchBtn.on('pointerdown', () => this.launch());
 
     const mod = EconomySystem.getStrategyModifier(option.id);
     const totalDayCost = EconomySystem.getModelDayCost(state.model) + mod.strategyCost;
     const qualityLabel = option.id === 'vibeCode' ? '???' : `${mod.qualityMult.toFixed(1)}x`;
     this.strategyPreviewText.setText(`Daily cost: $${totalDayCost} (model $${EconomySystem.getModelDayCost(state.model)} + strategy $${mod.strategyCost}) · Quality: ${qualityLabel}`);
+  }
+
+  private launch(): void {
+    const state = getState();
+    // Write selected agents, default to turbo if none chosen
+    state.activeAgents = this.selectedAgentIds.length > 0 ? [...this.selectedAgentIds] : ['turbo'];
+    this.scene.start('Execution');
   }
 }
