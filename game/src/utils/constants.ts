@@ -24,16 +24,6 @@ export const COLORS = {
   terminalText: 0x39d353,
 };
 
-// Event tags
-export type EventTag = 'requiresCloud' | 'requiresLocal';
-
-export interface PlaceholderEvent {
-  title: string;
-  body: string;
-  choices: string[];
-  tags?: EventTag[];
-}
-
 // Class theme overrides
 export const CLASS_THEMES = {
   techBro: { accent: 0x00ffcc, wallpaper: 'wallpaper_techbro' },

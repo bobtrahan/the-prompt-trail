@@ -95,7 +95,6 @@ export class ExecutionScene extends Phaser.Scene {
     
     toProcess.forEach(id => {
       let msg = "";
-      console.log(`[Consumable] Activating ${id}`);
 
       switch (id) {
         case 'con-coffee':

@@ -144,12 +144,11 @@ export class Telemetry {
     (currentRun.days ??= []).push(snapshot);
     (currentRun.budgetTrajectory ??= []).push(state.budget);
 
-    console.log('[Telemetry] Posting day snapshot:', snapshot.day);
     fetch('/__telemetry/day', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(snapshot),
-    }).then(r => console.log('[Telemetry] Day POST:', r.status)).catch(e => console.error('[Telemetry] Day POST failed:', e));
+    }).catch(() => {});
   }
 
   /** Update the most recent day snapshot with bug bounty results and re-POST. */
@@ -198,8 +197,6 @@ export class Telemetry {
       worstDay,
     };
 
-    // Expose for debugging
-    console.log('[Telemetry] RunLog:', runLog);
     (window as any).__TELEMETRY = runLog;
 
     // Store finalized run
