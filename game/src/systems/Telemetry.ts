@@ -2,6 +2,7 @@ import { DEV_CONFIG } from '../utils/devConfig';
 import type { GameState } from './GameState';
 import type { FinalScore } from './ScoringSystem';
 import type { DayScore } from './ScoringSystem';
+import { AudioManager } from './AudioManager';
 
 // ─── Exported Types ───────────────────────────────────────────────────────────
 
@@ -35,6 +36,10 @@ export interface DaySnapshot {
   overtimePromptsCompleted: number;
   bugBountyEarnings: number;
   bugsSquashed: number;
+  musicTrack: string | null;
+  audioMuted: boolean;
+  sfxVolume: number;
+  musicVolume: number;
 }
 
 export interface RunLog {
@@ -128,6 +133,10 @@ export class Telemetry {
       earlyFinishPath,
       bugBountyEarnings: 0,
       bugsSquashed: 0,
+      musicTrack: AudioManager.getInstance().currentTrack,
+      audioMuted: AudioManager.getInstance().isMuted,
+      sfxVolume: AudioManager.getInstance().sfxVolume,
+      musicVolume: AudioManager.getInstance().musicVolume,
     };
 
     (currentRun.days ??= []).push(snapshot);

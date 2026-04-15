@@ -28,6 +28,19 @@ class AudioManager {
   private _sfxVolume = 0.8;
   isMuted = false;
 
+  // Public getters for telemetry
+  get musicVolume(): number {
+    return this._musicVolume;
+  }
+
+  get sfxVolume(): number {
+    return this._sfxVolume;
+  }
+
+  get currentTrack(): string | null {
+    return this.currentMusicKey;
+  }
+
   private constructor() {
     this.loadSettings();
   }
@@ -70,12 +83,22 @@ class AudioManager {
 
     const targetVol = this.isMuted ? 0 : this._masterVolume * this._musicVolume;
 
-    // Fade in incoming
+    // 10ms mini-ramp from 0 to target volume to eliminate click artifacts
+    this.scene.tweens.add({
+      targets: incoming,
+      volume: targetVol,
+      duration: 10,
+      ease: 'Linear',
+      delay: 0,
+    });
+
+    // Fade in incoming (main crossfade from 0 to target over fadeMs)
     this.scene.tweens.add({
       targets: incoming,
       volume: targetVol,
       duration: fadeMs,
       ease: 'Linear',
+      delay: 10,
     });
 
     // Fade out + stop outgoing
