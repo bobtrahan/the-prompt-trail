@@ -134,7 +134,7 @@ gamedevjs-2026/
 - [x] 16 SFX generated (procedural ffmpeg) — keystrokes, events, UI, bug bounty, economy, boot chime
 - [x] Music triggers wired to all 9 scenes (execution-late auto-swaps on day ≥ 11)
 - [x] SFX triggers wired throughout (typing, events, choices, purchases, results, bug bounty)
-- [x] Volume mute toggle in Taskbar
+- [x] Volume mute toggle in PromptOS menu (moved from Taskbar — was overlapping day indicator)
 - [x] Audio telemetry fields in DaySnapshot (musicTrack, audioMuted, sfxVolume, musicVolume)
 - [x] Music candidate tracks preserved in `public/assets/audio/music/candidates/` for A/B comparison
 - [x] Generation scripts: `scripts/gen-exec.mjs` (MiniMax 2.6 + cover), `scripts/gen-music-batch2.mjs` (batch), `scripts/gen-sfx.sh` (procedural)
@@ -144,12 +144,20 @@ gamedevjs-2026/
 - [x] Consumable activation UI — sequential notifications at day start with fade in/hold/fade out
 - [x] Consumable telemetry — consumablesUsed tracked in DaySnapshot
 
-### In Progress (dispatched to Route, not yet landed)
-- [ ] Bug Bounty visual overhaul — IDE error chip sprites replacing emoji (Task 13, Forge)
-- [ ] Miss penalties + catch effects — misclick time penalty, escape $ penalty, camera shake, particle burst (Task 11, Patch)
-- [ ] Combo counter — sequential catch multiplier, combo UI, max combo tracking (Task 12, Patch)
+**Phase 5.5: Bug Bounty Polish** ✅ (Apr 14)
+- [x] IDE error chip visuals replacing emoji — styled containers with colored backgrounds, severity dots, labels per bug type (SyntaxError/LogicBug/RaceCondition/MemoryLeak/Heisenbug)
+- [x] Per-type idle animations — pulse (syntax), wobble (logic), teleport spin (race), grow (memleak), float + text scramble (heisen)
+- [x] Spawn animation (Back.easeOut scale) + despawn warning (border flash at <1.5s)
+- [x] Glow rectangles with slow alpha pulse on each chip
+- [x] Miss penalties — misclick costs 1s (200ms cooldown), escaped bugs cost $5, both with visual feedback
+- [x] Catch effects — camera shake (stronger for heisenbug + white flash), 6-particle color burst
+- [x] Bug death animation — scale 2x + spin + fade; escaped bugs get ghost trail drift
+- [x] Combo counter — 2s window, ×0.25 multiplier per chain, "COMBO ×N" UI, shake scales with combo
+- [x] End screen shows misclicks (red), escaped bugs (red), HP bonus (green), best combo (green) with dynamic height
 
 ### Remaining
+- [ ] Visual audit — screenshot all 14 screens, vision model analysis, prioritized UI improvement plan
+- [ ] Code crusades (Church plugin) — planned order: arch, test, dead, type, size, naming
 - [ ] Balance tuning — play 2-3 runs, review telemetry, adjust difficulty curve, costs, event frequency
 - [ ] Per-class visual differentiation — wallpapers, terminal themes beyond accent colors
 - [ ] Deploy — itch.io, GitHub Pages, Wavedash. Vite build + test
@@ -164,8 +172,9 @@ gamedevjs-2026/
 | 3: Night Phase | Apr 18-19 | ✅ Complete |
 | 4: Polish | Apr 20-22 | ✅ Complete (phases 4 + 4.5) |
 | 5: Audio + Consumables | Apr 14 | ✅ Complete (ahead of schedule) |
-| 5.5: Bug Bounty Polish | Apr 14-15 | 🔄 In progress |
-| 6: Balance + Visuals | Apr 15-16 | Next up |
+| 5.5: Bug Bounty Polish | Apr 14 | ✅ Complete |
+| 5.6: Visual Audit | Apr 15 | Next up |
+| 6: Crusades + Balance + Visuals | Apr 15-16 | Pending |
 | 7: Deploy + Submit | Apr 25-26 | Pending |
 
 ## Standards
