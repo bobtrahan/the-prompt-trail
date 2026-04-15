@@ -22,6 +22,7 @@ export class ExecutionScene extends Phaser.Scene {
   private typingEngine!: TypingEngine;
   private agentWindow!: Window;
   private resourceWindow!: Window;
+  private typoForgiveness = 0;
 
   // Progress
   private progressBar!: Phaser.GameObjects.Rectangle;
@@ -84,6 +85,15 @@ export class ExecutionScene extends Phaser.Scene {
     this.eventEngine = new EventEngine(state);
     this.speedMod = AgentSystem.getSpeedModifier(state.activeAgents);
     this.modelQualityMod = EconomySystem.getModelQualityMod(state.model);
+
+    // Apply hardware upgrades
+    if (state.ownedUpgrades.includes('hw-monitor')) {
+      this.speedMod += 0.05;
+    }
+    if (state.ownedUpgrades.includes('hw-keyboard')) {
+      this.typoForgiveness = 1;
+    }
+
     this.traitResults = AgentSystem.checkTraits(state.activeAgents, state.day);
     EconomySystem.applyDayCosts(state);
     state.dayStartBudget = state.budget;
@@ -261,7 +271,7 @@ export class ExecutionScene extends Phaser.Scene {
       this.onPromptComplete();
     }, () => {
       this.onFirstKeystroke();
-    });
+    }, this.typoForgiveness);
     this.typingEngine.start();
   }
 

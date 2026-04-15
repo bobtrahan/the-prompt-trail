@@ -43,8 +43,18 @@ export class EventEngine {
         if (day - lastFired < event.cooldown) continue;
       }
 
+      // Hardware immunity/reduction
+      const owned = this.state.ownedUpgrades;
+      if (owned.includes('hw-ups') && event.id.includes('power')) continue;
+      if (owned.includes('hw-cooling') && event.id.includes('overheat')) continue;
+
       // Weight adjustment: recently fired in last 3 days → ×0.3
       let weight = event.weight;
+
+      if (owned.includes('hw-ram') && event.id.includes('context')) {
+        weight *= 0.5;
+      }
+
       const recentlyFired = fired.some(d => day - d <= 3 && day - d > 0);
       if (recentlyFired) weight *= 0.3;
 
