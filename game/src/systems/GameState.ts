@@ -68,7 +68,7 @@ export interface GameState {
   dayStartHardware: number;
 }
 
-function createInitialState(): GameState {
+export function createInitialState(): GameState {
   return {
     day: 1,
     phase: 'title',
