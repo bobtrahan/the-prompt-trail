@@ -43,20 +43,57 @@ export class Taskbar {
     };
 
     // Left side — system items
-    const startBtn = scene.add.text(8, 8, '◆ PromptOS', {
+    const startBtnText = '◆ PromptOS ▾';
+    const startBtn = scene.add.text(8, 8, startBtnText, {
       ...style, color: Phaser.Display.Color.IntegerToColor(this.accentColor).rgba,
     }).setInteractive({ useHandCursor: true });
+    
     startBtn.on('pointerdown', () => this._openMenu());
+    startBtn.on('pointerover', () => startBtn.setColor('#e6edf3'));
+    startBtn.on('pointerout', () => startBtn.setColor(Phaser.Display.Color.IntegerToColor(this.accentColor).rgba));
+    
     this.container.add(startBtn);
+
+    // Separators
+    const sep1 = scene.add.rectangle(120, 16, 1, 16, 0x30363d, 0.5);
+    const sep2 = scene.add.rectangle(GAME_WIDTH - 155, 16, 1, 16, 0x30363d, 0.5);
+    this.container.add([sep1, sep2]);
 
     // Right side — indicators
     this.budgetText = scene.add.text(GAME_WIDTH - 460, 8, '', style);
     this.healthText = scene.add.text(GAME_WIDTH - 320, 8, '', style);
-    this.repText = scene.add.text(GAME_WIDTH - 180, 8, '', style);
+    this.repText = scene.add.text(GAME_WIDTH - 210, 8, '', style);
+    
+    // System Tray
+    const trayWifi = scene.add.text(GAME_WIDTH - 145, 8, '📡', style);
+    const trayBattery = scene.add.text(GAME_WIDTH - 120, 8, '🔋', style);
+    const trayClock = scene.add.text(GAME_WIDTH - 95, 8, this._getTimeString(), style);
+    
+    // Update tray clock every minute
+    scene.time.addEvent({
+      delay: 60000,
+      loop: true,
+      callback: () => {
+        if (trayClock.active) trayClock.setText(this._getTimeString());
+      }
+    });
+
     this.clockText = scene.add.text(GAME_WIDTH - 70, 8, '', style);
-    this.container.add([this.budgetText, this.healthText, this.repText, this.clockText]);
+    this.container.add([
+      this.budgetText, 
+      this.healthText, 
+      this.repText, 
+      trayWifi, 
+      trayBattery, 
+      trayClock, 
+      this.clockText
+    ]);
 
     this.refresh();
+  }
+
+  private _getTimeString(): string {
+    return new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
   }
 
   refresh(): void {
