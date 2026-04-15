@@ -5,6 +5,7 @@ import { Telemetry } from '../systems/Telemetry';
 import { ScoringSystem } from '../systems/ScoringSystem';
 import { Window } from '../ui/Window';
 import { Taskbar } from '../ui/Taskbar';
+import { AudioManager } from '../systems/AudioManager';
 
 const RANK_COLORS: Record<string, string> = {
   S: '#f2cc60',
@@ -55,6 +56,8 @@ export class FinalScene extends Phaser.Scene {
     const state = getState();
     const playerClass = state.playerClass ?? 'techBro';
     const classDef = CLASS_DEFS[playerClass];
+
+    AudioManager.getInstance().stopMusic(1000);
 
     const finalScoreData = ScoringSystem.calcFinalScore(state.dayScores, classDef.scoreMultiplier);
     this.rawTotal = finalScoreData.rawTotal;

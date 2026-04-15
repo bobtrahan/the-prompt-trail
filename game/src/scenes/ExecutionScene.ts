@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT, COLORS, TIME_UNITS_PER_DAY, EVENT_INTERVAL_MS } from '../utils/constants';
-import { getState, CLASS_DEFS } from '../systems/GameState';
+import { getState, CLASS_DEFS, GameState } from '../systems/GameState';
 import { Telemetry } from '../systems/Telemetry';
 import { getTheme } from '../utils/themes';
 import { Window } from '../ui/Window';
@@ -12,6 +12,7 @@ import { EventEngine } from '../systems/EventEngine';
 import { EconomySystem } from '../systems/EconomySystem';
 import { ScoringSystem } from '../systems/ScoringSystem';
 import { AgentSystem } from '../systems/AgentSystem';
+import { AudioManager } from '../systems/AudioManager';
 import type { EventDef, EventChoice } from '../data/events';
 
 
@@ -84,6 +85,12 @@ export class ExecutionScene extends Phaser.Scene {
   create(): void {
     const state = getState();
     const theme = getTheme(state.playerClass ?? undefined);
+
+    if (state.day >= 11) {
+      AudioManager.getInstance().playMusic('execution-late');
+    } else {
+      AudioManager.getInstance().playMusic('execution');
+    }
 
     this.cameras.main.setBackgroundColor(COLORS.bg);
     this.progress = 0;

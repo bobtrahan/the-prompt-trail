@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT, COLORS } from '../utils/constants';
 import { resetState } from '../systems/GameState';
+import { AudioManager } from '../systems/AudioManager';
 
 export class TitleScene extends Phaser.Scene {
   constructor() {
@@ -9,6 +10,7 @@ export class TitleScene extends Phaser.Scene {
 
   create(): void {
     resetState();
+    AudioManager.getInstance().playMusic('title');
     const cx = GAME_WIDTH / 2;
     const cy = GAME_HEIGHT / 2;
 

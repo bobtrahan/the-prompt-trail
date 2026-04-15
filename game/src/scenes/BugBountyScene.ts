@@ -5,6 +5,7 @@ import { Telemetry } from '../systems/Telemetry';
 import { getTheme } from '../utils/themes';
 import { Window } from '../ui/Window';
 import { Taskbar } from '../ui/Taskbar';
+import { AudioManager } from '../systems/AudioManager';
 
 // ── Bug type definitions ──────────────────────────────────────────────────────
 
@@ -105,6 +106,8 @@ export class BugBountyScene extends Phaser.Scene {
     this.ended = false;
     this.startTime = 0;
     this.lastSpawn = 0;
+
+    AudioManager.getInstance().playMusic('bugbounty');
 
     const state = getState();
     const theme = getTheme(state.playerClass ?? undefined);
@@ -405,6 +408,7 @@ export class BugBountyScene extends Phaser.Scene {
 
     btn.on('pointerover', () => btn.setColor('#e6edf3'));
     btn.on('pointerout', () => btn.setColor('#58a6ff'));
-    btn.on('pointerdown', () => this.scene.start(returnScene));
+  shutdown(): void {
+    AudioManager.getInstance().playMusic('night');
   }
 }

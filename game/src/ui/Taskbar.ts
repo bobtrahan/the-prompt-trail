@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT, COLORS } from '../utils/constants';
 import { getState } from '../systems/GameState';
 import { DebugMenu } from './DebugMenu';
+import AudioManager from '../systems/AudioManager';
 
 const TASKBAR_HEIGHT = 32;
 
@@ -15,6 +16,7 @@ export class Taskbar {
   private budgetText!: Phaser.GameObjects.Text;
   private healthText!: Phaser.GameObjects.Text;
   private repText!: Phaser.GameObjects.Text;
+  private muteText!: Phaser.GameObjects.Text;
   private clockText!: Phaser.GameObjects.Text;
   private accentColor: number;
   private activeMenu: DebugMenu | null = null;
@@ -52,8 +54,13 @@ export class Taskbar {
     this.budgetText = scene.add.text(GAME_WIDTH - 460, 8, '', style);
     this.healthText = scene.add.text(GAME_WIDTH - 320, 8, '', style);
     this.repText = scene.add.text(GAME_WIDTH - 180, 8, '', style);
+    this.muteText = scene.add.text(GAME_WIDTH - 50, 8, '', {
+      ...style,
+      color: '#8b949e',
+    }).setInteractive({ useHandCursor: true });
+    this.muteText.on('pointerdown', () => this._toggleMute());
     this.clockText = scene.add.text(GAME_WIDTH - 70, 8, '', style);
-    this.container.add([this.budgetText, this.healthText, this.repText, this.clockText]);
+    this.container.add([this.budgetText, this.healthText, this.repText, this.muteText, this.clockText]);
 
     this.refresh();
   }
@@ -63,7 +70,18 @@ export class Taskbar {
     this.budgetText.setText(`💰 $${s.budget.toLocaleString()}`);
     this.healthText.setText(`🖥️ HW: ${s.hardwareHp}%`);
     this.repText.setText(`⭐ Rep: ${s.reputation}`);
+    this._updateMuteIcon();
     this.clockText.setText(`Day ${s.day}/13`);
+  }
+
+  private _updateMuteIcon(): void {
+    const isMuted = AudioManager.getInstance().isMuted;
+    this.muteText.setText(isMuted ? '🔇' : '🔊');
+  }
+
+  private _toggleMute(): void {
+    AudioManager.getInstance().toggleMute();
+    this._updateMuteIcon();
   }
 
   private _openMenu(): void {

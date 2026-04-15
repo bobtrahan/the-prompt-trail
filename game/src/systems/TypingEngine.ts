@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { Terminal } from '../ui/Terminal';
+import AudioManager from './AudioManager';
 
 /**
  * Prompts organized by difficulty tier.
@@ -70,6 +71,7 @@ export class TypingEngine {
   private onPromptComplete?: () => void;
   private onFirstKeystroke?: () => void;
   private hasTypedOnce = false;
+  private lastSFXTime = 0;
 
   constructor(
     scene: Phaser.Scene,
@@ -173,9 +175,16 @@ export class TypingEngine {
 
     const expected = this.terminal['currentPrompt'][this.terminal.getTypedLength()];
 
+    const now = Date.now();
+
     if (event.key === expected) {
       this.stats.correct++;
       this.terminal.advanceChar();
+
+      if (now - this.lastSFXTime >= 80) {
+        AudioManager.getInstance().playSFX('key-correct');
+        this.lastSFXTime = now;
+      }
 
       if (this.terminal.isComplete()) {
         this.stats.promptsCompleted++;
@@ -192,6 +201,10 @@ export class TypingEngine {
       } else {
         this.stats.incorrect++;
         this.terminal.showError();
+        if (now - this.lastSFXTime >= 80) {
+          AudioManager.getInstance().playSFX('key-wrong');
+          this.lastSFXTime = now;
+        }
       }
     }
   };
