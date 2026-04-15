@@ -324,21 +324,25 @@ export class ExecutionScene extends Phaser.Scene {
 
     // Choice buttons
     const choiceStartY = dy + 48 + 60 + 20;
+    let cumulativeY = choiceStartY;
     choices.forEach((choice, i) => {
-      const btnY = choiceStartY + i * 40;
+      const btnTextObj = this.add.text(dx + 32, cumulativeY + 7, `[${i + 1}] ${(choice as EventChoice).text}`, {
+        fontFamily: 'monospace', fontSize: '13px', color: '#58a6ff',
+        wordWrap: { width: dw - 72 },
+      });
+      const btnH = Math.max(32, btnTextObj.height + 14);
+      btnTextObj.setY(cumulativeY + (btnH - btnTextObj.height) / 2);
 
-      const btnBg = this.add.rectangle(dx + 20, btnY, dw - 40, 32, COLORS.titleBar).setOrigin(0)
+      const btnBg = this.add.rectangle(dx + 20, cumulativeY, dw - 40, btnH, COLORS.titleBar).setOrigin(0)
         .setInteractive({ useHandCursor: true });
       this.modalGroup!.add(btnBg);
-
-      const btnText = this.add.text(dx + 32, btnY + 7, `[${i + 1}] ${(choice as EventChoice).text}`, {
-        fontFamily: 'monospace', fontSize: '13px', color: '#58a6ff',
-      });
-      this.modalGroup!.add(btnText);
+      this.modalGroup!.add(btnTextObj);
 
       btnBg.on('pointerover', () => btnBg.setFillStyle(COLORS.windowBorder));
       btnBg.on('pointerout', () => btnBg.setFillStyle(COLORS.titleBar));
       btnBg.on('pointerdown', () => this.resolveEvent(i, choice as EventChoice));
+
+      cumulativeY += btnH + 8;
     });
 
     // Keyboard shortcuts (1/2/3)
