@@ -104,6 +104,10 @@ export class TypingEngine {
   /** Resume typing after event */
   resume(): void {
     this.paused = false;
+    // If a prompt completed while paused (delayed nextPrompt was skipped), load one now
+    if (this.active && this.terminal.isComplete()) {
+      this.nextPrompt();
+    }
   }
 
   isPaused(): boolean {
