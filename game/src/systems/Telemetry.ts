@@ -129,11 +129,12 @@ export class Telemetry {
     (currentRun.days ??= []).push(snapshot);
     (currentRun.budgetTrajectory ??= []).push(state.budget);
 
+    console.log('[Telemetry] Posting day snapshot:', snapshot.day);
     fetch('/__telemetry/day', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(snapshot),
-    }).catch(() => {});
+    }).then(r => console.log('[Telemetry] Day POST:', r.status)).catch(e => console.error('[Telemetry] Day POST failed:', e));
   }
 
   /** Update the most recent day snapshot with bug bounty results and re-POST. */
