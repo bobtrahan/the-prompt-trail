@@ -74,8 +74,13 @@ export class EconomySystem {
     }
 
     const modelCost = this.getModelDayCost(state.model);
+    let finalModelCost = modelCost;
+    if (state.modelCostDiscount > 0) {
+      finalModelCost = Math.round(modelCost * (1 - state.modelCostDiscount));
+    }
+
     const strategyCost = state.strategy ? this.getStrategyModifier(state.strategy).strategyCost : 0;
-    state.budget -= (modelCost + strategyCost);
+    state.budget -= (finalModelCost + strategyCost);
 
     if (state.budget < 0) {
       state.eventFlags['broke'] = true;

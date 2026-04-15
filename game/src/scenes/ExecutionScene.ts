@@ -78,6 +78,67 @@ export class ExecutionScene extends Phaser.Scene {
   private modelQualityMod: number = 0;
   private traitResults: { agentId: string; trait: string; fired: boolean; description: string }[] = [];
 
+  private processConsumables(): void {
+    const state = getState();
+    if (!state.activeConsumables || state.activeConsumables.length === 0) return;
+
+    // We need to copy and clear to avoid concurrent modification issues if any
+    const toProcess = [...state.activeConsumables];
+    
+    toProcess.forEach(id => {
+      let msg = "";
+      console.log(`[Consumable] Activating ${id}`);
+
+      switch (id) {
+        case 'con-coffee':
+          this.typingEngine.speedModifier += 0.05;
+          msg = "☕ Coffee Boost Active!";
+          break;
+        case 'con-energy':
+          this.typingEngine.speedModifier += 0.1;
+          this.typingEngine.jitterChance = 0.2;
+          msg = "⚡ Energy Drink Active!";
+          break;
+        case 'con-backup':
+          state.hasBackupProtection = true;
+          msg = "☁️ Cloud Backup Active!";
+          break;
+        case 'con-api':
+          state.modelCostDiscount = 0.5;
+          msg = "💳 API Credits Active!";
+          break;
+        case 'con-duck':
+          state.hasDuckProtection = true;
+          msg = "🦆 Rubber Duck Active!";
+          break;
+      }
+
+      if (msg) {
+        AudioManager.getInstance().playSFX('notification');
+        this.showFlashMessage(msg);
+        state.consumablesUsedToday.push(id);
+      }
+    });
+
+    state.activeConsumables = [];
+  }
+
+  private showFlashMessage(text: string): void {
+    const flash = this.add.text(GAME_WIDTH / 2, 120, text, {
+      fontFamily: 'monospace', fontSize: '24px', color: '#58a6ff',
+      stroke: '#000000', strokeThickness: 4
+    }).setOrigin(0.5).setDepth(500);
+
+    this.tweens.add({
+      targets: flash,
+      y: flash.y - 40,
+      alpha: 0,
+      duration: 2000,
+      ease: 'Power2',
+      onComplete: () => flash.destroy()
+    });
+  }
+
   constructor() {
     super({ key: 'Execution' });
   }
@@ -289,6 +350,9 @@ export class ExecutionScene extends Phaser.Scene {
     }, () => {
       this.onFirstKeystroke();
     }, this.typoForgiveness);
+
+    this.processConsumables();
+    
     this.typingEngine.start();
   }
 
@@ -332,7 +396,9 @@ export class ExecutionScene extends Phaser.Scene {
 
   private onPromptComplete(): void {
     const accuracy = this.typingEngine.getAccuracy();
-    const gain = Math.round((8 + Math.floor(accuracy * 7)) * (1 + this.speedMod) * (1 + this.modelQualityMod));
+    const baseGain = 8 + Math.floor(accuracy * 7);
+    const speedModFactor = this.typingEngine.speedModifier + this.speedMod;
+    const gain = Math.round(baseGain * speedModFactor * (1 + this.modelQualityMod));
     this.progress = Math.min(100, this.progress + gain);
     this.updateProgressBar();
 
@@ -378,6 +444,18 @@ export class ExecutionScene extends Phaser.Scene {
 
     const evt = this.eventEngine.selectEvent();
     if (!evt) return;
+
+    const state = getState();
+    const isStuckEvent = evt.id.includes('agent_stuck') || evt.id.includes('stuck');
+    
+    if (isStuckEvent && state.hasDuckProtection) {
+      state.hasDuckProtection = false;
+      this.terminal.addLine("🦆 Rubber Duck resolved the issue!");
+      this.showFlashMessage("🦆 Rubber Duck resolved the issue!");
+      AudioManager.getInstance().playSFX('notification');
+      this.resolveEvent(0, evt.choices[0] as EventChoice, true);
+      return;
+    }
 
     this.currentEvent = evt;
     this.showEventModal(evt);
@@ -537,19 +615,19 @@ export class ExecutionScene extends Phaser.Scene {
     });
   }
 
-  private resolveEvent(choiceIndex: number, choice: EventChoice): void {
-    if (!this.modalGroup) return;
+  private resolveEvent(choiceIndex: number, choice: EventChoice, autoResolved = false): void {
+    if (!this.modalGroup && !autoResolved) return;
 
     // Cancel countdown
     this.eventCountdownTimer?.destroy();
     this.eventCountdownTimer = undefined;
     this.eventCountdownText = undefined;
 
-    this.terminal.addLine(`> Event: chose "${choice.text}"`);
+    this.terminal.addLine(`> Event: ${autoResolved ? 'auto-resolved' : 'chose "' + choice.text + '"'}`);
 
     const state = getState();
     const logs = this.eventEngine.applyEffects(choice, state);
-    Telemetry.logEvent(this.currentEvent?.id ?? 'unknown', choiceIndex, logs);
+    Telemetry.logEvent(this.currentEvent?.id ?? 'auto-resolve', choiceIndex, logs);
     for (const line of logs) {
       this.terminal.addLine(line);
     }
@@ -566,18 +644,23 @@ export class ExecutionScene extends Phaser.Scene {
     this.applyImpactFeedback(logs, state);
 
     // Close modal
-    this.tweens.add({
-      targets: this.modalGroup,
-      alpha: 0,
-      duration: 150,
-      onComplete: () => {
-        this.modalGroup?.destroy();
-        this.modalGroup = undefined;
-        if (this.dayTimer) this.dayTimer.paused = false;
-        this.typingEngine.resume();
-        this.taskbar.refresh();
-      },
-    });
+    if (this.modalGroup) {
+      this.tweens.add({
+        targets: this.modalGroup,
+        alpha: 0,
+        duration: 150,
+        onComplete: () => {
+          this.modalGroup?.destroy();
+          this.modalGroup = undefined;
+          if (this.dayTimer) this.dayTimer.paused = false;
+          this.typingEngine.resume();
+          this.taskbar.refresh();
+        },
+      });
+    } else {
+      // If it was an auto-resolve, we might need to refresh UI anyway
+      this.taskbar.refresh();
+    }
   }
 
   /** Flash UI elements and show floating summary based on effect logs */

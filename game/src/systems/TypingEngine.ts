@@ -72,6 +72,8 @@ export class TypingEngine {
   private onFirstKeystroke?: () => void;
   private hasTypedOnce = false;
   private lastSFXTime = 0;
+  public speedModifier = 1.0;
+  public jitterChance = 0;
 
   constructor(
     scene: Phaser.Scene,
@@ -177,7 +179,32 @@ export class TypingEngine {
 
     const now = Date.now();
 
+    // Jitter check: random chance to turn a correct key into a wrong one
+    let actualKey = event.key;
+    if (this.jitterChance > 0 && event.key === expected && Math.random() < this.jitterChance) {
+      if (Math.random() < 0.2) {
+        // Only 20% of the jitter triggers actually cause a "typo" as per spec
+        // "When jitterChance > 0, 20% of correct keystrokes should randomly count as wrong (typo)"
+        // WAIT, the spec says: "When jitterChance > 0, 20% of correct keystrokes should randomly count as wrong (typo)"
+        // That means I should just check if Math.random() < 0.2 if jitterChance > 0.
+        // Or does jitterChance itself define the probability?
+        // Spec says: "con-energy: TypingEngine.speedModifier += 0.1, TypingEngine.jitterChance = 0.2"
+        // And Task: "Add jitterChance: number (default 0). When jitterChance > 0, 20% of correct keystrokes should randomly count as wrong (typo)"
+        // Okay, so if jitterChance > 0, then 20% fixed chance? Or jitterChance chance?
+        // Usually, jitterChance = 0.2 means 20% chance.
+      }
+    }
+
+    // Re-reading spec: "When jitterChance > 0, 20% of correct keystrokes should randomly count as wrong (typo)"
+    // This phrasing is slightly ambiguous. Does it mean "If jitterChance > 0 THEN 20%" or "use jitterChance as the probability"?
+    // The energy drink sets it to 0.2. 0.2 IS 20%. So I'll use jitterChance as the probability.
+
     if (event.key === expected) {
+      if (this.jitterChance > 0 && Math.random() < this.jitterChance) {
+        this.handleIncorrectKey(now);
+        return;
+      }
+
       this.stats.correct++;
       this.terminal.advanceChar();
 
@@ -196,18 +223,22 @@ export class TypingEngine {
         });
       }
     } else if (event.key !== 'Backspace') {
-      if (this.currentWrongCount < this.typoForgiveness) {
-        this.currentWrongCount++;
-      } else {
-        this.stats.incorrect++;
-        this.terminal.showError();
-        if (now - this.lastSFXTime >= 80) {
-          AudioManager.getInstance().playSFX('key-wrong');
-          this.lastSFXTime = now;
-        }
-      }
+      this.handleIncorrectKey(now);
     }
   };
+
+  private handleIncorrectKey(now: number): void {
+    if (this.currentWrongCount < this.typoForgiveness) {
+      this.currentWrongCount++;
+    } else {
+      this.stats.incorrect++;
+      this.terminal.showError();
+      if (now - this.lastSFXTime >= 80) {
+        AudioManager.getInstance().playSFX('key-wrong');
+        this.lastSFXTime = now;
+      }
+    }
+  }
 
   destroy(): void {
     this.scene.input.keyboard!.off('keydown', this.handleKey, this);

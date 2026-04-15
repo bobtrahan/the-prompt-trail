@@ -145,6 +145,12 @@ export class NightScene extends Phaser.Scene {
     state.bountyPlayedTonight = false;
     state.day++;
     
+    // Reset consumable effects for the new day
+    state.hasBackupProtection = false;
+    state.hasDuckProtection = false;
+    state.modelCostDiscount = 0;
+    state.consumablesUsedToday = [];
+
     this.cameras.main.fadeOut(500, 0, 0, 0);
     this.cameras.main.once('camerafadeoutcomplete', () => {
       this.scene.start('Briefing');

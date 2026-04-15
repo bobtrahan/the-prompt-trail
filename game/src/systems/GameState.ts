@@ -106,6 +106,12 @@ export interface GameState {
   // Final stats tracking
   totalBugsSquashed: number;
 
+  // Consumable effects
+  hasBackupProtection: boolean;
+  hasDuckProtection: boolean;
+  modelCostDiscount: number;
+  consumablesUsedToday: string[];
+
   // Last day results snapshot
   lastDayResult?: {
     progress: number;
@@ -145,6 +151,10 @@ function createInitialState(): GameState {
     lockedModels: [],
     localSlots: 0,
     totalBugsSquashed: 0,
+    hasBackupProtection: false,
+    hasDuckProtection: false,
+    modelCostDiscount: 0,
+    consumablesUsedToday: [],
     overtimeBonus: 0,
     bugHuntReturnScene: 'Night',
     dayStartBudget: 0,

@@ -12,11 +12,18 @@ export class EventEngine {
   }
 
   selectEvent(): EventDef | null {
-    const { day, playerClass, localSlots, eventFlags } = this.state;
+    const { day, playerClass, localSlots, eventFlags, hasDuckProtection } = this.state;
 
     const eligible: Array<{ event: EventDef; weight: number }> = [];
 
     for (const event of EVENTS) {
+      // Duck protection: if an event with 'agent_stuck' or 'stuck' is about to fire and we have duck
+      // wait, selectEvent just returns the event. The auto-resolve happens in ExecutionScene when fireEvent is called?
+      // No, spec says: "When an event with id containing 'agent_stuck' or 'stuck' fires: if GameState.hasDuckProtection === true, auto-select the first choice, show notification '🦆 Rubber Duck resolved the issue!', and set hasDuckProtection = false"
+      // This logic should probably be in ExecutionScene.ts where showEventModal is called, 
+      // OR I can handle it here by returning a modified event or something.
+      // Better to handle in ExecutionScene.ts to manage the UI/notification.
+
       // dayRange filter
       if (day < event.dayRange[0] || day > event.dayRange[1]) continue;
 
@@ -88,6 +95,20 @@ export class EventEngine {
 
   applyEffects(choice: EventChoice, state: GameState): string[] {
     const logs: string[] = [];
+
+    // Backup protection
+    const causesLoss = choice.effects.some(e => 
+      (e.type === 'budget' && (e.value as number) < 0) || 
+      (e.type === 'hardware' && (e.value as number) < 0) ||
+      (e.type === 'reputation' && (e.value as number) < 0) ||
+      (e.type === 'time' && (e.value as number) < 0)
+    );
+
+    if (causesLoss && state.hasBackupProtection) {
+      state.hasBackupProtection = false;
+      logs.push('☁️ Cloud Backup protected your progress! (Consequences skipped)');
+      return logs;
+    }
 
     for (const effect of choice.effects) {
       switch (effect.type) {
