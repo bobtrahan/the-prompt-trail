@@ -52,6 +52,7 @@ export class ExecutionScene extends Phaser.Scene {
   // Completion / Overtime
   private inOvertime: boolean = false;
   private overtimeBonus: number = 0;
+  private overtimePromptsCompleted: number = 0;
   private completionShown: boolean = false;
   private overtimeText?: Phaser.GameObjects.Text;
   private overtimePrompts: string[] = [
@@ -331,6 +332,7 @@ export class ExecutionScene extends Phaser.Scene {
     if (this.progress >= 100 && !this.completionShown && !this.inOvertime) {
       this.showCompletionChoice();
     } else if (this.inOvertime) {
+      this.overtimePromptsCompleted++;
       this.overtimeBonus = Math.min(20, this.overtimeBonus + 1);
       if (this.overtimeText) {
         this.overtimeText.setText(`Production ♙: +${this.overtimeBonus}`);
@@ -760,13 +762,15 @@ export class ExecutionScene extends Phaser.Scene {
       hardwareDelta: state.hardwareHp - state.dayStartHardware,
     };
 
+    state.overtimeBonus = this.overtimeBonus;
+
     Telemetry.logDayEnd(
       state,
       dayScore,
-      state.bugHuntReturnScene === 'Results' ? 'bugHunt' : this.inOvertime ? 'overtime' : 'none'
+      state.bugHuntReturnScene === 'Results' ? 'bugHunt' : this.inOvertime ? 'overtime' : 'none',
+      this.overtimeBonus,
+      this.overtimePromptsCompleted
     );
-
-    state.overtimeBonus = this.overtimeBonus;
     state.reputation += dayScore.total;
     state.dayScores.push(dayScore.total);
   }

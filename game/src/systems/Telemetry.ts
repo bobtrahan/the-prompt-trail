@@ -32,6 +32,7 @@ export interface DaySnapshot {
   hardwareEnd: number;
   events: EventLog[];
   earlyFinishPath: 'bugHunt' | 'overtime' | 'none';
+  overtimePromptsCompleted: number;
   bugBountyEarnings: number;
   bugsSquashed: number;
 }
@@ -97,7 +98,9 @@ export class Telemetry {
   static logDayEnd(
     state: GameState,
     dayScore: DayScore,
-    earlyFinishPath: 'bugHunt' | 'overtime' | 'none'
+    earlyFinishPath: 'bugHunt' | 'overtime' | 'none',
+    overtimeBonus: number = 0,
+    overtimePromptsCompleted: number = 0
   ): void {
     if (!DEV_CONFIG.telemetry) return;
 
@@ -114,7 +117,8 @@ export class Telemetry {
       baseRep: dayScore.baseRep,
       accuracyBonus: dayScore.accuracyBonus,
       strategyBonus: dayScore.strategyBonus,
-      overtimeBonus: 0,
+      overtimeBonus,
+      overtimePromptsCompleted,
       totalRep: dayScore.total,
       budgetStart: dayStartBudget,
       budgetEnd: state.budget,
