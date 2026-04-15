@@ -155,7 +155,7 @@ export class BriefingScene extends Phaser.Scene {
     }));
 
     // Max reputation
-    win.add(this.add.text(cx + 12, projectCardY + projectCardH - 22, `Max Reputation: ${project.maxReputation}`, {
+    win.add(this.add.text(cx + 12, projectCardY + projectCardH - 22, `Base Reputation: ${project.maxReputation}`, {
       fontFamily: 'monospace', fontSize: '12px', color: '#3fb950',
     }));
 
