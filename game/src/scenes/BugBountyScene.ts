@@ -218,20 +218,40 @@ export class BugBountyScene extends Phaser.Scene {
     // ── Code lines ───────────────────────────────────────────────────────────
     const lineH = 28;
     const codeStartY = caAbsY + TIMER_BAR_H + 26;
-    CODE_LINES.forEach((line, i) => {
-      this.add.text(
-        caAbsX + 8,
-        codeStartY + i * lineH,
-        line,
-        { fontFamily: 'monospace', fontSize: '12px', color: '#3d444d' }
-      ).setDepth(11);
-    });
 
     // Grid bounds where bugs can spawn
     this.gridX = caAbsX + 8;
     this.gridY = codeStartY;
     this.gridW = ca.width - 16;
     this.gridH = CODE_LINES.length * lineH;
+
+    // Subtle vertical column guide lines (below bugs)
+    for (let x = 80; x < this.gridW; x += 80) {
+      this.add.rectangle(this.gridX + x, this.gridY, 1, this.gridH, 0x21262d, 0.3)
+        .setOrigin(0).setDepth(11);
+    }
+
+    // Decorative syntax highlight rectangles (below bugs)
+    const syntaxHints = [
+      { x: 10,  y: 0,   w: 80, c: 0x3fb950 }, // async function string-like hint
+      { x: 400, y: 1,   w: 60, c: 0x58a6ff }, // fetch keyword hint
+      { x: 200, y: 3,   w: 40, c: 0x58a6ff }, // for keyword hint
+      { x: 50,  y: 8,   w: 70, c: 0x3fb950 }, // new Array string-like hint
+      { x: 180, y: 10,  w: 50, c: theme.accent }, // reduce accent hint
+    ];
+    syntaxHints.forEach(h => {
+      this.add.rectangle(this.gridX + h.x, this.gridY + h.y * lineH + 12, h.w, 4, h.c, 0.25)
+        .setOrigin(0).setDepth(11);
+    });
+
+    CODE_LINES.forEach((line, i) => {
+      this.add.text(
+        caAbsX + 8,
+        codeStartY + i * lineH,
+        line,
+        { fontFamily: 'monospace', fontSize: '12px', color: '#303846' }
+      ).setDepth(11);
+    });
 
     const gridBg = this.add.rectangle(this.gridX, this.gridY, this.gridW, this.gridH, 0x000000, 0)
       .setOrigin(0).setDepth(15).setInteractive();

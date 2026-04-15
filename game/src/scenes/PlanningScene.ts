@@ -10,6 +10,15 @@ import { AGENT_ROSTER, SYNERGY_PAIRS, CLASH_PAIRS } from '../data/agents';
 import AudioManager from '../systems/AudioManager';
 import { drawWallpaper } from '../ui/DesktopWallpaper';
 
+const AGENT_EMOJI: Record<string, string> = {
+  turbo: '⚡',
+  oracle: '🔮',
+  gremlin: '👹',
+  parrot: '🦜',
+  linter: '🔍',
+  scope: '🔭',
+};
+
 interface StrategyOption {
   id: Strategy;
   name: string;
@@ -242,10 +251,19 @@ export class PlanningScene extends Phaser.Scene {
       const speedStars = '★'.repeat(agent.speed) + '☆'.repeat(5 - agent.speed);
       const qualStars  = '★'.repeat(agent.quality) + '☆'.repeat(5 - agent.quality);
 
-      this.add.text(ax + 10, rowY + 4, `🤖 ${agent.name}`, {
+      // Emoji avatar circle
+      const circleX = ax + 18;
+      const circleY = rowY + 13;
+      this.add.circle(circleX, circleY, 10, theme.accent).setAlpha(0.3);
+      const emoji = AGENT_EMOJI[agent.id] || '🤖';
+      this.add.text(circleX, circleY, emoji, {
+        fontSize: '14px',
+      }).setOrigin(0.5);
+
+      this.add.text(ax + 38, rowY + 4, `${agent.name}`, {
         fontFamily: 'monospace', fontSize: '13px', color: '#e6edf3',
       });
-      this.add.text(ax + 10, rowY + 22, `${agent.personality}  ·  Spd:${speedStars}  Qual:${qualStars}`, {
+      this.add.text(ax + 38, rowY + 22, `${agent.personality}  ·  Spd:${speedStars}  Qual:${qualStars}`, {
         fontFamily: 'monospace', fontSize: '10px', color: '#6e7681',
       });
       this.add.text(ax + rowW - 8, rowY + 4, agent.traitEffect.split('.')[0], {

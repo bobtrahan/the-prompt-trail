@@ -6,6 +6,7 @@ import { getTheme } from '../utils/themes';
 import { Window } from '../ui/Window';
 import { Taskbar } from '../ui/Taskbar';
 import { drawWallpaper } from '../ui/DesktopWallpaper';
+import { addButtonFx } from '../ui/ButtonFx';
 
 // ─── 25 Funny AI Headlines ───────────────────────────────────────────────────
 const AI_HEADLINES: string[] = [
@@ -256,6 +257,9 @@ export class BriefingScene extends Phaser.Scene {
       this.tweens.killAll();
       this.scene.start('Planning');
     });
+
+    // Apply micro-animation effects
+    addButtonFx(this, btnBg);
 
     // Make sure button label is above bg
     btnLabel.setDepth(1);
