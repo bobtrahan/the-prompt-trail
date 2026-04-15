@@ -203,9 +203,8 @@ export class ExecutionScene extends Phaser.Scene {
 
   /** Called once on the very first keystroke */
   private onFirstKeystroke(): void {
-    if (this.startedTyping) { console.log('[TYPING] onFirstKeystroke called but already started'); return; }
+    if (this.startedTyping) return;
     this.startedTyping = true;
-    console.log('[TYPING] first keystroke — starting timers');
 
     // Kill the hint
     this.typeHintTween?.destroy();
@@ -267,11 +266,10 @@ export class ExecutionScene extends Phaser.Scene {
 
   private fireEvent(): void {
     // Don't stack modals
-    if (this.modalGroup) { console.log('[EVENT] skipped: modal open'); return; }
-    if (this.timeUnits <= 0) { console.log('[EVENT] skipped: no time'); return; }
+    if (this.modalGroup) return;
+    if (this.timeUnits <= 0) return;
 
     const evt = this.eventEngine.selectEvent();
-    console.log(`[EVENT] day=${this.eventEngine['state'].day} selectEvent=${evt?.id ?? 'NULL'}`);
     if (!evt) return;
 
     this.currentEvent = evt;

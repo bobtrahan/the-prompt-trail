@@ -17,10 +17,10 @@ interface StrategyOption {
 }
 
 const STRATEGIES: StrategyOption[] = [
-  { id: 'planThenBuild', name: 'Plan Then Build', icon: '🎯', desc: 'Slower start, higher success rate, fewer hallucinations.', timeBonus: 2, riskLabel: 'Low Risk' },
-  { id: 'justStart', name: 'Just Start Building', icon: '🚀', desc: 'Medium speed, medium risk. The reliable choice.', timeBonus: 0, riskLabel: 'Medium Risk' },
-  { id: 'oneShot', name: 'One-Shot It', icon: '🎲', desc: 'Fast and cheap on time. High hallucination chance.', timeBonus: -2, riskLabel: 'High Risk' },
-  { id: 'vibeCode', name: 'Vibe Code', icon: '🧠', desc: 'Wildcard. Could be brilliant or catastrophic.', timeBonus: 1, riskLabel: '???' },
+  { id: 'planThenBuild', name: 'Plan Then Build', icon: '🎯', desc: 'Slower start, higher success rate, fewer hallucinations.', timeBonus: 2, riskLabel: EconomySystem.getStrategyModifier('planThenBuild').riskLabel },
+  { id: 'justStart', name: 'Just Start Building', icon: '🚀', desc: 'Medium speed, medium risk. The reliable choice.', timeBonus: 0, riskLabel: EconomySystem.getStrategyModifier('justStart').riskLabel },
+  { id: 'oneShot', name: 'One-Shot It', icon: '🎲', desc: 'Fast and cheap on time. High hallucination chance.', timeBonus: -2, riskLabel: EconomySystem.getStrategyModifier('oneShot').riskLabel },
+  { id: 'vibeCode', name: 'Vibe Code', icon: '🧠', desc: 'Wildcard. Could be brilliant or catastrophic.', timeBonus: 1, riskLabel: EconomySystem.getStrategyModifier('vibeCode').riskLabel },
 ];
 
 export class PlanningScene extends Phaser.Scene {
@@ -149,11 +149,11 @@ export class PlanningScene extends Phaser.Scene {
     }
 
     // Launch button
-    this.launchBtn = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 60, '[ Select a strategy to continue ]', {
+    this.launchBtn = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 80, '[ Select a strategy to continue ]', {
       fontFamily: 'monospace', fontSize: '16px', color: '#30363d',
     }).setOrigin(0.5);
 
-    this.strategyPreviewText = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 35, '', {
+    this.strategyPreviewText = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 55, '', {
       fontFamily: 'monospace', fontSize: '12px', color: '#8b949e',
     }).setOrigin(0.5);
   }
@@ -178,6 +178,7 @@ export class PlanningScene extends Phaser.Scene {
     this.launchBtn.on('pointerdown', () => this.scene.start('Execution'));
 
     const mod = EconomySystem.getStrategyModifier(option.id);
-    this.strategyPreviewText.setText(`Est. cost: $${EconomySystem.getModelDayCost(state.model)}/day · Quality: ${mod.qualityMult.toFixed(1)}x`);
+    const totalDayCost = EconomySystem.getModelDayCost(state.model) + mod.strategyCost;
+    this.strategyPreviewText.setText(`Daily cost: $${totalDayCost} (model $${EconomySystem.getModelDayCost(state.model)} + strategy $${mod.strategyCost}) · Quality: ${mod.qualityMult.toFixed(1)}x`);
   }
 }
