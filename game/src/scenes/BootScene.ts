@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import AudioManager from '../systems/AudioManager';
 
 export class BootScene extends Phaser.Scene {
   constructor() {
@@ -8,6 +9,7 @@ export class BootScene extends Phaser.Scene {
   preload(): void {
     // TODO: load fonts, audio, minimal images
     // For now, just show a loading bar
+    AudioManager.preload(this);
     const { width, height } = this.cameras.main;
     const bar = this.add.rectangle(width / 2, height / 2, 0, 4, 0x58a6ff);
     this.load.on('progress', (value: number) => {

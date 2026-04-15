@@ -21,6 +21,7 @@ const config: Phaser.Types.Core.GameConfig = {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
   },
+  audio: { disableWebAudio: false },
   scene: [
     BootScene,
     TitleScene,
