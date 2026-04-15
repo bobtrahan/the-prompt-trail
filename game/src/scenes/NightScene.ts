@@ -88,23 +88,33 @@ export class NightScene extends Phaser.Scene {
       padding: { x: 12, y: 8 },
     };
 
+    // Market Button
     const marketBtn = this.add.text(cx, cy + 200, '[ Token Market ]', btnStyle)
-      .setAlpha(0.4);
+      .setInteractive({ useHandCursor: true });
     nightWin.add(marketBtn);
-    nightWin.add(this.add.text(cx + 160, cy + 208, '(Coming Soon — Phase 3)', {
-      fontFamily: 'monospace',
-      fontSize: '12px',
-      color: '#8b949e',
-    }));
 
-    const bountyBtn = this.add.text(cx, cy + 250, '[ Bug Bounty ]', btnStyle)
-      .setAlpha(0.4);
+    marketBtn.on('pointerover', () => marketBtn.setBackgroundColor('#444c56'));
+    marketBtn.on('pointerout', () => marketBtn.setBackgroundColor('#30363d'));
+    marketBtn.on('pointerdown', () => this.scene.start('TokenMarket'));
+
+    // Bounty Button
+    const alreadyPlayed = state.bountyPlayedTonight;
+    const bountyBtn = this.add.text(cx, cy + 250, '[ Bug Bounty ]', btnStyle);
     nightWin.add(bountyBtn);
-    nightWin.add(this.add.text(cx + 160, cy + 258, '(Coming Soon — Phase 3)', {
-      fontFamily: 'monospace',
-      fontSize: '12px',
-      color: '#8b949e',
-    }));
+
+    if (alreadyPlayed) {
+      bountyBtn.setAlpha(0.4);
+      nightWin.add(this.add.text(cx + 160, cy + 258, '(Already played tonight)', {
+        fontFamily: 'monospace',
+        fontSize: '12px',
+        color: '#8b949e',
+      }));
+    } else {
+      bountyBtn.setInteractive({ useHandCursor: true });
+      bountyBtn.on('pointerover', () => bountyBtn.setBackgroundColor('#444c56'));
+      bountyBtn.on('pointerout', () => bountyBtn.setBackgroundColor('#30363d'));
+      bountyBtn.on('pointerdown', () => this.scene.start('BugBounty'));
+    }
 
     // Advance Button
     const sleepBtn = this.add.text(cx, cy + 320, '[ Sleep → Morning Briefing ]', {
@@ -129,6 +139,7 @@ export class NightScene extends Phaser.Scene {
 
   private advance(): void {
     const state = getState();
+    state.bountyPlayedTonight = false;
     state.day++;
     
     this.cameras.main.fadeOut(500, 0, 0, 0);
