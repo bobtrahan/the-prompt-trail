@@ -13,6 +13,25 @@ import { drawWallpaper } from '../ui/DesktopWallpaper';
 
 type TabCategory = 'model' | 'hardware' | 'agentSlot' | 'consumable' | 'joke';
 
+const ITEM_EFFECTS: Record<string, string> = {
+  'model-standard': 'Base quality. No bonus or penalty to progress.',
+  'model-frontier': '+15% progress quality. Premium daily cost.',
+  'model-local': '+5% quality, no daily API cost. Requires hardware.',
+  'model-open': '+8% quality, no daily cost. Community-maintained.',
+  'model-sketchy': '-10% quality, dirt cheap. "It works on my machine."',
+  'hw-monitor': '+5% typing speed. More screen real estate.',
+  'hw-keyboard': 'Forgives 1 typo per prompt. Mechanical clicky.',
+  'hw-ups': 'Immunity to power outage events.',
+  'hw-cooling': 'Reduces hardware damage from overheating events.',
+  'hw-ram': 'Reduces memory leak event frequency.',
+  'agent-slot': 'Assign one more agent during Planning.',
+  'con-coffee': '+5% speed for one day. Reliable and mild.',
+  'con-energy': '+10% speed but 20% jitter chance. Risky.',
+  'con-backup': 'Protects against data loss events for one day.',
+  'con-api': 'Halves model daily cost for one day.',
+  'con-duck': 'Auto-resolves one stuck/agent_stuck event.',
+};
+
 const TAB_DEFS: { label: string; category: TabCategory }[] = [
   { label: 'Models', category: 'model' },
   { label: 'Hardware', category: 'hardware' },
@@ -41,6 +60,14 @@ export class TokenMarketScene extends Phaser.Scene {
   private budgetLabel!: Phaser.GameObjects.Text;
   private tabObjects: { category: TabCategory; text: Phaser.GameObjects.Text; underline: Phaser.GameObjects.Rectangle }[] = [];
   private contentOrigin!: { x: number; y: number };
+  private highlightRect!: Phaser.GameObjects.Rectangle;
+  private detailBg!: Phaser.GameObjects.Rectangle;
+  private detailBorderLine!: Phaser.GameObjects.Rectangle;
+  private detailName!: Phaser.GameObjects.Text;
+  private detailDesc!: Phaser.GameObjects.Text;
+  private detailEffect!: Phaser.GameObjects.Text;
+  private detailAfford!: Phaser.GameObjects.Text;
+  private detailPaneY!: number;
 
   constructor() {
     super({ key: 'TokenMarket' });
@@ -99,8 +126,85 @@ export class TokenMarketScene extends Phaser.Scene {
     backBtn.on('pointerdown', () => this.scene.start('Night'));
     this.marketWin.add(backBtn);
 
+    // Detail pane (above back button)
+    this.createDetailPane(cx, cy, cw, ch);
+
     // Initial item list
     this.renderItems();
+  }
+
+  private createDetailPane(cx: number, cy: number, cw: number, ch: number): void {
+    const dpY = cy + ch - 136;
+    const dpH = 100;
+    this.detailPaneY = dpY;
+
+    // Hover highlight (behind items, created first so it's below them)
+    this.highlightRect = this.add.rectangle(cx - 4, 0, cw + 8, 50, 0x21262d)
+      .setOrigin(0, 0).setAlpha(0);
+    this.marketWin.add(this.highlightRect);
+
+    // Top border line
+    this.detailBorderLine = this.add.rectangle(cx - 4, dpY, cw + 8, 1, 0x30363d)
+      .setOrigin(0, 0);
+    this.marketWin.add(this.detailBorderLine);
+
+    // Dark background
+    this.detailBg = this.add.rectangle(cx - 4, dpY + 1, cw + 8, dpH - 1, 0x0d1117)
+      .setOrigin(0, 0);
+    this.marketWin.add(this.detailBg);
+
+    // Default "hover" prompt
+    this.detailName = this.add.text(cx + 4, dpY + 12, 'Hover over an item for details', {
+      fontFamily: 'monospace',
+      fontSize: '16px',
+      color: '#9da5b0',
+      fontStyle: 'bold',
+    });
+    this.marketWin.add(this.detailName);
+
+    this.detailDesc = this.add.text(cx + 4, dpY + 38, '', {
+      fontFamily: 'monospace',
+      fontSize: '13px',
+      color: '#9da5b0',
+    });
+    this.marketWin.add(this.detailDesc);
+
+    this.detailEffect = this.add.text(cx + 4, dpY + 58, '', {
+      fontFamily: 'monospace',
+      fontSize: '12px',
+      color: '#6e7681',
+      fontStyle: 'italic',
+    });
+    this.marketWin.add(this.detailEffect);
+
+    this.detailAfford = this.add.text(cx + cw - 4, dpY + 12, '', {
+      fontFamily: 'monospace',
+      fontSize: '13px',
+      color: '#f85149',
+    }).setOrigin(1, 0);
+    this.marketWin.add(this.detailAfford);
+  }
+
+  private updateDetailPane(item: ItemDef, canAfford: boolean, isOwned: boolean): void {
+    this.detailName.setText(item.name).setColor('#e6edf3');
+    this.detailDesc.setText(item.description);
+    this.detailEffect.setText(ITEM_EFFECTS[item.id] ?? '');
+
+    if (isOwned) {
+      this.detailAfford.setText('✓ Already purchased').setColor('#3fb950');
+    } else if (!canAfford) {
+      this.detailAfford.setText('⚠️ Insufficient funds').setColor('#f85149');
+    } else {
+      this.detailAfford.setText('');
+    }
+  }
+
+  private clearDetailPane(): void {
+    this.detailName.setText('Hover over an item for details').setColor('#9da5b0');
+    this.detailDesc.setText('');
+    this.detailEffect.setText('');
+    this.detailAfford.setText('');
+    this.highlightRect.setAlpha(0);
   }
 
   private refreshBudget(): void {
@@ -173,8 +277,11 @@ export class TokenMarketScene extends Phaser.Scene {
     });
 
     const { x: cx, y: cy } = this.contentOrigin;
+    const { width: cw } = this.marketWin.contentArea;
     const listStartY = cy + 48; // below tabs
     const rowHeight = 54;
+    // Reset highlight when re-rendering
+    if (this.highlightRect) this.highlightRect.setAlpha(0);
     const colNameX = cx;
     const colPriceX = cx + 360;
     const colDescX = cx;
@@ -191,6 +298,17 @@ export class TokenMarketScene extends Phaser.Scene {
       const sep = this.add.rectangle(cx, ry - 4, 860, 1, 0x21262d).setOrigin(0, 0);
       this.marketWin.add(sep);
       this.itemListObjects.push(sep);
+
+      // Invisible hover hit area for the whole row
+      const rowHit = this.add.rectangle(cx - 4, ry - 4, cw + 8, rowHeight, 0x000000, 0)
+        .setOrigin(0, 0).setInteractive();
+      rowHit.on('pointerover', () => {
+        this.highlightRect.setY(ry - 4).setAlpha(0.5);
+        this.updateDetailPane(item, canAfford, isOwned);
+      });
+      rowHit.on('pointerout', () => this.clearDetailPane());
+      this.marketWin.add(rowHit);
+      this.itemListObjects.push(rowHit);
 
       // Emoji + Name
       const emoji = categoryEmoji(item.category);
@@ -240,16 +358,19 @@ export class TokenMarketScene extends Phaser.Scene {
         this.marketWin.add(dealText);
         this.itemListObjects.push(dealText);
       } else {
+        const canAffordPrice = state.budget >= price;
+        const priceColor = canAffordPrice ? '#c9d1d9' : '#f85149';
         const priceText = this.add.text(colPriceX, ry + 4, `$${price}`, {
           fontFamily: 'monospace',
           fontSize: '13px',
-          color: '#c9d1d9',
+          color: priceColor,
         });
         this.marketWin.add(priceText);
         this.itemListObjects.push(priceText);
       }
 
       // BUY button or OWNED label
+      const canAfford = !isOwned && state.budget >= (isDeal ? Math.round(price / 2) : price);
       if (isOwned) {
         const ownedLabel = this.add.text(colBtnX, ry + 10, '✓ OWNED', {
           fontFamily: 'monospace',
@@ -260,17 +381,17 @@ export class TokenMarketScene extends Phaser.Scene {
         this.itemListObjects.push(ownedLabel);
       } else {
         const actualPrice = isDeal ? Math.round(price / 2) : price;
-        const canAfford = state.budget >= actualPrice;
+        const canAfford2 = state.budget >= actualPrice;
         const buyLabel = `[ BUY $${actualPrice} ]`;
         const buyBtn = this.add.text(colBtnX, ry + 10, buyLabel, {
           fontFamily: 'monospace',
           fontSize: '12px',
-          color: canAfford ? '#e6edf3' : '#6e7681',
-          backgroundColor: canAfford ? '#238636' : '#21262d',
+          color: canAfford2 ? '#e6edf3' : '#6e7681',
+          backgroundColor: canAfford2 ? '#238636' : '#21262d',
           padding: { x: 8, y: 5 },
         }).setOrigin(0, 0.5);
 
-        if (canAfford) {
+        if (canAfford2) {
           buyBtn.setInteractive({ useHandCursor: true });
           buyBtn.on('pointerover', () => buyBtn.setBackgroundColor('#2ea043'));
           buyBtn.on('pointerout', () => buyBtn.setBackgroundColor('#238636'));
