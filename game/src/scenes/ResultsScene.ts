@@ -18,6 +18,12 @@ export class ResultsScene extends Phaser.Scene {
   private animDuration = 1000; // 1 second
   private isAnimating = true;
 
+  // Cached layout values needed in update()
+  private winWidth = 500;
+  private winHeight = 460;
+  private themeAccent = 0x00ffcc;
+  private yShift = 0;
+
   // Display objects
   private progressText!: Phaser.GameObjects.Text;
   private accuracyText!: Phaser.GameObjects.Text;
@@ -46,6 +52,7 @@ export class ResultsScene extends Phaser.Scene {
     AudioManager.getInstance().playMusic('night');
 
     const theme = getTheme(state.playerClass ?? undefined);
+    this.themeAccent = theme.accent;
 
     this.cameras.main.setBackgroundColor(COLORS.bg);
     this.taskbar = new Taskbar(this, theme.accent);
@@ -107,7 +114,8 @@ export class ResultsScene extends Phaser.Scene {
 
     const strategyLabel = this.getStrategyLabel(state.strategy || 'justStart');
     const hasOvertime = state.overtimeBonus > 0;
-    const yShift = hasOvertime ? 25 : 0;
+    this.yShift = hasOvertime ? 25 : 0;
+    const yShift = this.yShift;
 
     this.window.add(this.add.text(x + 20, y + 175, 'Strategy ♙:', labelStyle));
     this.strategyBonusText = this.add.text(x + 140, y + 175, `+0  (${strategyLabel})`, valueStyle);
@@ -218,13 +226,11 @@ export class ResultsScene extends Phaser.Scene {
 
       // C) Border flash on high score
       if (total >= 40) {
-        const { x: wx, y: wy } = this.window.contentArea;
-        const winX = wx - 20; // approximate window origin offset
         const flashRect = this.add.rectangle(
-          this.window.container.x + winWidth / 2,
-          this.window.container.y + winHeight / 2,
-          winWidth, winHeight
-        ).setStrokeStyle(2, theme.accent).setFillStyle(0, 0).setDepth(50).setAlpha(0);
+          this.window.container.x + this.winWidth / 2,
+          this.window.container.y + this.winHeight / 2,
+          this.winWidth, this.winHeight
+        ).setStrokeStyle(2, this.themeAccent).setFillStyle(0, 0).setDepth(50).setAlpha(0);
         this.tweens.add({
           targets: flashRect,
           alpha: 0.8,
@@ -241,7 +247,7 @@ export class ResultsScene extends Phaser.Scene {
         const vibePercent = result.progress >= 100
           ? Math.floor(50 + Math.random() * 50)
           : Math.floor(Math.random() * 40);
-        const vibeText = this.add.text(cx2 + cw / 2, cy2 + 265 + yShift, '', {
+        const vibeText = this.add.text(cx2 + cw / 2, cy2 + 265 + this.yShift, '', {
           fontFamily: 'monospace', fontSize: '16px', color: '#d29922', fontStyle: 'bold',
         }).setOrigin(0.5).setAlpha(0);
         this.window.add(vibeText);

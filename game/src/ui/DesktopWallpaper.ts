@@ -1,4 +1,5 @@
 import { GAME_WIDTH, GAME_HEIGHT } from '../utils/constants';
+import { getState } from '../systems/GameState';
 
 /**
  * Simple LCG pseudo-random number generator seeded by a given value.
@@ -61,7 +62,6 @@ function drawTechBro(scene: Phaser.Scene): void {
   }
 
   // Random circuit nodes seeded by day
-  const { getState } = require('../systems/GameState');
   const state = getState();
   const rand = makeLCG(state.day ?? 1);
 
