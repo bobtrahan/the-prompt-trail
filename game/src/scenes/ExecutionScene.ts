@@ -642,11 +642,13 @@ export class ExecutionScene extends Phaser.Scene {
   }
 
   private onPromptComplete(): void {
-    // Progress driven by prompts completed out of total
+    // Power-curve progress — early prompts barely move the bar, final prompt is the big payoff
+    // 4 prompts: 8 → 29 → 60 → 100  |  10 prompts: 2 → 6 → 11 → ... → 83 → 100
     const completed = this.typingEngine.getStats().promptsCompleted;
     const total = this.typingEngine.getTotalDayPrompts();
     if (total > 0) {
-      this.progress = Math.min(100, Math.round((completed / total) * 100));
+      const frac = Math.pow(completed / total, 1.8);
+      this.progress = Math.min(100, Math.round(frac * 100));
     }
     this.updateProgressBar();
 
