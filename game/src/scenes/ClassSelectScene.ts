@@ -81,21 +81,21 @@ export class ClassSelectScene extends Phaser.Scene {
         .setAlpha(0.06)
         .setDepth(2);
 
-      // Emoji — comfortable padding from top
-      this.add.text(x, y - halfH + 22, CLASS_EMOJI[def.id] ?? '💻', {
+      // Emoji — vertically centered in header band
+      this.add.text(x, y - halfH + 40, CLASS_EMOJI[def.id] ?? '💻', {
         fontSize: '40px',
       }).setOrigin(0.5).setDepth(2);
 
-      // Class name
-      this.add.text(x, y - halfH + 66, def.name, {
+      // Class name — below header, same gap as emoji-to-header-center (~18px below header bottom)
+      this.add.text(x, y - halfH + 98, def.name, {
         fontFamily: 'monospace',
         fontSize: '22px',
         color: '#e6edf3',
         fontStyle: 'bold',
       }).setOrigin(0.5).setDepth(2);
 
-      // Bio — 3 lines, always
-      this.add.text(x, y - halfH + 100, CLASS_BIO[def.id] ?? '', {
+      // Bio — 3 lines, same gap below class name
+      this.add.text(x, y - halfH + 132, CLASS_BIO[def.id] ?? '', {
         fontFamily: 'monospace',
         fontSize: '13px',
         color: `#${COLORS.textDim.toString(16).padStart(6, '0')}`,
