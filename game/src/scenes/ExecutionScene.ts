@@ -72,8 +72,10 @@ export class ExecutionScene extends Phaser.Scene {
   private progressText!: Phaser.GameObjects.Text;
   private progress = 0;
   private timeUnits = TIME_UNITS_PER_DAY;
+  private timeSeconds = 45;
   private timeBar!: Phaser.GameObjects.Rectangle;
   private timeBg!: Phaser.GameObjects.Rectangle;
+  private timeText!: Phaser.GameObjects.Text;
 
   // Timers
   private dayTimer!: Phaser.Time.TimerEvent;
@@ -470,8 +472,8 @@ export class ExecutionScene extends Phaser.Scene {
     // Hardware health bar
     const hwPct = state.hardwareHp / 100;
     const hwBarColor = state.hardwareHp >= 60 ? 0x3fb950 : state.hardwareHp >= 30 ? 0xd29922 : 0xf85149;
-    this.hwBarBg = this.add.rectangle(rX, rY + 42, 160, 6, 0x21262d).setOrigin(0);
-    this.hwBar = this.add.rectangle(rX, rY + 42, Math.round(hwPct * 160), 6, hwBarColor).setOrigin(0);
+    this.hwBarBg = this.add.rectangle(rX, rY + 46, 160, 6, 0x21262d).setOrigin(0);
+    this.hwBar = this.add.rectangle(rX, rY + 46, Math.round(hwPct * 160), 6, hwBarColor).setOrigin(0);
     this.lastHw = state.hardwareHp;
 
     this.repText = this.add.text(rX, rY + 56, `⭐ Reputation: ${state.reputation}`, rStyle);
@@ -486,11 +488,11 @@ export class ExecutionScene extends Phaser.Scene {
       fontFamily: 'monospace', fontSize: '12px', color: qualityColor,
     });
 
-    this.add.text(rX, rY + 106, '⏱️ Time Remaining:', {
+    this.timeText = this.add.text(rX, rY + 106, `⏱️ Time: ${this.timeSeconds}s`, {
       fontFamily: 'monospace', fontSize: '12px', color: '#9da5b0',
     });
-    this.timeBg = this.add.rectangle(rX, rY + 120, rArea.width - 16, 14, 0x21262d).setOrigin(0);
-    this.timeBar = this.add.rectangle(rX, rY + 120, rArea.width - 16, 14, COLORS.warning).setOrigin(0);
+    this.timeBg = this.add.rectangle(rX, rY + 124, rArea.width - 16, 14, 0x21262d).setOrigin(0);
+    this.timeBar = this.add.rectangle(rX, rY + 124, rArea.width - 16, 14, COLORS.warning).setOrigin(0);
 
     // ── Terminal boot text ──
     this.terminal.addLine('PromptOS Terminal v1.3.7');
@@ -617,11 +619,11 @@ export class ExecutionScene extends Phaser.Scene {
       onComplete: () => this.typeHint.destroy(),
     });
 
-    // NOW start the day timer
-    const tickMs = 4500;
+    // NOW start the day timer — fixed 45 seconds, ticks every 1s
+    this.timeSeconds = 45;
     this.dayTimer = this.time.addEvent({
-      delay: tickMs,
-      repeat: this.timeUnits - 1,
+      delay: 1000,
+      repeat: this.timeSeconds - 1,
       callback: () => this.tickTime(),
     });
 
@@ -670,18 +672,19 @@ export class ExecutionScene extends Phaser.Scene {
 
   private tickTime(): void {
     if (window.__GOD_MODE) return;
+    this.timeSeconds--;
     this.timeUnits--;
     const state = getState();
     state.timeUnitsRemaining = this.timeUnits;
 
-    const initialTimeUnits = getState().dayStartTimeUnits ?? TIME_UNITS_PER_DAY;
-    const frac = this.timeUnits / initialTimeUnits;
+    const frac = this.timeSeconds / 45;
     this.timeBar.width = this.timeBg.width * frac;
+    this.timeText.setText(`⏱️ Time: ${this.timeSeconds}s`);
     if (frac <= 0.3) this.timeBar.setFillStyle(COLORS.error);
 
     this.taskbar.refresh();
 
-    if (this.timeUnits <= 0) {
+    if (this.timeSeconds <= 0) {
       // If completion modal is still open when time runs out, dismiss and end normally
       if (this.completionShown && this.modalGroup) {
         this.modalGroup.destroy();
@@ -696,7 +699,7 @@ export class ExecutionScene extends Phaser.Scene {
   private fireEvent(): void {
     // Don't stack modals
     if (this.modalGroup) return;
-    if (this.timeUnits <= 0) return;
+    if (this.timeSeconds <= 0) return;
 
     const evt = this.eventEngine.selectEvent();
     if (!evt) return;
@@ -1013,8 +1016,7 @@ export class ExecutionScene extends Phaser.Scene {
         const label = m ? `${m[1]} ⏱️` : '⏱️';
         summaryParts.push(label);
         // Color pulse on time bar
-        const initTU = getState().dayStartTimeUnits ?? TIME_UNITS_PER_DAY;
-        const origColor = this.timeUnits / initTU <= 0.3 ? COLORS.error : COLORS.warning;
+        const origColor = this.timeSeconds / 45 <= 0.3 ? COLORS.error : COLORS.warning;
         this.timeBar.setFillStyle(0xffffff);
         this.time.delayedCall(200, () => this.timeBar.setFillStyle(origColor));
       } else if (log.startsWith('> HARDWARE')) {
