@@ -7,28 +7,7 @@ import { Window } from '../ui/Window';
 import { Taskbar } from '../ui/Taskbar';
 import AudioManager from '../systems/AudioManager';
 import { drawWallpaper } from '../ui/DesktopWallpaper';
-
-// ── Bug type definitions ──────────────────────────────────────────────────────
-
-type BugType = 'syntax' | 'logic' | 'race' | 'memleak' | 'heisen';
-
-interface BugConfig {
-  emoji: string;
-  label: string;
-  reward: number;
-  despawnMs: number;
-  weight: number;
-  color: number;
-  dotColor: number;
-}
-
-const BUG_DEFS: Record<BugType, BugConfig> = {
-  syntax:  { emoji: '🔴', label: 'SyntaxError',    reward: 10, despawnMs: 6000, weight: 35, color: 0xda3633, dotColor: 0xff6b6b },
-  logic:   { emoji: '🟡', label: 'LogicBug',       reward: 15, despawnMs: 8000, weight: 25, color: 0xd29922, dotColor: 0xffd166 },
-  race:    { emoji: '🟣', label: 'RaceCondition',  reward: 20, despawnMs: 6000, weight: 15, color: 0x8957e5, dotColor: 0xb89af7 },
-  memleak: { emoji: '🟢', label: 'MemoryLeak',     reward: 10, despawnMs: 8000, weight: 15, color: 0x238636, dotColor: 0x3fb950 },
-  heisen:  { emoji: '👻', label: 'Heisenbug',      reward: 30, despawnMs: 5000, weight: 10, color: 0x6e7681, dotColor: 0x9aa6b2 },
-};
+import { BUG_DEFS, type BugConfig, pickBugType, type BugType } from '../data/bugs';
 
 // Chip dimensions (centered at container origin)
 const CHIP_W = 120;
@@ -74,16 +53,6 @@ const CODE_LINES = [
 ];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-
-function pickBugType(): BugType {
-  const total = Object.values(BUG_DEFS).reduce((s, d) => s + d.weight, 0);
-  let r = Math.random() * total;
-  for (const [type, def] of Object.entries(BUG_DEFS) as [BugType, BugConfig][]) {
-    r -= def.weight;
-    if (r <= 0) return type;
-  }
-  return 'syntax';
-}
 
 /** Draw the chip background into a Graphics object (reusable for memleak color shifts) */
 function drawChipBg(gfx: Phaser.GameObjects.Graphics, color: number, alpha = 0.85): void {
