@@ -102,15 +102,18 @@ interface HuntBug {
 
 // ── Code obstacle text definitions ────────────────────────────────────────────
 
+// Mix of small (1-2 line) and medium (3-4 line) snippets for varied obstacle sizes
 const OBSTACLE_SNIPPETS: string[][] = [
-  ['class Server {', '  port = 3000', '  start(): void {}', '}'],
-  ['function deploy() {', '  await push(remote)', '  notify("shipped")', '}'],
-  ['import { fetch, cache }', 'from "./api/client"'],
-  ['const heap = []', '// grows unbounded...'],
-  ['async function getModel(', '  id: string', '): Promise<Model> {', '  return registry.get(id)', '}'],
-  ['try {', '  runInferPipeline()', '} catch (e) {', '  // TODO: handle', '}'],
-  ['export default', '  new Router({', '    prefix: "/"', '  })'],
-  ['interface ModelConfig {', '  tier: ModelTier', '  tokens: number', '}'],
+  ['const x = 42'],
+  ['// TODO: fix'],
+  ['import ai from "./"'],
+  ['let bug = true'],
+  ['return null'],
+  ['class Server {', '  port = 3000', '}'],
+  ['function deploy() {', '  push(remote)', '}'],
+  ['try {', '  run()', '} catch {}'],
+  ['const heap = []', '// unbounded...'],
+  ['async getModel(', '  id: string', '): Model {', '  return get(id)', '}'],
 ];
 
 const SYNTAX_ACCENT_COLORS = [0x3fb950, 0x58a6ff, 0xf0883e, 0xf85149];
@@ -169,7 +172,14 @@ export class BugHuntScene extends Phaser.Scene {
   private crosshairY = 0;
 
   // Input
+  private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
+  private keyW!: Phaser.Input.Keyboard.Key;
+  private keyA!: Phaser.Input.Keyboard.Key;
+  private keyS!: Phaser.Input.Keyboard.Key;
+  private keyD!: Phaser.Input.Keyboard.Key;
   private keySpace!: Phaser.Input.Keyboard.Key;
+  private aimDirX = 0;
+  private aimDirY = -1; // default aim up
 
   // Game state
   private bugCount = 0;
@@ -311,14 +321,18 @@ export class BugHuntScene extends Phaser.Scene {
       ease: 'Sine.easeInOut',
     });
 
-    // ── Input (mouse aim + space/click to fire) ──────────────────────────────
+    // ── Input (WASD/arrows aim, space fires — Oregon Trail style) ─────────
     const kb = this.input.keyboard!;
+    this.cursors = kb.createCursorKeys();
+    const wasdKeys = kb.addKeys('W,A,S,D') as Record<string, Phaser.Input.Keyboard.Key>;
+    this.keyW = wasdKeys['W'];
+    this.keyA = wasdKeys['A'];
+    this.keyS = wasdKeys['S'];
+    this.keyD = wasdKeys['D'];
     this.keySpace = kb.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
 
-    this.input.on('pointerdown', this.fireBullet, this);
     this.keySpace.on('down', this.fireBullet, this);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
-      this.input.off('pointerdown', this.fireBullet, this);
       this.keySpace.off('down', this.fireBullet, this);
       this.destroyAllBullets();
       this.destroyAllBugs();
@@ -357,8 +371,8 @@ export class BugHuntScene extends Phaser.Scene {
     for (let i = 0; i < count; i++) {
       const lines = OBSTACLE_SNIPPETS[i % OBSTACLE_SNIPPETS.length];
       const longestLen = Math.max(...lines.map(l => l.length));
-      const blockW = Math.max(120, longestLen * 7 + 20);
-      const blockH = lines.length * 16 + 14;
+      const blockW = Math.max(60, longestLen * 7 + 12);
+      const blockH = lines.length * 14 + 10;
 
       let placed = false;
       for (let attempt = 0; attempt < 30; attempt++) {
@@ -401,9 +415,9 @@ export class BugHuntScene extends Phaser.Scene {
 
     // Code text lines
     lines.forEach((line, i) => {
-      this.add.text(x + 8, y + 7 + i * 16, line, {
+      this.add.text(x + 6, y + 5 + i * 14, line, {
         fontFamily: 'monospace',
-        fontSize: '11px',
+        fontSize: '10px',
         color: '#3a5c3a',
       }).setDepth(14);
     });
@@ -1047,9 +1061,21 @@ export class BugHuntScene extends Phaser.Scene {
     this.playerX = newX;
     this.playerY = newY;
 
-    // ── Aim from mouse ────────────────────────────────────────────────────────
-    const ptr = this.input.activePointer;
-    this.aimAngle = Math.atan2(ptr.y - this.playerY, ptr.x - this.playerX);
+    // ── Aim from WASD/arrows (8 directions, Oregon Trail style) ──────────
+    let ax = 0;
+    let ay = 0;
+    if (this.cursors.left.isDown  || this.keyA.isDown) ax -= 1;
+    if (this.cursors.right.isDown || this.keyD.isDown) ax += 1;
+    if (this.cursors.up.isDown    || this.keyW.isDown) ay -= 1;
+    if (this.cursors.down.isDown  || this.keyS.isDown) ay += 1;
+
+    // Only update aim direction when keys are held
+    if (ax !== 0 || ay !== 0) {
+      const len = Math.hypot(ax, ay);
+      this.aimDirX = ax / len;
+      this.aimDirY = ay / len;
+    }
+    this.aimAngle = Math.atan2(this.aimDirY, this.aimDirX);
 
     this.updateBullets(dt);
     this.updateBugs(time, dt);
