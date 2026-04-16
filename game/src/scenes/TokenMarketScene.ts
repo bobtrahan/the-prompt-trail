@@ -301,8 +301,26 @@ export class TokenMarketScene extends Phaser.Scene {
     const colDescX = cx;
     const colBtnX = cx + 760;
 
+    // Geometry mask to clip items within list area
+    const absListTop = this.marketWin.container.y + listStartY;
+    const absListLeft = this.marketWin.container.x + cx - 8;
+    const absListW = cw + 16;
+    const maskGfx = this.add.graphics();
+    maskGfx.fillStyle(0xffffff);
+    maskGfx.fillRect(absListLeft, absListTop, absListW, this.listClipH);
+    this.listMask = maskGfx.createGeometryMask();
+    this.itemListObjects.push(maskGfx);
+
+    // Helper to add item to list with mask
+    const addListItem = (obj: Phaser.GameObjects.GameObject) => {
+      this.marketWin.add(obj);
+      this.itemListObjects.push(obj);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if ('setMask' in obj) (obj as any).setMask(this.listMask);
+    };
+
     // Mouse wheel scrolling
-    this.input.off('wheel'); // remove previous listener
+    this.input.off('wheel');
     if (this.maxScroll > 0) {
       this.input.on('wheel', (_ptr: unknown, _gos: unknown, _dx: number, dy: number) => {
         this.scrollOffset = Phaser.Math.Clamp(this.scrollOffset + dy * 0.5, 0, this.maxScroll);
@@ -310,20 +328,8 @@ export class TokenMarketScene extends Phaser.Scene {
       });
     }
 
-    // Scroll indicator
-    if (this.maxScroll > 0 && this.scrollOffset < this.maxScroll) {
-      const moreText = this.add.text(cx + cw / 2, listEndY - 4, '▼ scroll for more', {
-        fontFamily: 'monospace', fontSize: '10px', color: '#9da5b0',
-      }).setOrigin(0.5, 1);
-      this.marketWin.add(moreText);
-      this.itemListObjects.push(moreText);
-    }
-
     filtered.forEach((item, i) => {
       const ry = listStartY + i * rowHeight - this.scrollOffset;
-
-      // Skip rows outside visible area
-      if (ry + rowHeight < listStartY - 4 || ry > listEndY) return;
       const price = prices.get(item.id) ?? item.baseCost;
       const isDeal = item.id === dealId;
       const canBuyResult = ShopSystem.canBuy(state, item, isDeal ? Math.round(price / 2) : price);
@@ -331,8 +337,7 @@ export class TokenMarketScene extends Phaser.Scene {
 
       // Row separator
       const sep = this.add.rectangle(cx, ry - 4, 860, 1, 0x21262d).setOrigin(0, 0);
-      this.marketWin.add(sep);
-      this.itemListObjects.push(sep);
+      addListItem(sep);
 
       // Invisible hover hit area for the whole row
       const rowHit = this.add.rectangle(cx - 4, ry - 4, cw + 8, rowHeight, 0x000000, 0)
@@ -342,8 +347,7 @@ export class TokenMarketScene extends Phaser.Scene {
         this.updateDetailPane(item, canAfford, isOwned);
       });
       rowHit.on('pointerout', () => this.clearDetailPane());
-      this.marketWin.add(rowHit);
-      this.itemListObjects.push(rowHit);
+      addListItem(rowHit);
 
       // Emoji + Name
       const emoji = categoryEmoji(item.category);
@@ -352,8 +356,7 @@ export class TokenMarketScene extends Phaser.Scene {
         fontSize: '13px',
         color: '#e6edf3',
       });
-      this.marketWin.add(nameText);
-      this.itemListObjects.push(nameText);
+      addListItem(nameText);
 
       // Description (dim, below name)
       const descText = this.add.text(colDescX, ry + 22, item.description, {
@@ -361,8 +364,7 @@ export class TokenMarketScene extends Phaser.Scene {
         fontSize: '13px',
         color: '#9da5b0',
       });
-      this.marketWin.add(descText);
-      this.itemListObjects.push(descText);
+      addListItem(descText);
 
       // Price display
       if (isDeal) {
@@ -373,16 +375,14 @@ export class TokenMarketScene extends Phaser.Scene {
           fontSize: '12px',
           color: '#6e7681',
         });
-        this.marketWin.add(strikeText);
-        this.itemListObjects.push(strikeText);
+        addListItem(strikeText);
         // Strikethrough line
         const strikeLine = this.add.rectangle(
           colPriceX, strikeText.y + strikeText.height / 2,
           strikeText.width, 1,
           0x6e7681
         ).setOrigin(0, 0.5);
-        this.marketWin.add(strikeLine);
-        this.itemListObjects.push(strikeLine);
+        addListItem(strikeLine);
 
         const halfPrice = Math.round(price / 2);
         const dealText = this.add.text(colPriceX + strikeText.width + 8, ry + 4, `$${halfPrice} 🏷️`, {
@@ -390,8 +390,7 @@ export class TokenMarketScene extends Phaser.Scene {
           fontSize: '13px',
           color: '#d29922',
         });
-        this.marketWin.add(dealText);
-        this.itemListObjects.push(dealText);
+        addListItem(dealText);
       } else {
         const canAffordPrice = state.budget >= price;
         const priceColor = canAffordPrice ? '#c9d1d9' : '#f85149';
@@ -400,8 +399,7 @@ export class TokenMarketScene extends Phaser.Scene {
           fontSize: '13px',
           color: priceColor,
         });
-        this.marketWin.add(priceText);
-        this.itemListObjects.push(priceText);
+        addListItem(priceText);
       }
 
       // BUY button or OWNED label
@@ -412,8 +410,7 @@ export class TokenMarketScene extends Phaser.Scene {
           fontSize: '13px',
           color: '#3fb950',
         }).setOrigin(0, 0.5);
-        this.marketWin.add(ownedLabel);
-        this.itemListObjects.push(ownedLabel);
+        addListItem(ownedLabel);
       } else {
         const actualPrice = isDeal ? Math.round(price / 2) : price;
         const canAfford2 = state.budget >= actualPrice;
@@ -432,8 +429,7 @@ export class TokenMarketScene extends Phaser.Scene {
           buyBtn.on('pointerout', () => buyBtn.setBackgroundColor('#238636'));
           buyBtn.on('pointerdown', () => this.handleBuy(item, actualPrice));
         }
-        this.marketWin.add(buyBtn);
-        this.itemListObjects.push(buyBtn);
+        addListItem(buyBtn);
       }
     });
 
