@@ -111,7 +111,9 @@ gamedevjs-2026/
 
 ### Remaining
 
-- [ ] **Visual nits** — screenshot-driven fixes using browser automation. One-by-one audit and fix cycle.
+- [ ] **Audio normalization** — levels are uneven across music/SFX/voice; normalize all assets to consistent loudness
+- [ ] **Granular audio controls** — add PromptOS settings panel with sliders for Master, Music, SFX, Voice, plus mute toggle (AudioManager already supports per-channel volumes)
+- [ ] **Debug menu: scene jumps** — add Bug Bounty and Token Market jump buttons to the debug menu
 - [ ] **Balance tuning** — play 2-3 runs, review telemetry, adjust difficulty curve, costs, event frequency
 - [ ] **Per-class visual differentiation** — terminal themes beyond accent colors (wallpapers already done)
 - [ ] **Deploy** — itch.io, GitHub Pages, Wavedash. Vite build + test
@@ -126,8 +128,18 @@ gamedevjs-2026/
 | 5.6: Visual Audit | ✅ Complete |
 | 6: Code Crusades | ✅ Complete |
 | 6.5: New Features | ✅ Complete (Bug Hunt, typing rework, events, Agent Manager, voice) |
-| 7: Balance + Polish | Pending |
-| 8: Deploy + Submit | Pending (deadline: Apr 26) |
+| 7: Visual Polish | ✅ Complete (Apr 15 evening session — see below) |
+| 8: Audio + Controls Polish | In Progress |
+| 9: Balance + Deploy + Submit | Pending (deadline: Apr 26) |
+
+### Phase 7: Visual Polish (Apr 15 evening)
+- [x] **Boot sequence** — progress bar fills smoothly through POST/kernel/splash, holds at 100% before transition
+- [x] **ClassSelect** — larger cards, custom 3-line bios, emoji centered in header, voice on hover, divider between bio and stats
+- [x] **BriefingScene overhaul** — reordered (AI News → Project → Resources → Plan Insights), procedural OS-style news thumbnails (7 styles: terminal, alert, code, chart, chat, email, invoice), 3-column bottom panels
+- [x] **Execution** — fixed 45s timer with live seconds display, day ends when unique prompts complete (4→10 scaling), Agent Manager panel now visible (was double-offset off-screen)
+- [x] **BugHunt (Old School)** — Oregon Trail controls: WASD/arrows turn, Enter walks, Space fires. Stops on wall/block collision. Smaller varied code block obstacles. Raw DOM input (bypasses Phaser keyboard conflicts)
+- [x] **Token Market** — scrollable item list with geometry mask, no overflow into detail pane
+- [x] **Audio** — mute-before-play prevents audio blip on reload
 
 ## Standards
 
