@@ -349,6 +349,14 @@ export class ExecutionScene extends Phaser.Scene {
       accentColor: theme.accent,
     });
 
+    // Subtle accent tint on Agent Manager content area
+    const agentTint = this.add.rectangle(
+      this.agentWindow.contentArea.x, this.agentWindow.contentArea.y,
+      this.agentWindow.contentArea.width, this.agentWindow.contentArea.height,
+      theme.accent,
+    ).setOrigin(0).setAlpha(0.03);
+    this.agentWindow.add(agentTint);
+
     const activeAgentIds = state.activeAgents.length > 0 ? state.activeAgents : ['turbo'];
     const agentDefs = AgentSystem.getAgentDefs(activeAgentIds);
     const aArea = this.agentWindow.contentArea;
