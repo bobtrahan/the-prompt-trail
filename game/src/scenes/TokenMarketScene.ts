@@ -244,6 +244,8 @@ export class TokenMarketScene extends Phaser.Scene {
       });
       text.on('pointerdown', () => this.selectTab(category));
 
+      text.setDepth(50);
+      underline.setDepth(50);
       this.marketWin.add(text);
       this.marketWin.add(underline);
       this.tabObjects.push({ category, text, underline });
@@ -339,9 +341,14 @@ export class TokenMarketScene extends Phaser.Scene {
       const sep = this.add.rectangle(cx, ry - 4, 860, 1, 0x21262d).setOrigin(0, 0);
       addListItem(sep);
 
-      // Invisible hover hit area for the whole row
+      // Invisible hover hit area — only for rows within the visible clip region
+      // Prevents scrolled-out rows from stealing input from tabs above
+      const rowVisible = ry >= listStartY - rowHeight && ry < listStartY + this.listClipH;
       const rowHit = this.add.rectangle(cx - 4, ry - 4, cw + 8, rowHeight, 0x000000, 0)
-        .setOrigin(0, 0).setInteractive();
+        .setOrigin(0, 0);
+      if (rowVisible) {
+        rowHit.setInteractive();
+      }
       rowHit.on('pointerover', () => {
         this.highlightRect.setY(ry - 4).setAlpha(0.5);
         this.updateDetailPane(item, canAfford, isOwned);
