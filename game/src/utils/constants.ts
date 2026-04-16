@@ -26,8 +26,44 @@ export const COLORS = {
 
 // Class theme overrides
 export const CLASS_THEMES = {
-  techBro: { accent: 0x00ffcc, wallpaper: 'wallpaper_techbro' },
-  indieHacker: { accent: 0xf0883e, wallpaper: 'wallpaper_indie' },
-  collegeStudent: { accent: 0x58a6ff, wallpaper: 'wallpaper_student' },
-  corporateDev: { accent: 0x6e7681, wallpaper: 'wallpaper_corporate' },
+  techBro: {
+    accent: 0x00ffcc,
+    wallpaper: 'wallpaper_techbro',
+    terminalText: '#00ffcc',
+    terminalBg: 0x0a0f14,
+    titleBarBg: 0x0a2020,
+    taskbarBg: 0x0a1418,
+    taskbarBorder: 0x00ffcc,
+    cursorChar: '█',
+  },
+  indieHacker: {
+    accent: 0xf0883e,
+    wallpaper: 'wallpaper_indie',
+    terminalText: '#f0883e',
+    terminalBg: 0x14100a,
+    titleBarBg: 0x201a0a,
+    taskbarBg: 0x18140e,
+    taskbarBorder: 0xf0883e,
+    cursorChar: '_',
+  },
+  collegeStudent: {
+    accent: 0x58a6ff,
+    wallpaper: 'wallpaper_student',
+    terminalText: '#ff79c6',
+    terminalBg: 0x0d0a14,
+    titleBarBg: 0x0f1020,
+    taskbarBg: 0x0a0c18,
+    taskbarBorder: 0xff79c6,
+    cursorChar: '|',
+  },
+  corporateDev: {
+    accent: 0x6e7681,
+    wallpaper: 'wallpaper_corporate',
+    terminalText: '#8b949e',
+    terminalBg: 0x10121a,
+    titleBarBg: 0x1c1f26,
+    taskbarBg: 0x1a1d24,
+    taskbarBorder: 0x6e7681,
+    cursorChar: '▌',
+  },
 };
