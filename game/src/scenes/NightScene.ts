@@ -164,7 +164,10 @@ export class NightScene extends Phaser.Scene {
         AudioManager.getInstance().playSFX('ui-click', 0.15);
       });
       bountyBtn.on('pointerout', () => bountyBtn.setBackgroundColor('#30363d'));
-      bountyBtn.on('pointerdown', () => this.scene.start('BugBounty'));
+      bountyBtn.on('pointerdown', () => {
+        state.bugHuntReturnScene = 'Night';
+        this.scene.start('BugBountySelect');
+      });
     }
 
     // Advance Button

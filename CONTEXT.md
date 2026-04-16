@@ -172,11 +172,20 @@ gamedevjs-2026/
 - [x] TS build: zero errors. Test suite: 110 passing.
 
 ### Remaining
+
+**New features (Apr 15):**
+- [ ] **Old School Bug Hunt mode** — top-down shooter alternative to the existing clicker Bug Bounty. Direct Oregon Trail hunting homage: player moves crosshair in a top-down code landscape, code blocks replace rocks/trees (collision = penalty), the 5 bug types replace animals (Syntax/Logic/Race/MemLeak/Heisenbug with distinct movement patterns). Player chooses "Use AI" (existing clicker, easier) or "Old School" (this mode, much harder) at Bug Bounty entry. The difficulty gap is the joke — doing it the old-fashioned way is brutal.
+- [ ] **Prompt-based typing rework** — replace generic code snippets with day-specific prompt sequences that tell a story. Each of the 13 days gets 4-6 custom prompts that escalate from clueless to desperate (e.g. Day 1 email automation: "how automate email?" → "npm install -g googleapis" → "how do I oauth?" → "run that please" → "no, you click that dialogue" → "okay, please automate my email now"). Fewer prompts per day but longer text each. Writing-heavy task.
+- [ ] **Explicit event tradeoffs** — surface outcome hints on event choice buttons so players know what they're trading (e.g. "[-$50, +10 rep]" or short outcome text). Data already exists in event defs, just not shown to player.
+- [ ] **Agent Manager panel** — flesh out the mostly-blank Agent Manager window in ExecutionScene. Show agent trait triggers ("Linter is debating your semicolons..."), speed modifiers from synergy/clash, consumable effects, status changes during events. Makes agent picks feel consequential during gameplay.
+- [ ] **Visual nits** — screenshot-driven fixes using browser automation. One-by-one audit and fix cycle.
+- [ ] **Voice narrator** — TTS for class intros, day intros, rare events. Not a stretch goal anymore.
+
+**Existing items:**
 - [ ] Balance tuning — play 2-3 runs, review telemetry, adjust difficulty curve, costs, event frequency
 - [ ] Per-class visual differentiation — terminal themes beyond accent colors (wallpapers already done in T7)
 - [ ] Deploy — itch.io, GitHub Pages, Wavedash. Vite build + test
 - [ ] README + screenshots for jam submission
-- [ ] Voice narrator (stretch goal) — TTS for class intros, day intros, rare events
 
 ### Build Milestones (from TECHPLAN.md)
 | Phase | Target Date | Status |
@@ -189,7 +198,8 @@ gamedevjs-2026/
 | 5.5: Bug Bounty Polish | Apr 14 | ✅ Complete |
 | 5.6: Visual Audit | Apr 15 | ✅ Complete (18 tasks, 3 tiers) |
 | 6: Code Crusades | Apr 15 | ✅ Complete (arch, test, dead, type) |
-| 6.5: Balance + Visuals | Apr 16+ | Pending |
+| 6.5: New Features | Apr 15-20 | Pending — Old School Bug Hunt, prompt rework, event tradeoffs, Agent Manager, visual nits, voice narrator |
+| 6.6: Balance + Visuals | Apr 20-22 | Pending |
 | 7: Deploy + Submit | Apr 25-26 | Pending |
 
 ## Standards

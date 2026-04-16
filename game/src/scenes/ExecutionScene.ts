@@ -951,7 +951,7 @@ export class ExecutionScene extends Phaser.Scene {
     const state = getState();
     state.bugHuntReturnScene = 'Results';
     this.scoreDayAndStore();
-    this.scene.start('BugBounty');
+    this.scene.start('BugBountySelect');
   }
 
   private chooseOvertime(): void {
