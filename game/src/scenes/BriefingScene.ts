@@ -261,15 +261,46 @@ export class BriefingScene extends Phaser.Scene {
     const ca = win.contentArea;
     const cx = ca.x;
     const accentHex = '#' + theme.accent.toString(16).padStart(6, '0');
-
-    // ── TODAY'S PROJECT ──────────────────────────────────────────────────────
     const project = PROJECTS[Math.min(state.day - 1, PROJECTS.length - 1)];
 
-    win.add(this.add.text(cx, ca.y, '📋 TODAY\'S PROJECT', {
+    // ── AI NEWS — 3 cards ────────────────────────────────────────────────────
+    win.add(this.add.text(cx, ca.y, '📰 AI NEWS', {
       fontFamily: 'monospace', fontSize: '13px', color: '#9da5b0', letterSpacing: 1,
     }));
 
-    const projectCardY = ca.y + 22;
+    const headlines = getHeadlinesForDay(state.day);
+    const newsCardGap = 12;
+    const newsCardW = Math.floor((ca.width - newsCardGap * 2) / 3);
+    const thumbH = 114;
+    const newsCardH = thumbH + 66;
+    const newsStartY = ca.y + 22;
+
+    headlines.forEach((headline, i) => {
+      const ncx = cx + i * (newsCardW + newsCardGap);
+
+      const newsBg = this.add.rectangle(ncx, newsStartY, newsCardW, newsCardH, 0x0d1117).setOrigin(0);
+      newsBg.setStrokeStyle(1, 0x30363d);
+      win.add(newsBg);
+
+      const thumb = drawThumbnail(this, ncx + 1, newsStartY + 1, newsCardW - 2, thumbH, headline.thumbStyle, theme.accent);
+      win.add(thumb);
+
+      win.add(this.add.text(ncx + 10, newsStartY + thumbH + 10, headline.text, {
+        fontFamily: 'monospace', fontSize: '12px', color: '#d29922',
+        wordWrap: { width: newsCardW - 20 },
+        lineSpacing: 4,
+        maxLines: 3,
+      }));
+    });
+
+    // ── TODAY'S PROJECT ──────────────────────────────────────────────────────
+    const projectSectionY = newsStartY + newsCardH + 16;
+
+    win.add(this.add.text(cx, projectSectionY, '📋 TODAY\'S PROJECT', {
+      fontFamily: 'monospace', fontSize: '13px', color: '#9da5b0', letterSpacing: 1,
+    }));
+
+    const projectCardY = projectSectionY + 22;
     const projectCardH = 90;
 
     const card = this.add.rectangle(cx, projectCardY, ca.width, projectCardH, 0x0d1117).setOrigin(0);
@@ -316,47 +347,17 @@ export class BriefingScene extends Phaser.Scene {
       fontFamily: 'monospace', fontSize: '14px', color: '#e6edf3',
     }));
 
-    // ── AI NEWS — 3 cards ────────────────────────────────────────────────────
-    const newsY = resY + 52;
-
-    win.add(this.add.text(cx, newsY, '📰 AI NEWS', {
+    // ── PLAN INSIGHTS (Risk + Agents + Forecast — 3 columns) ─────────────────
+    const panelY = resY + 52;
+    win.add(this.add.text(cx, panelY, '💡 PLAN INSIGHTS', {
       fontFamily: 'monospace', fontSize: '13px', color: '#9da5b0', letterSpacing: 1,
     }));
 
-    const headlines = getHeadlinesForDay(state.day);
-    const newsCardGap = 12;
-    const newsCardW = Math.floor((ca.width - newsCardGap * 2) / 3);
-    const thumbH = 76;
-    const newsCardH = thumbH + 44; // thumb + headline text area
-    const newsStartY = newsY + 22;
-
-    headlines.forEach((headline, i) => {
-      const ncx = cx + i * (newsCardW + newsCardGap);
-
-      // Card bg
-      const newsBg = this.add.rectangle(ncx, newsStartY, newsCardW, newsCardH, 0x0d1117).setOrigin(0);
-      newsBg.setStrokeStyle(1, 0x30363d);
-      win.add(newsBg);
-
-      // Procedural thumbnail
-      const thumb = drawThumbnail(this, ncx + 1, newsStartY + 1, newsCardW - 2, thumbH, headline.thumbStyle, theme.accent);
-      win.add(thumb);
-
-      // Headline text
-      win.add(this.add.text(ncx + 8, newsStartY + thumbH + 6, headline.text, {
-        fontFamily: 'monospace', fontSize: '10px', color: '#d29922',
-        wordWrap: { width: newsCardW - 16 },
-        lineSpacing: 2,
-        maxLines: 2,
-      }));
-    });
-
-    // ── Bottom panels: Risk + Agents + Forecast (3 columns) ──────────────────
-    const panelY = newsStartY + newsCardH + 16;
+    const panelContentY = panelY + 22;
     const panelGap = 12;
     const panelW = Math.floor((ca.width - panelGap * 2) / 3);
 
-    // ── RISK ASSESSMENT (left panel) ─────────────────────────────────────────
+    // ── RISK (left panel) ─────────────────────────────────────────────────────
     const diff = project.difficulty;
     const barFillPct = diff === 'easy' ? 0.33 : diff === 'medium' ? 0.66 : 1.0;
     const barColor = diff === 'easy' ? 0x3fb950 : diff === 'medium' ? 0xd29922 : 0xf85149;
@@ -369,13 +370,13 @@ export class BriefingScene extends Phaser.Scene {
       : 'Every time unit counts.';
 
     const p1x = cx;
-    win.add(this.add.text(p1x, panelY, '⚠️ RISK', {
+    win.add(this.add.text(p1x, panelContentY, '⚠️ RISK', {
       fontFamily: 'monospace', fontSize: '11px', color: '#9da5b0', letterSpacing: 1,
     }));
 
     const barTrackW = panelW - 10;
     const barH = 10;
-    const barBarY = panelY + 20;
+    const barBarY = panelContentY + 20;
     win.add(this.add.rectangle(p1x, barBarY, barTrackW, barH, 0x21262d).setOrigin(0));
     const barFillW = Math.round(barTrackW * barFillPct);
     if (barFillW > 0) {
@@ -391,7 +392,7 @@ export class BriefingScene extends Phaser.Scene {
 
     // ── RECOMMENDED AGENTS (center panel) ────────────────────────────────────
     const p2x = cx + panelW + panelGap;
-    win.add(this.add.text(p2x, panelY, '🤖 AGENTS', {
+    win.add(this.add.text(p2x, panelContentY, '🤖 AGENTS', {
       fontFamily: 'monospace', fontSize: '11px', color: '#9da5b0', letterSpacing: 1,
     }));
 
@@ -404,16 +405,16 @@ export class BriefingScene extends Phaser.Scene {
       ? 'Reliability over speed.'
       : 'Bulletproof code.';
 
-    win.add(this.add.text(p2x, panelY + 20, agentNames, {
+    win.add(this.add.text(p2x, panelContentY + 20, agentNames, {
       fontFamily: 'monospace', fontSize: '12px', color: '#e6edf3',
     }));
-    win.add(this.add.text(p2x, panelY + 38, agentTip, {
+    win.add(this.add.text(p2x, panelContentY + 38, agentTip, {
       fontFamily: 'monospace', fontSize: '10px', color: '#9da5b0', fontStyle: 'italic',
     }));
 
     // ── EVENT FORECAST (right panel) ─────────────────────────────────────────
     const p3x = cx + (panelW + panelGap) * 2;
-    win.add(this.add.text(p3x, panelY, '📡 FORECAST', {
+    win.add(this.add.text(p3x, panelContentY, '📡 FORECAST', {
       fontFamily: 'monospace', fontSize: '11px', color: '#9da5b0', letterSpacing: 1,
     }));
 
@@ -428,10 +429,10 @@ export class BriefingScene extends Phaser.Scene {
       ? 'Expect event interrupts.'
       : 'Brace for chaos.';
 
-    win.add(this.add.text(p3x, panelY + 20, forecastLine, {
+    win.add(this.add.text(p3x, panelContentY + 20, forecastLine, {
       fontFamily: 'monospace', fontSize: '12px', color: '#e6edf3',
     }));
-    win.add(this.add.text(p3x, panelY + 38, forecastDetail, {
+    win.add(this.add.text(p3x, panelContentY + 38, forecastDetail, {
       fontFamily: 'monospace', fontSize: '10px', color: '#9da5b0', fontStyle: 'italic',
     }));
 
@@ -439,7 +440,7 @@ export class BriefingScene extends Phaser.Scene {
     const btnW = 280;
     const btnH = 38;
     const btnX = cx + (ca.width - btnW) / 2;
-    const btnY = panelY + 68;
+    const btnY = panelContentY + 68;
 
     const btnBg = this.add.rectangle(btnX, btnY, btnW, btnH, theme.accent)
       .setOrigin(0)
