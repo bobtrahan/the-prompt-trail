@@ -305,11 +305,10 @@ export class TokenMarketScene extends Phaser.Scene {
     const absListTop = this.marketWin.container.y + listStartY;
     const absListLeft = this.marketWin.container.x + cx - 8;
     const absListW = cw + 16;
-    const maskGfx = this.add.graphics();
+    const maskGfx = this.make.graphics({ add: false });
     maskGfx.fillStyle(0xffffff);
     maskGfx.fillRect(absListLeft, absListTop, absListW, this.listClipH);
     this.listMask = maskGfx.createGeometryMask();
-    this.itemListObjects.push(maskGfx);
 
     // Helper to add item to list with mask
     const addListItem = (obj: Phaser.GameObjects.GameObject) => {
