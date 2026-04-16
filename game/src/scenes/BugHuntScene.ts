@@ -155,10 +155,12 @@ export class BugHuntScene extends Phaser.Scene {
   // Code block obstacles
   private codeBlocks: CodeBlock[] = [];
 
-  // Player
+  // Player (auto-walk)
   private playerX = 0;
   private playerY = 0;
   private playerGfx!: Phaser.GameObjects.Graphics;
+  private playerDir = { x: 1, y: 0.6 }; // auto-walk direction
+  private playerSpeed = PLAYER_SPEED;
 
   // Aiming
   private crosshairGfx!: Phaser.GameObjects.Graphics;
@@ -167,11 +169,6 @@ export class BugHuntScene extends Phaser.Scene {
   private crosshairY = 0;
 
   // Input
-  private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
-  private keyW!: Phaser.Input.Keyboard.Key;
-  private keyA!: Phaser.Input.Keyboard.Key;
-  private keyS!: Phaser.Input.Keyboard.Key;
-  private keyD!: Phaser.Input.Keyboard.Key;
   private keySpace!: Phaser.Input.Keyboard.Key;
 
   // Game state
@@ -215,6 +212,9 @@ export class BugHuntScene extends Phaser.Scene {
     this.bugs = [];
     this.escapedBugs = 0;
     this.lastSpawn = 0;
+    // Randomize initial auto-walk direction
+    const angle = Math.random() * Math.PI * 2;
+    this.playerDir = { x: Math.cos(angle), y: Math.sin(angle) };
     this.shotsHit = 0;
     this.lastCatchTime = 0;
     this.comboCount = 0;
@@ -311,14 +311,8 @@ export class BugHuntScene extends Phaser.Scene {
       ease: 'Sine.easeInOut',
     });
 
-    // ── Input ─────────────────────────────────────────────────────────────────
+    // ── Input (mouse aim + space/click to fire) ──────────────────────────────
     const kb = this.input.keyboard!;
-    this.cursors = kb.createCursorKeys();
-    const wasdKeys = kb.addKeys('W,A,S,D') as Record<string, Phaser.Input.Keyboard.Key>;
-    this.keyW = wasdKeys['W'];
-    this.keyA = wasdKeys['A'];
-    this.keyS = wasdKeys['S'];
-    this.keyD = wasdKeys['D'];
     this.keySpace = kb.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
 
     this.input.on('pointerdown', this.fireBullet, this);
@@ -1016,35 +1010,39 @@ export class BugHuntScene extends Phaser.Scene {
       this.lastSpawn = time;
     }
 
-    // ── Movement ─────────────────────────────────────────────────────────────
+    // ── Auto-walk (Oregon Trail style — player bounces around, you just aim) ──
     const dt = delta / 1000;
-    let dx = 0;
-    let dy = 0;
 
-    if (this.cursors.left.isDown  || this.keyA.isDown) dx -= 1;
-    if (this.cursors.right.isDown || this.keyD.isDown) dx += 1;
-    if (this.cursors.up.isDown    || this.keyW.isDown) dy -= 1;
-    if (this.cursors.down.isDown  || this.keyS.isDown) dy += 1;
+    let newX = this.playerX + this.playerDir.x * this.playerSpeed * dt;
+    let newY = this.playerY + this.playerDir.y * this.playerSpeed * dt;
 
-    // Normalize diagonal movement
-    if (dx !== 0 && dy !== 0) {
-      dx /= Math.SQRT2;
-      dy /= Math.SQRT2;
+    // Arena edge bounce
+    if (newX - PLAYER_HW < this.arenaX) {
+      this.playerDir.x = Math.abs(this.playerDir.x);
+      newX = this.arenaX + PLAYER_HW;
+    } else if (newX + PLAYER_HW > this.arenaX + this.arenaW) {
+      this.playerDir.x = -Math.abs(this.playerDir.x);
+      newX = this.arenaX + this.arenaW - PLAYER_HW;
+    }
+    if (newY - PLAYER_HH < this.arenaY) {
+      this.playerDir.y = Math.abs(this.playerDir.y);
+      newY = this.arenaY + PLAYER_HH;
+    } else if (newY + PLAYER_HH > this.arenaY + this.arenaH) {
+      this.playerDir.y = -Math.abs(this.playerDir.y);
+      newY = this.arenaY + this.arenaH - PLAYER_HH;
     }
 
-    let newX = this.playerX + dx * PLAYER_SPEED * dt;
-    let newY = this.playerY + dy * PLAYER_SPEED * dt;
-
-    // Code block AABB collision resolution FIRST (before arena clamp)
+    // Code block bounce
     for (const block of this.codeBlocks) {
-      const r = this.resolveAABB(newX, newY, block);
-      newX = r.x;
-      newY = r.y;
+      if (this.circleOverlapsRect(newX, this.playerY, PLAYER_HW, block)) {
+        this.playerDir.x = -this.playerDir.x;
+        newX = this.playerX;
+      }
+      if (this.circleOverlapsRect(this.playerX, newY, PLAYER_HH, block)) {
+        this.playerDir.y = -this.playerDir.y;
+        newY = this.playerY;
+      }
     }
-
-    // Then constrain to arena bounds
-    newX = Phaser.Math.Clamp(newX, this.arenaX + PLAYER_HW, this.arenaX + this.arenaW - PLAYER_HW);
-    newY = Phaser.Math.Clamp(newY, this.arenaY + PLAYER_HH, this.arenaY + this.arenaH - PLAYER_HH);
 
     this.playerX = newX;
     this.playerY = newY;
@@ -1061,36 +1059,7 @@ export class BugHuntScene extends Phaser.Scene {
     this.redrawCrosshair();
   }
 
-  // ── AABB push-out collision resolution ───────────────────────────────────
-
-  private resolveAABB(px: number, py: number, b: CodeBlock): { x: number; y: number } {
-    const pL  = px - PLAYER_HW;
-    const pR  = px + PLAYER_HW;
-    const pT  = py - PLAYER_HH;
-    const pBo = py + PLAYER_HH;
-    const bR  = b.x + b.w;
-    const bBo = b.y + b.h;
-
-    // No overlap
-    if (pR <= b.x || pL >= bR || pBo <= b.y || pT >= bBo) {
-      return { x: px, y: py };
-    }
-
-    // Penetration depths on each axis
-    const oL  = pR  - b.x;
-    const oR  = bR  - pL;
-    const oT  = pBo - b.y;
-    const oBo = bBo - pT;
-
-    // Push out on the axis with smallest overlap
-    if (Math.min(oL, oR) < Math.min(oT, oBo)) {
-      return { x: oL < oR ? b.x - PLAYER_HW : bR + PLAYER_HW, y: py };
-    } else {
-      return { x: px, y: oT < oBo ? b.y - PLAYER_HH : bBo + PLAYER_HH };
-    }
-  }
-
-  // ── Hit detection ─────────────────────────────────────────────────────────
+    // ── Hit detection ─────────────────────────────────────────────────────────
 
   private checkBulletHitBug(bullet: Bullet): boolean {
     for (const bug of this.bugs) {
