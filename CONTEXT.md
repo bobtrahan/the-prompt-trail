@@ -84,7 +84,7 @@ gamedevjs-2026/
     └── public/assets/  ← fonts, audio, images (mostly empty)
 ```
 
-## Current Status (as of April 14, 2026 — end of day)
+## Current Status (as of April 15, 2026 — evening session)
 
 ### Done ✅
 
@@ -97,9 +97,10 @@ gamedevjs-2026/
 - Class select with 4 cards, difficulty badges, multiplier labels
 
 **Phase 2: Core Loop**
-- Terminal typing engine — three-segment prompt, accuracy tracking, difficulty scaling (easy→medium→hard)
+- Terminal typing engine — day-specific prompt sequences (78 prompts across 13 days), sequential iteration with loop
 - Execution scene — full PromptOS desktop: terminal, agent manager, system monitor, progress bar
-- Event modal system — 55 events, modal dialogs pause typing + day timer (10s countdown), 3 choices (click or keyboard)
+- Event modal system — 55 events, prompt-count-triggered (not timer), modal dialogs pause typing + 10s countdown, 3 choices (click or keyboard)
+- Event choice tradeoff hints — each choice button shows visible effect costs/rewards like `(−$50, +15 rep)`
 - Event impact feedback — resource changes flash with color bounce + floating summary text
 - Planning scene — strategy picker (4 cards), interactive model selector (unlock/switch), interactive agent picker (6 agents, synergy/clash indicators), must fill all slots + pick strategy before launch
 - Economy system — model daily costs, strategy costs, Corp Dev exemption, bankruptcy → forced Free Tier downgrade
@@ -113,7 +114,9 @@ gamedevjs-2026/
 **Phase 3: Night Phase**
 - Token Market shop — category tabs, item cards, buy buttons, deal-of-the-day, joke item modals, budget updates live
 - ShopSystem — purchase logic, model unlocks, hardware upgrades, consumable tracking, joke results
-- Bug Bounty mini-game — code grid, 5 bug types (Syntax/Logic/Race Condition/Memory Leak/Heisenbug), 30s timer, earnings added to budget, +5 HP bonus at 10+ bugs
+- Bug Bounty mini-game — two modes selectable via BugBountySelectScene:
+  - **Use AI** (clicker) — code grid, 5 bug types, 30s timer, click to squash
+  - **Old School** (top-down shooter, IN PROGRESS) — Oregon Trail hunting homage, WASD + mouse aim, bullets, code block obstacles, 1.5× earnings
 - NightScene hub — Token Market, Bug Bounty (once/night + bonus from early finish), Sleep
 
 **Phase 4: Systems + Polish**
@@ -173,10 +176,11 @@ gamedevjs-2026/
 
 ### Remaining
 
-**New features (Apr 15):**
-- [ ] **Old School Bug Hunt mode** — top-down shooter alternative to the existing clicker Bug Bounty. Direct Oregon Trail hunting homage: player moves crosshair in a top-down code landscape, code blocks replace rocks/trees (collision = penalty), the 5 bug types replace animals (Syntax/Logic/Race/MemLeak/Heisenbug with distinct movement patterns). Player chooses "Use AI" (existing clicker, easier) or "Old School" (this mode, much harder) at Bug Bounty entry. The difficulty gap is the joke — doing it the old-fashioned way is brutal.
-- [ ] **Prompt-based typing rework** — replace generic code snippets with day-specific prompt sequences that tell a story. Each of the 13 days gets 4-6 custom prompts that escalate from clueless to desperate (e.g. Day 1 email automation: "how automate email?" → "npm install -g googleapis" → "how do I oauth?" → "run that please" → "no, you click that dialogue" → "okay, please automate my email now"). Fewer prompts per day but longer text each. Writing-heavy task.
-- [ ] **Explicit event tradeoffs** — surface outcome hints on event choice buttons so players know what they're trading (e.g. "[-$50, +10 rep]" or short outcome text). Data already exists in event defs, just not shown to player.
+**New features (Apr 15 evening session):**
+- [x] **Old School Bug Hunt mode (partial)** — top-down shooter alternative to the existing clicker Bug Bounty. Direct Oregon Trail hunting homage: player moves crosshair in a top-down code landscape, code blocks replace rocks/trees (collision = penalty), the 5 bug types replace animals (Syntax/Logic/Race/MemLeak/Heisenbug with distinct movement patterns). Player chooses "Use AI" (existing clicker, easier) or "Old School" (this mode, much harder) at Bug Bounty entry. The difficulty gap is the joke — doing it the old-fashioned way is brutal.
+- [x] **Prompt-based typing rework** — 78 day-specific prompts across 13 days (4 early → 10 late), sequential iteration, prompt-count-triggered events replacing timer-based. Data: `src/data/prompts.ts` + `src/data/eventTriggers.ts`. Engine refactored in `TypingEngine.ts` + `ExecutionScene.ts`.
+- [x] **Explicit event tradeoffs** — choice buttons now show effect hints like `(−$50, +15 rep)`. Follow-up: hover preview with live bar/counter animation (spec: `EVENT-PREVIEW.md`).
+- [ ] **Event choice visual preview** — hover a choice to see projected impact on resource bars/counters (red for loss, green for gain). Spec: `EVENT-PREVIEW.md`.
 - [ ] **Agent Manager panel** — flesh out the mostly-blank Agent Manager window in ExecutionScene. Show agent trait triggers ("Linter is debating your semicolons..."), speed modifiers from synergy/clash, consumable effects, status changes during events. Makes agent picks feel consequential during gameplay.
 - [ ] **Visual nits** — screenshot-driven fixes using browser automation. One-by-one audit and fix cycle.
 - [ ] **Voice narrator** — TTS for class intros, day intros, rare events. Not a stretch goal anymore.
@@ -198,7 +202,7 @@ gamedevjs-2026/
 | 5.5: Bug Bounty Polish | Apr 14 | ✅ Complete |
 | 5.6: Visual Audit | Apr 15 | ✅ Complete (18 tasks, 3 tiers) |
 | 6: Code Crusades | Apr 15 | ✅ Complete (arch, test, dead, type) |
-| 6.5: New Features | Apr 15-20 | Pending — Old School Bug Hunt, prompt rework, event tradeoffs, Agent Manager, visual nits, voice narrator |
+| 6.5: New Features | Apr 15-20 | In progress — Bug Hunt (T7/T8 remain), prompt rework ✅, event tradeoffs ✅, event preview/Agent Manager/visual nits/voice narrator pending |
 | 6.6: Balance + Visuals | Apr 20-22 | Pending |
 | 7: Deploy + Submit | Apr 25-26 | Pending |
 
