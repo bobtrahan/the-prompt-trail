@@ -96,6 +96,7 @@ export class ExecutionScene extends Phaser.Scene {
   private hwBarBg!: Phaser.GameObjects.Rectangle;
   private lastHw: number = -1;
   private hwBarFlashing: boolean = false;
+  private previewSnapshot?: { budget: number; hardwareHp: number; reputation: number };
 
   // Systems
   private eventEngine!: EventEngine;
@@ -618,6 +619,14 @@ export class ExecutionScene extends Phaser.Scene {
     const { title, body, choices } = evt;
     this.typingEngine.pause();
 
+    // Snapshot current resource values for non-destructive hover preview
+    const snapState = getState();
+    this.previewSnapshot = {
+      budget: snapState.budget,
+      hardwareHp: snapState.hardwareHp,
+      reputation: snapState.reputation,
+    };
+
     const am = AudioManager.getInstance();
     if (evt.tags.includes('rare')) {
       am.playSFX('critical');
@@ -690,8 +699,14 @@ export class ExecutionScene extends Phaser.Scene {
       this.modalGroup!.add(btnBg);
       this.modalGroup!.add(btnTextObj);
 
-      btnBg.on('pointerover', () => btnBg.setFillStyle(COLORS.windowBorder));
-      btnBg.on('pointerout', () => btnBg.setFillStyle(COLORS.titleBar));
+      btnBg.on('pointerover', () => {
+        btnBg.setFillStyle(COLORS.windowBorder);
+        this.applyResourcePreview(choice.effects);
+      });
+      btnBg.on('pointerout', () => {
+        btnBg.setFillStyle(COLORS.titleBar);
+        this.restoreResourcePreview();
+      });
       btnBg.on('pointerdown', () => {
         AudioManager.getInstance().playSFX('choice-select');
         this.resolveEvent(i, choice);
@@ -745,6 +760,7 @@ export class ExecutionScene extends Phaser.Scene {
   /** Auto-dismiss event modal with no effect (countdown expired, no choice made) */
   private dismissEventNoEffect(): void {
     if (!this.modalGroup) return;
+    this.restoreResourcePreview();
     this.eventCountdownTimer?.destroy();
     this.eventCountdownTimer = undefined;
     this.eventCountdownText = undefined;
@@ -890,6 +906,56 @@ export class ExecutionScene extends Phaser.Scene {
         onComplete: () => floatText.destroy(),
       });
     }
+  }
+
+  /** Temporarily update resource displays to show projected effect of a hovered choice */
+  private applyResourcePreview(effects: EventEffect[]): void {
+    if (!this.previewSnapshot) return;
+    const { budget, hardwareHp, reputation } = this.previewSnapshot;
+    const state = getState();
+
+    for (const effect of effects) {
+      if (effect.type === 'budget' && typeof effect.value === 'number' && state.playerClass !== 'corporateDev') {
+        const projected = budget + effect.value;
+        const isGain = effect.value > 0;
+        this.budgetText
+          .setText(`💰 Budget: $${projected.toLocaleString()} ${isGain ? '↑' : '↓'}`)
+          .setColor(isGain ? '#3fb950' : '#f85149');
+      } else if (effect.type === 'hardware' && typeof effect.value === 'number') {
+        const projected = Math.max(0, Math.min(100, hardwareHp + effect.value));
+        const isGain = effect.value > 0;
+        this.hardwareText
+          .setText(`🖥️ Hardware: ${projected}% ${isGain ? '↑' : '↓'}`)
+          .setColor(isGain ? '#3fb950' : '#f85149');
+        this.hwBar.width = Math.round((projected / 100) * 160);
+        this.hwBar.setFillStyle(isGain ? 0x3fb950 : 0xf85149);
+      } else if (effect.type === 'reputation' && typeof effect.value === 'number') {
+        const projected = reputation + effect.value;
+        const isGain = effect.value > 0;
+        this.repText
+          .setText(`⭐ Reputation: ${projected} ${isGain ? '↑' : '↓'}`)
+          .setColor(isGain ? '#3fb950' : '#f85149');
+      }
+    }
+  }
+
+  /** Snap resource displays back to actual values (on pointerout or countdown auto-dismiss) */
+  private restoreResourcePreview(): void {
+    if (!this.previewSnapshot) return;
+    const { budget, hardwareHp, reputation } = this.previewSnapshot;
+    const state = getState();
+
+    this.budgetText
+      .setText(state.playerClass === 'corporateDev' ? '💳 Company Card' : `💰 Budget: $${budget.toLocaleString()}`)
+      .setColor('#e6edf3');
+
+    this.hardwareText.setText(`🖥️ Hardware: ${hardwareHp}%`).setColor('#e6edf3');
+
+    const hwBarColor = hardwareHp >= 60 ? 0x3fb950 : hardwareHp >= 30 ? 0xd29922 : 0xf85149;
+    this.hwBar.width = Math.round((hardwareHp / 100) * 160);
+    this.hwBar.setFillStyle(hwBarColor);
+
+    this.repText.setText(`⭐ Reputation: ${reputation}`).setColor('#e6edf3');
   }
 
   // ── Completion Choice modal ──
