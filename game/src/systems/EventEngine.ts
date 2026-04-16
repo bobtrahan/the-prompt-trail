@@ -134,7 +134,11 @@ export class EventEngine {
         }
 
         case 'hardware': {
-          const amount = effect.value as number;
+          let amount = effect.value as number;
+          // Standing desk halves hardware damage
+          if (amount < 0 && state.ownedUpgrades.includes('hw-desk')) {
+            amount = Math.ceil(amount / 2);
+          }
           state.hardwareHp = Math.max(0, Math.min(100, state.hardwareHp + amount));
           logs.push(`> HARDWARE ${amount >= 0 ? '+' : ''}${amount} HP → ${state.hardwareHp} HP`);
           break;

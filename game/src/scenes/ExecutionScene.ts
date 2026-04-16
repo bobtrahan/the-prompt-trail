@@ -280,6 +280,9 @@ export class ExecutionScene extends Phaser.Scene {
     if (state.ownedUpgrades.includes('hw-monitor')) {
       this.speedMod += 0.05;
     }
+    if (state.ownedUpgrades.includes('hw-gpu') && ['local', 'openSource'].includes(state.model)) {
+      this.speedMod += 0.1; // GPU upgrade boosts local/open-source models
+    }
     if (state.ownedUpgrades.includes('hw-keyboard')) {
       this.typoForgiveness = 1;
     }
@@ -537,11 +540,22 @@ export class ExecutionScene extends Phaser.Scene {
           state.timerBonusSeconds -= 6; // costs 2 time units = 6s
           this.terminal.addLine("🤖 Scope: 'I added dark mode and a settings page! You're welcome!'");
         } else if (res.trait === 'low_hallucination') {
-          this.terminal.addLine("🤖 Oracle: 'I have seen the future. It is... mostly fine.'");
+          // Oracle: +5 rep (fewer hallucinations = better output)
+          state.reputation += 5;
+          this.terminal.addLine("🤖 Oracle: 'I have seen the future. It is... mostly fine.' (+5 rep)");
         } else if (res.trait === 'agreeable') {
-          this.terminal.addLine("🤖 Parrot: 'Exactly what I was thinking!'");
+          // Parrot: +3s timer (goes along with everything, fast)
+          state.timerBonusSeconds += 3;
+          this.terminal.addLine("🤖 Parrot: 'Exactly what I was thinking!' (+3s)");
         } else if (res.trait === 'wildcard_shortcut') {
-          this.terminal.addLine("🤖 Gremlin: 'I found a shortcut! Don't ask how.'");
+          // Gremlin: 50/50 — either +6s or -3s
+          if (Math.random() < 0.5) {
+            state.timerBonusSeconds += 6;
+            this.terminal.addLine("🤖 Gremlin: 'I found a shortcut! Don't ask how.' (+6s)");
+          } else {
+            state.timerBonusSeconds -= 3;
+            this.terminal.addLine("🤖 Gremlin: 'I found a shortcut! It... didn't work.' (-3s)");
+          }
         }
       }
     });

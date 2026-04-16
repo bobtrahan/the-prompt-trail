@@ -113,8 +113,8 @@ export const SHOP_ITEMS: ItemDef[] = [
     category: 'hardware',
     baseCost: 120,
     description: 'The health-conscious developer\'s choice.',
-    effect: '-10% chance of hardware overheat events.',
-    mechanical: { type: 'eventWeightMod', value: 'overheat:-0.1' }
+    effect: 'Hardware damage from events is halved.',
+    mechanical: { type: 'hardwareDamageReduction', value: 0.5 }
   },
   {
     id: 'hw-cooling',
