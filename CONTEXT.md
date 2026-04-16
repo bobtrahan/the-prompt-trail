@@ -111,7 +111,9 @@ gamedevjs-2026/
 
 ### Remaining
 
-- [ ] **Balance audit + tuning** — full mechanics audit (events, items, strategies, agents), fix no-op decisions, tune economy. TOP PRIORITY.
+- [x] **Balance audit + tuning** — see Phase 9 below
+- [ ] **Playtesting** — 2-3 full runs per class, verify tension curve, analyze bug hunt telemetry
+- [ ] **Bug Hunt collision fix** — suspected update-order issue (bullets check before bugs move). Telemetry data will confirm. See `docs/BALANCE-AUDIT.md`.
 - [ ] **Deploy** — itch.io, GitHub Pages, Wavedash. Vite build + test
 - [ ] **README + screenshots** for jam submission
 
@@ -127,7 +129,8 @@ gamedevjs-2026/
 | 7: Visual Polish | ✅ Complete (Apr 15 evening session — see below) |
 | 8: Audio + Controls Polish | ✅ Complete (Apr 15-16 late session) |
 | 8.5: Per-Class Visual Differentiation | ✅ Complete (Apr 16 late session) |
-| 9: Balance + Deploy + Submit | In Progress (deadline: Apr 26) |
+| 9: Balance Tuning | ✅ Complete (Apr 16 session) |
+| 9.5: Playtesting + Deploy + Submit | Not Started (deadline: Apr 26) |
 
 ### Phase 8: Audio + Controls Polish (Apr 15-16 late session)
 - [x] **Audio normalization** — all 48 files: music -16 LUFS, voice -16 LUFS, SFX -12 LUFS
@@ -151,6 +154,20 @@ gamedevjs-2026/
 - [x] **Agent Manager tinting** — subtle accent tint on panel background
 - [x] **Cursor styles** — Tech Bro █, Indie Hacker _, College Student |, Corporate Dev ▌
 
+### Phase 9: Balance Tuning (Apr 16 ~2am session)
+- [x] **Model quality → scoring** — `modelBonus = baseRep × modelQualityMod` added to `ScoringSystem.calcDayReputation()`. Free = -15%, frontier = +15%. Results scene shows "Model ♙" row.
+- [x] **Speed → real timer** — agent speed modifier + event `agentSpeed` effects now modify the 45s execution timer. `BASE_TIMER_SECONDS` constant. Timer bar uses actual max, not hardcoded 45.
+- [x] **Time units killed** — `timeUnitsRemaining` removed from GameState. Strategy bonuses in seconds: planThenBuild +6s, oneShot -6s, vibeCode +3s. Event `time` effects: 1 unit = 3 seconds. Mid-execution events adjust live timer.
+- [x] **Budgets slashed** — Tech Bro $2k (was $10k), Indie $800 (was $2k), Student $200 (was $500). Corporate unchanged at $99,999.
+- [x] **Corporate Dev half-timer** — 22s base timer (half of 45s). Taskbar shows `💳 $∞`. Speed mods scale proportionally.
+- [x] **Event audit (all 55)** — 131 flag-only/empty choices now have mechanical effects (budget/time/hardware/rep/agentSpeed). Boris did mechanical edits, Haze did spec + review.
+- [x] **modelSwitch wired** — `EventEngine` now actually changes `state.model` (maps backup→openSource, sketchy→sketchy, smaller→local).
+- [x] **RNG roll resolution** — 45 gamble flags resolve with real odds via `ROLL_RESOLUTIONS` table in `src/data/rollResolutions.ts`. Good/bad outcomes with effects. EventEngine strips deterministic companion effects when roll fires.
+- [x] **Token Market audit** — hw-gpu wired (+10% speed for local/openSource models), hw-desk wired (halves hardware damage from events). All other items already functional.
+- [x] **Agent trait audit** — Oracle (+5 rep/day), Parrot (+3s timer), Gremlin (50/50: +6s or -3s). Synergies/clashes already worked via speedMod.
+- [x] **Planning summary line** — shows total timer, model/strategy rep modifiers, and agent trait effects below launch button. Updates live on selection.
+- [x] **Bug Hunt telemetry** — per-shot logs (spawn, result, nearest-bug-at-miss), per-bug lifecycle (spawn, death cause), FPS min/max/avg. POSTs to `/__telemetry/bughunt`.
+
 ### Phase 7: Visual Polish (Apr 15 evening)
 - [x] **Boot sequence** — progress bar fills smoothly through POST/kernel/splash, holds at 100% before transition
 - [x] **ClassSelect** — larger cards, custom 3-line bios, emoji centered in header, voice on hover, divider between bio and stats
@@ -164,7 +181,7 @@ gamedevjs-2026/
 
 - **Every code change → `git add` + `git commit`.** Uncommitted = unfinished.
 - **TypeScript `strict: true`** (noUnusedLocals/Params off for jam speed).
-- **Vitest test suite:** 110 tests across 7 files. Run `npm test` in `game/`.
+- **Vitest test suite:** 112 tests across 7 files. Run `npm test` in `game/`.
 - **Commit format:** `feat: description [Agent - OpenClaw (model)]` or `feat: description [Haze]`
 - **Agent matching:**
   - Boris (Codex) → mechanical, clear-spec, single-file tasks
@@ -192,6 +209,7 @@ gamedevjs-2026/
 | `src/data/agents.ts` | 6 agent defs, synergy/clash pairs |
 | `src/data/agentMessages.ts` | Agent idle/trait/event/consumable message pools |
 | `src/data/items.ts` | Token Market items, prices, effects |
+| `src/data/rollResolutions.ts` | 45 gamble flag → RNG outcome table (odds + good/bad effects) |
 
 ### Key Systems
 | System | File | Notes |

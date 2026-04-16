@@ -87,17 +87,24 @@ Kill the `timeUnitsRemaining` system. Replace all references with direct timer s
 
 ---
 
-## Implementation Order
+## Implementation Order (All Complete — Apr 16)
 
-1. **Wire model quality into scoring** — `ScoringSystem.calcDayReputation()`
-2. **Wire speed into timer** — `ExecutionScene` timer calculation
-3. **Replace time units with seconds** — strategy table, remove timeUnitsRemaining
-4. **Adjust starting budgets** — `classes.ts`
-5. **Corporate Dev half-timer + infinite money display** — `ExecutionScene` + `Taskbar`
-6. **Audit all 55 events** — replace no-op effects, ensure every choice has impact
-7. **Audit Token Market items** — same treatment
-8. **Audit agent synergy/clash effects** — ensure they map to working systems
-9. **Test 2-3 full runs** per class, verify tension curve
+1. ✅ **Wire model quality into scoring** — `ScoringSystem.calcDayReputation()`
+2. ✅ **Wire speed into timer** — `ExecutionScene` timer calculation
+3. ✅ **Replace time units with seconds** — strategy table, remove timeUnitsRemaining
+4. ✅ **Adjust starting budgets** — `classes.ts`
+5. ✅ **Corporate Dev half-timer + infinite money display** — `ExecutionScene` + `Taskbar`
+6. ✅ **Audit all 55 events** — replaced no-op effects + RNG roll resolution system
+7. ✅ **Audit Token Market items** — hw-gpu and hw-desk wired
+8. ✅ **Audit agent synergy/clash + traits** — Oracle/Parrot/Gremlin traits wired
+9. ⏳ **Playtesting** — 2-3 full runs per class, verify tension curve, analyze telemetry
+
+## Known Issue: Bug Hunt Collision
+
+Suspected update-order bug: `updateBullets()` runs before `updateBugs()` in the game loop.
+Bullet sweep checks backwards along travel path, but bugs have already moved since last frame.
+Fast bugs (Race @ 300px/s) can dodge between frames. Fix: swap update order or sweep against bug velocity.
+Detailed telemetry added to `/__telemetry/bughunt` endpoint to confirm with real data.
 
 ---
 
