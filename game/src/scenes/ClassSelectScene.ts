@@ -21,12 +21,27 @@ const CLASS_BIO: Record<string, string> = {
   collegeStudent: 'No money.\nBad hardware.\nUnlimited ambition.',
 };
 
+const classVoiceMap: Record<PlayerClass, string> = {
+  techBro: 'class-techbro',
+  indieHacker: 'class-indie',
+  collegeStudent: 'class-student',
+  corporateDev: 'class-corporate',
+};
+
 export class ClassSelectScene extends Phaser.Scene {
+  private selectedClass: PlayerClass | null = null;
+  private cardRefs: { id: PlayerClass; card: Phaser.GameObjects.Rectangle; glow: Phaser.GameObjects.Rectangle; badge: Phaser.GameObjects.Text; accent: number }[] = [];
+  private continueBtn: Phaser.GameObjects.Text | null = null;
+
   constructor() {
     super({ key: 'ClassSelect' });
   }
 
   create(): void {
+    this.selectedClass = null;
+    this.cardRefs = [];
+    this.continueBtn = null;
+
     this.cameras.main.setBackgroundColor(COLORS.bg);
 
     // Window chrome
@@ -87,7 +102,7 @@ export class ClassSelectScene extends Phaser.Scene {
       }).setOrigin(0.5).setDepth(2);
 
       // Class name — below header with breathing room
-      const nameGap = 40; // gap between header bottom (80) and class name
+      const nameGap = 40;
       this.add.text(x, y - halfH + 80 + nameGap, def.name, {
         fontFamily: 'monospace',
         fontSize: '22px',
@@ -95,7 +110,7 @@ export class ClassSelectScene extends Phaser.Scene {
         fontStyle: 'bold',
       }).setOrigin(0.5).setDepth(2);
 
-      // Bio — 3 lines, same gap below class name
+      // Bio — 3 lines
       this.add.text(x, y - halfH + 80 + nameGap + 34, CLASS_BIO[def.id] ?? '', {
         fontFamily: 'monospace',
         fontSize: '13px',
@@ -104,12 +119,12 @@ export class ClassSelectScene extends Phaser.Scene {
         lineSpacing: 4,
       }).setOrigin(0.5, 0).setDepth(2);
 
-      // Divider line — separates bio from difficulty + stats
+      // Divider line
       this.add.rectangle(x, y - halfH + 220, cardWidth - 40, 1, COLORS.textDim)
         .setAlpha(0.2)
         .setDepth(2);
 
-      // Difficulty badge — below divider
+      // Difficulty badge
       this.add.text(x, y - halfH + 242, DIFFICULTY[def.id], {
         fontFamily: 'monospace',
         fontSize: '16px',
@@ -132,55 +147,99 @@ export class ClassSelectScene extends Phaser.Scene {
         }).setOrigin(0.5).setDepth(2);
       });
 
-      // ▶ SELECT badge — hidden by default
-      const selectBadge = this.add.text(x, y + halfH - 28, '▶ SELECT', {
+      // ▶ SELECTED badge — hidden by default
+      const selectBadge = this.add.text(x, y + halfH - 28, '▶ SELECTED', {
         fontFamily: 'monospace',
         fontSize: '13px',
         color: accentHex,
       }).setOrigin(0.5).setVisible(false).setDepth(2);
 
-      // Hover effects — glow, select badge, voice
+      this.cardRefs.push({ id: def.id, card, glow: glowRect, badge: selectBadge, accent });
+
+      // Hover effects — glow only, no voice
       card.on('pointerover', () => {
         card.setStrokeStyle(2, accent);
         glowRect.setAlpha(0.08);
-        selectBadge.setVisible(true);
-        AudioManager.getInstance().playVoice(classVoiceMap[def.id]);
+        if (this.selectedClass !== def.id) {
+          selectBadge.setVisible(false);
+        }
       });
       card.on('pointerout', () => {
-        card.setStrokeStyle(2, accent);
-        glowRect.setAlpha(0);
-        selectBadge.setVisible(false);
+        if (this.selectedClass === def.id) {
+          card.setStrokeStyle(2, 0xffffff);
+          glowRect.setAlpha(0.12);
+          selectBadge.setVisible(true);
+        } else {
+          card.setStrokeStyle(2, accent);
+          glowRect.setAlpha(0);
+          selectBadge.setVisible(false);
+        }
       });
-
-      // Voice map + selection animation
-      const classVoiceMap: Record<PlayerClass, string> = {
-        techBro: 'class-techbro',
-        indieHacker: 'class-indie',
-        collegeStudent: 'class-student',
-        corporateDev: 'class-corporate',
-      };
 
       addButtonFx(this, card);
       card.on('pointerdown', () => {
+        this.onSelectCard(def.id);
+      });
+    });
+
+    // Continue button — hidden until a class is selected
+    this.continueBtn = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 30, '[ Continue → ]', {
+      fontFamily: 'monospace',
+      fontSize: '16px',
+      color: '#e6edf3',
+      backgroundColor: '#238636',
+      padding: { x: 20, y: 10 },
+    }).setOrigin(0.5).setInteractive({ useHandCursor: true }).setVisible(false).setDepth(10);
+
+    this.continueBtn.on('pointerover', () => this.continueBtn?.setBackgroundColor('#2ea043'));
+    this.continueBtn.on('pointerout', () => this.continueBtn?.setBackgroundColor('#238636'));
+    this.continueBtn.on('pointerdown', () => {
+      if (this.selectedClass) {
+        this.launchGame(this.selectedClass);
+      }
+    });
+  }
+
+  private onSelectCard(classId: PlayerClass): void {
+    // Play voice on click
+    AudioManager.getInstance().playVoice(classVoiceMap[classId]);
+
+    this.selectedClass = classId;
+
+    // Update all cards — highlight selected, reset others
+    for (const ref of this.cardRefs) {
+      if (ref.id === classId) {
+        ref.card.setStrokeStyle(2, 0xffffff);
+        ref.glow.setAlpha(0.12);
+        ref.badge.setVisible(true);
         this.tweens.add({
-          targets: card,
+          targets: ref.card,
           scaleX: 1.03,
           scaleY: 1.03,
           duration: 120,
           ease: 'Linear',
         });
-        card.setStrokeStyle(2, 0xffffff);
-        this.time.delayedCall(100, () => {
-          card.setStrokeStyle(2, accent);
-        });
-        this.time.delayedCall(200, () => {
-          this.selectClass(def.id);
-        });
+      } else {
+        ref.card.setStrokeStyle(2, ref.accent);
+        ref.card.setScale(1);
+        ref.glow.setAlpha(0);
+        ref.badge.setVisible(false);
+      }
+    }
+
+    // Show continue button
+    if (this.continueBtn && !this.continueBtn.visible) {
+      this.continueBtn.setVisible(true).setAlpha(0);
+      this.tweens.add({
+        targets: this.continueBtn,
+        alpha: 1,
+        duration: 300,
+        ease: 'Power2.easeOut',
       });
-    });
+    }
   }
 
-  private selectClass(playerClass: PlayerClass): void {
+  private launchGame(playerClass: PlayerClass): void {
     initClassState(playerClass);
     Telemetry.logRunStart(getState());
     this.scene.start('Briefing');
