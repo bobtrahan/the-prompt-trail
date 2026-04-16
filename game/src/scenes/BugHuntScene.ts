@@ -57,6 +57,10 @@ const HEISEN_SPEED      = 80;
 const HIT_RADIUS: Record<BugType, number> = {
   syntax: 30, logic: 22, race: 15, memleak: 25, heisen: 20,
 };
+const HIT_HALF_W: Record<BugType, number> = {
+  syntax: 55, logic: 45, race: 40, memleak: 50, heisen: 38,
+};
+const HIT_HALF_H = 16;
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -562,6 +566,23 @@ export class BugHuntScene extends Phaser.Scene {
     };
 
     this.bullets.push(bullet);
+
+    // Kill any bug the bullet spawns inside (handles player-overlapping-bug case)
+    for (const bug of this.bugs) {
+      if (!bug.alive) continue;
+      if (bug.type === 'heisen' && bug.invisible) continue;
+      const hw = (bug.type === 'memleak' ? HIT_HALF_W[bug.type] * bug.growScale : HIT_HALF_W[bug.type]) + BULLET_RADIUS;
+      const hh = (bug.type === 'memleak' ? HIT_HALF_H * bug.growScale : HIT_HALF_H) + BULLET_RADIUS;
+      if (Math.abs(this.playerX - bug.x) < hw && Math.abs(this.playerY - bug.y) < hh) {
+        this.shotsHit++;
+        this.hitBug(bug);
+        // Remove bullet immediately — it already hit
+        this.bullets.pop();
+        this.destroyBullet(bullet);
+        return;
+      }
+    }
+
     this.ammo--;
     this.shotsFired++;
     this.updateAmmoDisplay();
@@ -1206,30 +1227,30 @@ export class BugHuntScene extends Phaser.Scene {
     // ── Hit detection ─────────────────────────────────────────────────────────
 
   private checkBulletHitBug(bullet: Bullet, deltaSec: number): boolean {
-    const travel = BULLET_SPEED * deltaSec;
-
     for (const bug of this.bugs) {
       if (!bug.alive) continue;
       if (bug.type === 'heisen' && bug.invisible) continue;
 
-      const effectiveR = bug.type === 'memleak' ? bug.hitRadius * bug.growScale : bug.hitRadius;
-      const combinedR = effectiveR + BULLET_RADIUS;
+      const halfW = (bug.type === 'memleak' ? HIT_HALF_W[bug.type] * bug.growScale : HIT_HALF_W[bug.type]) + BULLET_RADIUS;
+      const halfH = (bug.type === 'memleak' ? HIT_HALF_H * bug.growScale : HIT_HALF_H) + BULLET_RADIUS;
+      const inBox = (px: number, py: number) =>
+        Math.abs(px - bug.x) < halfW && Math.abs(py - bug.y) < halfH;
 
-      // Point distance check at current position
-      const dist = Math.hypot(bullet.x - bug.x, bullet.y - bug.y);
-      if (dist < combinedR) {
+      if (inBox(bullet.x, bullet.y)) {
         this.logShotHit(bullet, bug);
         this.hitBug(bug);
         return true;
       }
 
-      // Sweep check — sample evenly along the full bullet travel this frame
-      const steps = Math.max(2, Math.ceil(travel / (combinedR * 0.5)));
+      const travel = BULLET_SPEED * deltaSec;
+      // steps based on smallest hit dimension to avoid tunneling
+      const minHalf = Math.min(halfW, halfH);
+      const steps = Math.max(2, Math.ceil(travel / (minHalf * 0.5)));
       for (let s = 1; s <= steps; s++) {
         const t = s / steps;
         const sx = bullet.x - bullet.dx * travel * t;
         const sy = bullet.y - bullet.dy * travel * t;
-        if (Math.hypot(sx - bug.x, sy - bug.y) < combinedR) {
+        if (inBox(sx, sy)) {
           this.logShotHit(bullet, bug);
           this.hitBug(bug);
           return true;
