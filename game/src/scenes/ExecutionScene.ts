@@ -16,8 +16,34 @@ import { EconomySystem } from '../systems/EconomySystem';
 import { ScoringSystem } from '../systems/ScoringSystem';
 import { AgentSystem } from '../systems/AgentSystem';
 import AudioManager from '../systems/AudioManager';
-import type { EventDef, EventChoice } from '../data/events';
+import type { EventDef, EventChoice, EventEffect } from '../data/events';
 import { drawWallpaper } from '../ui/DesktopWallpaper';
+
+function formatEffectHint(effects: EventEffect[]): string {
+  const formatSigned = (value: number): string => `${value >= 0 ? '+' : '−'}${Math.abs(value)}`;
+
+  return effects.flatMap(effect => {
+    switch (effect.type) {
+      case 'budget':
+        return typeof effect.value === 'number' ? `${effect.value >= 0 ? '+' : '−'}$${Math.abs(effect.value)}` : [];
+      case 'time':
+        return typeof effect.value === 'number' ? `${formatSigned(effect.value)}s` : [];
+      case 'hardware':
+        return typeof effect.value === 'number' ? `${formatSigned(effect.value)} HP` : [];
+      case 'reputation':
+        return typeof effect.value === 'number' ? `${formatSigned(effect.value)} rep` : [];
+      case 'agentSpeed':
+        return typeof effect.value === 'number'
+          ? `${effect.value >= 0 ? '+' : '−'}${Math.round(Math.abs(effect.value) * 100)}% speed`
+          : [];
+      case 'flag':
+      case 'modelSwitch':
+        return [];
+      default:
+        return [];
+    }
+  }).join(', ');
+}
 
 
 
@@ -650,7 +676,9 @@ export class ExecutionScene extends Phaser.Scene {
     const choiceStartY = dy + 48 + 60 + 20;
     let cumulativeY = choiceStartY;
     choices.forEach((choice, i) => {
-      const btnTextObj = this.add.text(dx + 32, cumulativeY + 7, `[${i + 1}] ${choice.text}`, {
+      const hint = formatEffectHint(choice.effects);
+      const label = hint ? `[${i + 1}] ${choice.text}  (${hint})` : `[${i + 1}] ${choice.text}`;
+      const btnTextObj = this.add.text(dx + 32, cumulativeY + 7, label, {
         fontFamily: 'monospace', fontSize: '13px', color: '#58a6ff',
         wordWrap: { width: dw - 72 },
       });
