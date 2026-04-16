@@ -5,6 +5,7 @@ import { Telemetry } from '../systems/Telemetry';
 import { getState, resetState } from '../systems/GameState';
 import { SHOP_ITEMS } from '../data/items';
 import AudioManager from '../systems/AudioManager';
+import { AudioSettingsPanel } from './AudioSettingsPanel';
 
 const TASKBAR_HEIGHT = 32;
 const PANEL_W = 260;
@@ -71,8 +72,8 @@ export class DebugMenu extends Phaser.GameObjects.Container {
     const hasDebug = DEV_CONFIG.debugMenu === true;
 
     // Row count: 1 sound + 1 reboot + (hasDebug ? separator + 8 debug buttons : 0)
-    const debugRows = hasDebug ? 11 : 0; // separator counts as a row
-    const rows = 2 + debugRows;
+    const debugRows = hasDebug ? 11 : 0; // separator counts as a row // separator counts as a row
+    const rows = 3 + debugRows; // sound + audio settings + reboot + debug rows
     const panelH = PAD + rows * (BTN_H + 4) + PAD;
 
     const panelX = 8;
@@ -108,6 +109,13 @@ export class DebugMenu extends Phaser.GameObjects.Container {
       AudioManager.getInstance().toggleMute();
       txt.setText(muteLabel());
       txt.setColor(muteColor());
+    });
+    curY += BTN_H + 4;
+
+    // ── Audio Settings ──
+    makeButton(scene, this, '🎛 Audio Settings', innerX, curY, '#e6edf3', () => {
+      this.dismiss();
+      new AudioSettingsPanel(scene);
     });
     curY += BTN_H + 4;
 

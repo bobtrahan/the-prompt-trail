@@ -6,6 +6,7 @@ interface AudioSettings {
   masterVolume: number;
   musicVolume: number;
   sfxVolume: number;
+  voiceVolume: number;
   muted: boolean;
 }
 
@@ -37,6 +38,7 @@ class AudioManager {
   private _masterVolume = 1;
   private _musicVolume = 0.7;
   private _sfxVolume = 0.8;
+  private _voiceVolume = 1;
   isMuted = false;
 
   // Public getters for telemetry
@@ -46,6 +48,14 @@ class AudioManager {
 
   get sfxVolume(): number {
     return this._sfxVolume;
+  }
+
+  get voiceVolume(): number {
+    return this._voiceVolume;
+  }
+
+  get masterVolume(): number {
+    return this._masterVolume;
   }
 
   get currentTrack(): string | null {
@@ -204,7 +214,7 @@ class AudioManager {
       }
     }
 
-    const voice = this.game.sound.add(key, { volume: this._masterVolume }) as
+    const voice = this.game.sound.add(key, { volume: this._masterVolume * this._voiceVolume }) as
       Phaser.Sound.WebAudioSound | Phaser.Sound.HTML5AudioSound;
     voice.play();
     this.currentVoice = voice;
@@ -247,6 +257,14 @@ class AudioManager {
     this.saveSettings();
   }
 
+  setVoiceVolume(v: number): void {
+    this._voiceVolume = Math.max(0, Math.min(1, v));
+    if (this.currentVoice && !this.isMuted) {
+      this.currentVoice.setVolume(this._masterVolume * this._voiceVolume);
+    }
+    this.saveSettings();
+  }
+
   toggleMute(): void {
     this.isMuted = !this.isMuted;
     this.applyMusicVolume();
@@ -266,6 +284,7 @@ class AudioManager {
       masterVolume: this._masterVolume,
       musicVolume: this._musicVolume,
       sfxVolume: this._sfxVolume,
+      voiceVolume: this._voiceVolume,
       muted: this.isMuted,
     };
     try {
@@ -283,6 +302,7 @@ class AudioManager {
       if (typeof settings.masterVolume === 'number') this._masterVolume = settings.masterVolume;
       if (typeof settings.musicVolume === 'number') this._musicVolume = settings.musicVolume;
       if (typeof settings.sfxVolume === 'number') this._sfxVolume = settings.sfxVolume;
+      if (typeof settings.voiceVolume === 'number') this._voiceVolume = settings.voiceVolume;
       if (typeof settings.muted === 'boolean') this.isMuted = settings.muted;
     } catch {
       // ignore parse errors
