@@ -11,48 +11,6 @@ export interface TypingTarget {
   getCurrentPrompt(): string;
 }
 
-/**
- * Prompts organized by difficulty tier.
- * Early game = short/easy. Scales up as day progresses.
- */
-const PROMPTS_EASY: string[] = [
-  'hello world',
-  'npm start',
-  'git init',
-  'ls -la',
-  'cd src',
-  'make',
-  'go run .',
-  'pip install',
-  'node app',
-  'cat README',
-];
-
-const PROMPTS_MEDIUM: string[] = [
-  'git push origin',
-  'docker compose up',
-  'npm run build',
-  'python train.py',
-  'ssh prod@server',
-  'curl localhost',
-  'export API_KEY=',
-  'screen -r agent',
-  'tail -f logs',
-  'chmod 755 run.sh',
-];
-
-const PROMPTS_HARD: string[] = [
-  'git push --force',
-  'pip install sketchy-model',
-  'await agent.think()',
-  'rm -rf node_modules',
-  'kubectl apply -f chaos.yaml',
-  'rsync -avz ./weights remote:',
-  'wget model-7b.gguf',
-  'systemctl restart agent',
-  'LGTM ship it',
-  'export OPENAI_KEY=sk-...',
-];
 
 export interface TypingStats {
   correct: number;
@@ -69,9 +27,8 @@ export class TypingEngine {
   private scene: Phaser.Scene;
   private terminal: TypingTarget;
   private stats: TypingStats = { correct: 0, incorrect: 0, promptsCompleted: 0 };
-  private easyQueue: string[] = [];
-  private mediumQueue: string[] = [];
-  private hardQueue: string[] = [];
+  private dayPrompts?: string[];
+  private dayPromptIndex = 0;
   private overridePool?: string[];
   private active = false;
   private paused = false;
@@ -96,10 +53,6 @@ export class TypingEngine {
     this.onPromptComplete = onPromptComplete;
     this.onFirstKeystroke = onFirstKeystroke;
     this.typoForgiveness = typoForgiveness;
-
-    this.easyQueue = Phaser.Utils.Array.Shuffle([...PROMPTS_EASY]);
-    this.mediumQueue = Phaser.Utils.Array.Shuffle([...PROMPTS_MEDIUM]);
-    this.hardQueue = Phaser.Utils.Array.Shuffle([...PROMPTS_HARD]);
 
     scene.input.keyboard!.on('keydown', this.handleKey, this);
   }
@@ -141,6 +94,13 @@ export class TypingEngine {
     return total === 0 ? 1 : this.stats.correct / total;
   }
 
+  /** Set ordered day-specific prompts. Iterates sequentially, loops when exhausted. */
+  setDayPrompts(prompts: string[]): void {
+    this.dayPrompts = prompts;
+    this.dayPromptIndex = 0;
+    if (this.active) this.nextPrompt();
+  }
+
   /** Replace the active prompt pool with a custom set (e.g. overtime production prompts) */
   setPromptPool(prompts: string[]): void {
     this.overridePool = Phaser.Utils.Array.Shuffle([...prompts]);
@@ -148,30 +108,27 @@ export class TypingEngine {
     if (this.active && !this.paused) this.nextPrompt();
   }
 
-  private getNextPromptPool(): string[] {
-    if (this.overridePool) return this.overridePool;
-    const completed = this.stats.promptsCompleted;
-    if (completed < 3) return this.easyQueue;
-    if (completed < 7) return this.mediumQueue;
-    return this.hardQueue;
-  }
-
   private nextPrompt(): void {
-    const pool = this.getNextPromptPool();
-    if (pool.length === 0) {
-      // Refill
-      if (this.overridePool && pool === this.overridePool) {
-        // Reshuffle the same set
-        const src = this.overridePool;
-        this.overridePool = Phaser.Utils.Array.Shuffle([...src]);
-      } else if (pool === this.easyQueue) this.easyQueue = Phaser.Utils.Array.Shuffle([...PROMPTS_EASY]);
-      else if (pool === this.mediumQueue) this.mediumQueue = Phaser.Utils.Array.Shuffle([...PROMPTS_MEDIUM]);
-      else this.hardQueue = Phaser.Utils.Array.Shuffle([...PROMPTS_HARD]);
+    if (this.overridePool) {
+      if (this.overridePool.length === 0) {
+        this.overridePool = Phaser.Utils.Array.Shuffle([...this.overridePool]);
+      }
+      const prompt = this.overridePool.pop() ?? 'npm start';
+      this.currentWrongCount = 0;
+      this.terminal.setPrompt(prompt);
+      return;
     }
-    const activePool = this.getNextPromptPool();
-    const prompt = activePool.pop() ?? 'npm start';
+
+    if (this.dayPrompts && this.dayPrompts.length > 0) {
+      const prompt = this.dayPrompts[this.dayPromptIndex];
+      this.dayPromptIndex = (this.dayPromptIndex + 1) % this.dayPrompts.length;
+      this.currentWrongCount = 0;
+      this.terminal.setPrompt(prompt);
+      return;
+    }
+
     this.currentWrongCount = 0;
-    this.terminal.setPrompt(prompt);
+    this.terminal.setPrompt('npm start');
   }
 
   private handleKey = (event: KeyboardEvent): void => {

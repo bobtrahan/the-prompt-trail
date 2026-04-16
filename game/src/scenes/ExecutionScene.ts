@@ -1,5 +1,7 @@
 import Phaser from 'phaser';
-import { GAME_WIDTH, GAME_HEIGHT, COLORS, TIME_UNITS_PER_DAY, EVENT_INTERVAL_MS } from '../utils/constants';
+import { GAME_WIDTH, GAME_HEIGHT, COLORS, TIME_UNITS_PER_DAY } from '../utils/constants';
+import { DAY_PROMPTS, OVERTIME_PROMPTS } from '../data/prompts';
+import { EVENT_SCHEDULE } from '../data/eventTriggers';
 import { getState, type GameState } from '../systems/GameState';
 import { CLASS_DEFS } from '../data/classes';
 import { Telemetry } from '../systems/Telemetry';
@@ -39,7 +41,6 @@ export class ExecutionScene extends Phaser.Scene {
 
   // Timers
   private dayTimer!: Phaser.Time.TimerEvent;
-  private eventTimer!: Phaser.Time.TimerEvent;
 
   // "Start typing" affordance
   private typeHint!: Phaser.GameObjects.Text;
@@ -58,16 +59,6 @@ export class ExecutionScene extends Phaser.Scene {
   private overtimePromptsCompleted: number = 0;
   private completionShown: boolean = false;
   private overtimeText?: Phaser.GameObjects.Text;
-  private overtimePrompts: string[] = [
-    'kubectl rollout status',
-    'tail -f /var/log/prod.log',
-    'curl -I https://api.prod',
-    'systemctl restart app',
-    'grafana alert silence',
-    'pg_dump --format=custom',
-    'nginx -t && nginx -s reload',
-    'ssh bastion -- uptime',
-  ];
 
   // Resource display refs (for flash feedback)
   private budgetText!: Phaser.GameObjects.Text;
@@ -464,6 +455,12 @@ export class ExecutionScene extends Phaser.Scene {
       this.onFirstKeystroke();
     }, this.typoForgiveness);
 
+    // Wire day-specific prompts
+    const dayPromptDef = DAY_PROMPTS.find(d => d.day === state.day);
+    if (dayPromptDef) {
+      this.typingEngine.setDayPrompts(dayPromptDef.prompts);
+    }
+
     // ── Process consumables and show notification sequence before typing begins ──
     this.processConsumables();
     
@@ -503,25 +500,12 @@ export class ExecutionScene extends Phaser.Scene {
       onComplete: () => this.typeHint.destroy(),
     });
 
-    // NOW start the day timer and event timer
+    // NOW start the day timer
     const tickMs = 4500;
     this.dayTimer = this.time.addEvent({
       delay: tickMs,
       repeat: this.timeUnits - 1,
       callback: () => this.tickTime(),
-    });
-
-    // First event fires quickly so the player learns the rhythm
-    this.time.delayedCall(5000, () => {
-      if (this.timeUnits > 0) this.fireEvent();
-    });
-
-    // Subsequent events on interval
-    this.eventTimer = this.time.addEvent({
-      delay: EVENT_INTERVAL_MS,
-      loop: true,
-      startAt: EVENT_INTERVAL_MS - 5000, // offset so first interval accounts for the early fire
-      callback: () => this.fireEvent(),
     });
 
     this.terminal.addLine('Ready. Building...');
@@ -542,6 +526,16 @@ export class ExecutionScene extends Phaser.Scene {
       this.overtimeBonus += 3;
       if (this.overtimeText) {
         this.overtimeText.setText(`Production ♙: +${this.overtimeBonus}`);
+      }
+    }
+
+    // Prompt-count-triggered events (normal play only)
+    if (!this.inOvertime) {
+      const state = getState();
+      const count = this.typingEngine.getStats().promptsCompleted;
+      const schedule = EVENT_SCHEDULE.find(e => e.day === state.day);
+      if (schedule && schedule.afterPrompts.includes(count)) {
+        this.fireEvent();
       }
     }
   }
@@ -963,7 +957,7 @@ export class ExecutionScene extends Phaser.Scene {
     this.terminal.addLine('Deploying to production...');
 
     // Swap prompt pool
-    this.typingEngine.setPromptPool(this.overtimePrompts);
+    this.typingEngine.setPromptPool(OVERTIME_PROMPTS);
 
     // Show overtime counter overlay in terminal window corner
     const tArea = this.terminalWindow.contentArea;
@@ -979,7 +973,6 @@ export class ExecutionScene extends Phaser.Scene {
 
   private scoreDayAndStore(): void {
     this.typingEngine.stop();
-    this.eventTimer?.destroy();
 
     const state = getState();
     const dayScore = ScoringSystem.calcDayReputation(
