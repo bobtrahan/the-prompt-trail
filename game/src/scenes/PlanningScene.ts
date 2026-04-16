@@ -6,7 +6,9 @@ import { getTheme } from '../utils/themes';
 import { Window } from '../ui/Window';
 import { Taskbar } from '../ui/Taskbar';
 import { EconomySystem } from '../systems/EconomySystem';
+import { AgentSystem } from '../systems/AgentSystem';
 import { AGENT_ROSTER, SYNERGY_PAIRS, CLASH_PAIRS } from '../data/agents';
+import { BASE_TIMER_SECONDS } from '../utils/constants';
 import AudioManager from '../systems/AudioManager';
 import { drawWallpaper } from '../ui/DesktopWallpaper';
 
@@ -41,6 +43,7 @@ export class PlanningScene extends Phaser.Scene {
   private launchBtn!: Phaser.GameObjects.Text;
   private cards: Phaser.GameObjects.Rectangle[] = [];
   private strategyPreviewText!: Phaser.GameObjects.Text;
+  private agentSummaryText!: Phaser.GameObjects.Text;
 
   // Agent picker state
   private selectedAgentIds: string[] = [];
@@ -305,6 +308,10 @@ export class PlanningScene extends Phaser.Scene {
     this.strategyPreviewText = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 55, '', {
       fontFamily: 'monospace', fontSize: '12px', color: '#9da5b0',
     }).setOrigin(0.5);
+
+    this.agentSummaryText = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 38, '', {
+      fontFamily: 'monospace', fontSize: '11px', color: '#9da5b0',
+    }).setOrigin(0.5);
   }
 
   // ── Agent picker logic ────────────────────────────────────────────────
@@ -353,6 +360,60 @@ export class PlanningScene extends Phaser.Scene {
 
     // Re-evaluate launch readiness
     this.updateLaunchState();
+    this.refreshAgentSummary();
+  }
+
+  private refreshAgentSummary(): void {
+    const state = getState();
+    const parts: string[] = [];
+
+    // Timer: base + strategy + agent speed + GPU
+    const baseTimer = state.playerClass === 'corporateDev' ? 22 : BASE_TIMER_SECONDS;
+    const agentSpeedMod = AgentSystem.getSpeedModifier(this.selectedAgentIds);
+    const agentSpeedSec = Math.round(baseTimer * agentSpeedMod);
+    const strategyBonus = this.lastStrategyTimeBonus;
+    let gpuBonus = 0;
+    if (state.ownedUpgrades.includes('hw-gpu') && ['local', 'openSource'].includes(state.model)) {
+      gpuBonus = Math.round(baseTimer * 0.1);
+    }
+    let monitorBonus = 0;
+    if (state.ownedUpgrades.includes('hw-monitor')) {
+      monitorBonus = Math.round(baseTimer * 0.05);
+    }
+    const totalTimer = Math.max(10, baseTimer + agentSpeedSec + strategyBonus + gpuBonus + monitorBonus);
+    parts.push(`⏱️ ${totalTimer}s timer`);
+
+    // Model rep modifier
+    const modelMod = EconomySystem.getModelQualityMod(state.model);
+    if (modelMod !== 0) {
+      const pct = Math.round(modelMod * 100);
+      parts.push(`${pct >= 0 ? '+' : ''}${pct}% rep (model)`);
+    }
+
+    // Strategy rep modifier
+    if (this.selectedStrategy) {
+      const option = STRATEGIES.find(s => s.id === this.selectedStrategy);
+      if (option) {
+        const stratMod = option.id === 'planThenBuild' ? '+15%' : option.id === 'oneShot' ? '-10%' : option.id === 'vibeCode' ? '-20%~+40%' : '';
+        if (stratMod) parts.push(`${stratMod} rep (strategy)`);
+      }
+    }
+
+    // Agent traits
+    const traitNotes: string[] = [];
+    for (const id of this.selectedAgentIds) {
+      const agent = AGENT_ROSTER.find(a => a.id === id);
+      if (!agent) continue;
+      if (agent.trait === 'low_hallucination') traitNotes.push('+5 rep/day (Oracle)');
+      if (agent.trait === 'agreeable') traitNotes.push('+3s (Parrot)');
+      if (agent.trait === 'deploy_unapproved') traitNotes.push('20%: +10 progress (Turbo)');
+      if (agent.trait === 'architecture_debates') traitNotes.push('-3s/day (Linter)');
+      if (agent.trait === 'feature_creep') traitNotes.push('25%: -6s (Scope)');
+      if (agent.trait === 'wildcard_shortcut') traitNotes.push('50/50: +6s or -3s (Gremlin)');
+    }
+    if (traitNotes.length > 0) parts.push(traitNotes.join(' · '));
+
+    this.agentSummaryText.setText(parts.join('  │  '));
   }
 
   private updateSynergyIndicator(): void {
@@ -416,6 +477,7 @@ export class PlanningScene extends Phaser.Scene {
         this.strategyPreviewText.setText(`Daily cost: $${totalDayCost} (model $${EconomySystem.getModelDayCost(state.model)} + strategy $${mod.strategyCost}) · Quality: ${qualityLabel}`);
       }
     }
+    this.refreshAgentSummary();
   }
 
   private lastStrategyTimeBonus = 0;
@@ -445,6 +507,7 @@ export class PlanningScene extends Phaser.Scene {
     } else {
       this.strategyPreviewText.setText(`Daily cost: $${totalDayCost} (model $${EconomySystem.getModelDayCost(state.model)} + strategy $${mod.strategyCost}) · Quality: ${qualityLabel}`);
     }
+    this.refreshAgentSummary();
   }
 
   private updateLaunchState(): void {
