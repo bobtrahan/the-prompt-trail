@@ -81,13 +81,14 @@ export class ClassSelectScene extends Phaser.Scene {
         .setAlpha(0.06)
         .setDepth(2);
 
-      // Emoji — vertically centered in header band
-      this.add.text(x, y - halfH + 40, CLASS_EMOJI[def.id] ?? '💻', {
+      // Emoji — vertically centered in header band (nudge up to compensate for emoji descent)
+      this.add.text(x, y - halfH + 36, CLASS_EMOJI[def.id] ?? '💻', {
         fontSize: '40px',
       }).setOrigin(0.5).setDepth(2);
 
-      // Class name — below header, same gap as emoji-to-header-center (~18px below header bottom)
-      this.add.text(x, y - halfH + 98, def.name, {
+      // Class name — below header with breathing room
+      const nameGap = 30; // gap between header bottom (80) and class name
+      this.add.text(x, y - halfH + 80 + nameGap, def.name, {
         fontFamily: 'monospace',
         fontSize: '22px',
         color: '#e6edf3',
@@ -95,7 +96,7 @@ export class ClassSelectScene extends Phaser.Scene {
       }).setOrigin(0.5).setDepth(2);
 
       // Bio — 3 lines, same gap below class name
-      this.add.text(x, y - halfH + 132, CLASS_BIO[def.id] ?? '', {
+      this.add.text(x, y - halfH + 80 + nameGap + 34, CLASS_BIO[def.id] ?? '', {
         fontFamily: 'monospace',
         fontSize: '13px',
         color: `#${COLORS.textDim.toString(16).padStart(6, '0')}`,
@@ -103,20 +104,20 @@ export class ClassSelectScene extends Phaser.Scene {
         lineSpacing: 4,
       }).setOrigin(0.5, 0).setDepth(2);
 
-      // Difficulty badge
-      this.add.text(x, y - halfH + 168, DIFFICULTY[def.id], {
+      // Divider line — separates bio from difficulty + stats
+      this.add.rectangle(x, y - halfH + 210, cardWidth - 40, 1, COLORS.textDim)
+        .setAlpha(0.2)
+        .setDepth(2);
+
+      // Difficulty badge — below divider
+      this.add.text(x, y - halfH + 228, DIFFICULTY[def.id], {
         fontFamily: 'monospace',
         fontSize: '14px',
         color: accentHex,
       }).setOrigin(0.5).setDepth(2);
 
-      // Divider line
-      this.add.rectangle(x, y - halfH + 194, cardWidth - 40, 1, COLORS.textDim)
-        .setAlpha(0.2)
-        .setDepth(2);
-
       // Stats
-      const statsY = y - halfH + 214;
+      const statsY = y - halfH + 258;
       const stats = [
         `Budget: $${def.startingBudget.toLocaleString()}`,
         `Hardware: ${def.hardwareHp} HP`,
