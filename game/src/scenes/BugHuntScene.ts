@@ -958,13 +958,14 @@ export class BugHuntScene extends Phaser.Scene {
             bug.invisible = false;
             bug.container.setAlpha(1);
           }
-          // Check bullet proximity — go invisible if any bullet within 80px
+          // Check bullet proximity — go invisible if any bullet within 40px
+          // Short 400ms dodge window so players can actually land hits
           if (!bug.invisible) {
             for (const bullet of this.bullets) {
-              if (Math.hypot(bullet.x - bug.x, bullet.y - bug.y) < 80) {
+              if (Math.hypot(bullet.x - bug.x, bullet.y - bug.y) < 40) {
                 bug.invisible      = true;
-                bug.invisibleUntil = time + 1000;
-                bug.container.setAlpha(0.1);
+                bug.invisibleUntil = time + 400;
+                bug.container.setAlpha(0.15);
                 break;
               }
             }
@@ -1117,15 +1118,17 @@ export class BugHuntScene extends Phaser.Scene {
         return true;
       }
 
-      // Sweep check — test midpoint of bullet travel this frame to prevent tunneling
-      const prevX = bullet.x - bullet.dx * BULLET_SPEED * (1 / 60);
-      const prevY = bullet.y - bullet.dy * BULLET_SPEED * (1 / 60);
-      const midX = (prevX + bullet.x) / 2;
-      const midY = (prevY + bullet.y) / 2;
-      const midDist = Math.hypot(midX - bug.x, midY - bug.y);
-      if (midDist < combinedR) {
-        this.hitBug(bug);
-        return true;
+      // Sweep check — sample along bullet travel this frame to prevent tunneling
+      const travel = BULLET_SPEED * (1 / 60);
+      const steps = Math.ceil(travel / combinedR);
+      for (let s = 1; s <= steps; s++) {
+        const t = s / (steps + 1);
+        const sx = bullet.x - bullet.dx * travel * t;
+        const sy = bullet.y - bullet.dy * travel * t;
+        if (Math.hypot(sx - bug.x, sy - bug.y) < combinedR) {
+          this.hitBug(bug);
+          return true;
+        }
       }
     }
     return false;
