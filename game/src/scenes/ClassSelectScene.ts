@@ -14,6 +14,13 @@ const CLASS_EMOJI: Record<string, string> = {
   collegeStudent: '📚',
 };
 
+const CLASS_BIO: Record<string, string> = {
+  techBro: 'Best hardware.\nBig budget.\nZero self-awareness.',
+  corporateDev: 'Company card and laptop.\nMeetings and HR.\nZero freedom.',
+  indieHacker: 'Balanced. Resourceful.\nShips fast.\nBreak things.',
+  collegeStudent: 'No money.\nBad hardware.\nUnlimited ambition.',
+};
+
 export class ClassSelectScene extends Phaser.Scene {
   constructor() {
     super({ key: 'ClassSelect' });
@@ -23,15 +30,15 @@ export class ClassSelectScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor(COLORS.bg);
 
     // Window chrome
-    this.add.text(GAME_WIDTH / 2, 40, 'PromptOS — User Setup', {
+    this.add.text(GAME_WIDTH / 2, 50, 'PromptOS — User Setup', {
       fontFamily: 'monospace',
-      fontSize: '20px',
+      fontSize: '24px',
       color: '#e6edf3',
     }).setOrigin(0.5);
 
-    this.add.text(GAME_WIDTH / 2, 70, 'Select your developer profile:', {
+    this.add.text(GAME_WIDTH / 2, 84, 'Select your developer profile:', {
       fontFamily: 'monospace',
-      fontSize: '14px',
+      fontSize: '15px',
       color: `#${COLORS.textDim.toString(16).padStart(6, '0')}`,
     }).setOrigin(0.5);
 
@@ -43,65 +50,73 @@ export class ClassSelectScene extends Phaser.Scene {
       indieHacker: '☆☆☆ Hard',
       collegeStudent: '☆☆☆☆ Brutal',
     };
-    const cardWidth = 260;
-    const totalWidth = classes.length * cardWidth + (classes.length - 1) * 20;
+    const cardWidth = 270;
+    const cardHeight = 420;
+    const cardGap = 18;
+    const totalWidth = classes.length * cardWidth + (classes.length - 1) * cardGap;
     const startX = (GAME_WIDTH - totalWidth) / 2 + cardWidth / 2;
 
     classes.forEach((def, i) => {
-      const x = startX + i * (cardWidth + 20);
-      const y = GAME_HEIGHT / 2 - 20;
+      const x = startX + i * (cardWidth + cardGap);
+      const y = GAME_HEIGHT / 2 + 10;
       const theme = CLASS_THEMES[def.id as keyof typeof CLASS_THEMES];
       const accent = theme.accent;
       const accentHex = `#${accent.toString(16).padStart(6, '0')}`;
 
+      const halfH = cardHeight / 2;
+
       // Glow rect (behind card, hidden by default)
-      const glowRect = this.add.rectangle(x, y, cardWidth + 8, 388, accent)
+      const glowRect = this.add.rectangle(x, y, cardWidth + 8, cardHeight + 8, accent)
         .setAlpha(0)
         .setDepth(0);
 
       // Card background
-      const card = this.add.rectangle(x, y, cardWidth, 380, COLORS.windowBg)
+      const card = this.add.rectangle(x, y, cardWidth, cardHeight, COLORS.windowBg)
         .setStrokeStyle(2, accent)
         .setInteractive({ useHandCursor: true })
         .setDepth(1);
 
-      // Tinted header rect (C) — 260×60 at top of card
-      // Card top edge = y - 190, tinted rect center = y - 160
-      this.add.rectangle(x, y - 160, cardWidth, 60, accent)
+      // Tinted header rect — top of card
+      this.add.rectangle(x, y - halfH + 40, cardWidth, 80, accent)
         .setAlpha(0.06)
         .setDepth(2);
 
-      // Emoji (B) — above class name, inside tinted header area
-      this.add.text(x, y - 170, CLASS_EMOJI[def.id] ?? '💻', {
-        fontSize: '36px',
+      // Emoji — comfortable padding from top
+      this.add.text(x, y - halfH + 22, CLASS_EMOJI[def.id] ?? '💻', {
+        fontSize: '40px',
       }).setOrigin(0.5).setDepth(2);
 
-      // Class name — shifted down slightly from original to accommodate emoji
-      this.add.text(x, y - 118, def.name, {
+      // Class name
+      this.add.text(x, y - halfH + 66, def.name, {
         fontFamily: 'monospace',
-        fontSize: '20px',
+        fontSize: '22px',
         color: '#e6edf3',
         fontStyle: 'bold',
       }).setOrigin(0.5).setDepth(2);
 
-      // Description
-      const descText = this.add.text(x, y - 82, def.description, {
+      // Bio — 3 lines, always
+      this.add.text(x, y - halfH + 100, CLASS_BIO[def.id] ?? '', {
         fontFamily: 'monospace',
         fontSize: '13px',
         color: `#${COLORS.textDim.toString(16).padStart(6, '0')}`,
-        wordWrap: { width: cardWidth - 30 },
         align: 'center',
+        lineSpacing: 4,
       }).setOrigin(0.5, 0).setDepth(2);
 
-      // Difficulty badge — text color = class accent (A)
-      this.add.text(x, y - 82 + descText.height + 16, DIFFICULTY[def.id], {
+      // Difficulty badge
+      this.add.text(x, y - halfH + 168, DIFFICULTY[def.id], {
         fontFamily: 'monospace',
-        fontSize: '13px',
+        fontSize: '14px',
         color: accentHex,
       }).setOrigin(0.5).setDepth(2);
 
+      // Divider line
+      this.add.rectangle(x, y - halfH + 194, cardWidth - 40, 1, COLORS.textDim)
+        .setAlpha(0.2)
+        .setDepth(2);
+
       // Stats
-      const statsY = y + 10;
+      const statsY = y - halfH + 214;
       const stats = [
         `Budget: $${def.startingBudget.toLocaleString()}`,
         `Hardware: ${def.hardwareHp} HP`,
@@ -109,25 +124,26 @@ export class ClassSelectScene extends Phaser.Scene {
         `Score: ×${def.scoreMultiplier}`,
       ];
       stats.forEach((line, j) => {
-        this.add.text(x, statsY + j * 22, line, {
+        this.add.text(x, statsY + j * 26, line, {
           fontFamily: 'monospace',
-          fontSize: '13px',
+          fontSize: '14px',
           color: '#e6edf3',
         }).setOrigin(0.5).setDepth(2);
       });
 
-      // ▶ SELECT badge (E) — hidden by default
-      const selectBadge = this.add.text(x, statsY + 4 * 22 + 10, '▶ SELECT', {
+      // ▶ SELECT badge — hidden by default
+      const selectBadge = this.add.text(x, y + halfH - 28, '▶ SELECT', {
         fontFamily: 'monospace',
-        fontSize: '12px',
+        fontSize: '13px',
         color: accentHex,
       }).setOrigin(0.5).setVisible(false).setDepth(2);
 
-      // Hover effects (A + E)
+      // Hover effects — glow, select badge, voice
       card.on('pointerover', () => {
         card.setStrokeStyle(2, accent);
         glowRect.setAlpha(0.08);
         selectBadge.setVisible(true);
+        AudioManager.getInstance().playVoice(classVoiceMap[def.id]);
       });
       card.on('pointerout', () => {
         card.setStrokeStyle(2, accent);
@@ -135,16 +151,16 @@ export class ClassSelectScene extends Phaser.Scene {
         selectBadge.setVisible(false);
       });
 
-      // Selection animation (D)
-      addButtonFx(this, card);
+      // Voice map + selection animation
       const classVoiceMap: Record<PlayerClass, string> = {
         techBro: 'class-techbro',
         indieHacker: 'class-indie',
         collegeStudent: 'class-student',
         corporateDev: 'class-corporate',
       };
+
+      addButtonFx(this, card);
       card.on('pointerdown', () => {
-        // Tween scale
         this.tweens.add({
           targets: card,
           scaleX: 1.03,
@@ -152,14 +168,10 @@ export class ClassSelectScene extends Phaser.Scene {
           duration: 120,
           ease: 'Linear',
         });
-        // Flash border white
         card.setStrokeStyle(2, 0xffffff);
         this.time.delayedCall(100, () => {
           card.setStrokeStyle(2, accent);
         });
-        // Play class voice clip
-        AudioManager.getInstance().playVoice(classVoiceMap[def.id]);
-        // Delay scene start
         this.time.delayedCall(200, () => {
           this.selectClass(def.id);
         });
