@@ -12,7 +12,7 @@ interface AudioSettings {
 
 const MUSIC_KEYS = ['title', 'execution', 'execution-late', 'night', 'bugbounty'] as const;
 const SFX_KEYS = [
-  'key-correct', 'key-wrong', 'notification', 'error', 'critical',
+  'key-correct', 'key-correct-alt', 'key-wrong', 'notification', 'error', 'critical',
   'choice-select', 'ui-click', 'bug-squash', 'bug-miss', 'purchase',
   'day-complete', 'rep-gain', 'rep-loss', 'hw-damage', 'boot', 'score-tick',
 ] as const;
@@ -178,9 +178,14 @@ class AudioManager {
   playSFX(key: string, rateVariation = 0.05): void {
     if (!this.game) return;
     if (this.isMuted) return;
+    // Weighted variant: key-correct uses 2:1 weighted random between primary and alt
+    let resolvedKey = key;
+    if (key === 'key-correct') {
+      resolvedKey = Math.random() < 0.667 ? 'key-correct' : 'key-correct-alt';
+    }
     const rate = 1.0 + (Math.random() * 2 - 1) * rateVariation;
     const vol = this._masterVolume * this._sfxVolume;
-    this.game.sound.play(key, { volume: vol, rate });
+    this.game.sound.play(resolvedKey, { volume: vol, rate });
   }
 
   playVoice(clipId: string): void {
