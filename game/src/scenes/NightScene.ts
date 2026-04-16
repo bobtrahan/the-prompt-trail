@@ -139,7 +139,6 @@ export class NightScene extends Phaser.Scene {
 
     marketBtn.on('pointerover', () => {
       marketBtn.setBackgroundColor('#444c56');
-      AudioManager.getInstance().playSFX('ui-click', 0.15);
     });
     marketBtn.on('pointerout', () => marketBtn.setBackgroundColor('#30363d'));
     marketBtn.on('pointerdown', () => this.scene.start('TokenMarket'));
@@ -161,7 +160,6 @@ export class NightScene extends Phaser.Scene {
       bountyBtn.setInteractive({ useHandCursor: true });
       bountyBtn.on('pointerover', () => {
         bountyBtn.setBackgroundColor('#444c56');
-        AudioManager.getInstance().playSFX('ui-click', 0.15);
       });
       bountyBtn.on('pointerout', () => bountyBtn.setBackgroundColor('#30363d'));
       bountyBtn.on('pointerdown', () => {
@@ -179,7 +177,6 @@ export class NightScene extends Phaser.Scene {
 
     sleepBtn.on('pointerover', () => {
       sleepBtn.setBackgroundColor('#2ea043');
-      AudioManager.getInstance().playSFX('ui-click', 0.15);
     });
     sleepBtn.on('pointerout', () => sleepBtn.setBackgroundColor('#238636'));
     sleepBtn.on('pointerdown', () => this.advance());

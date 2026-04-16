@@ -169,7 +169,6 @@ export class BugBountySelectScene extends Phaser.Scene {
       card.setStrokeStyle(2, accent);
       glow.setAlpha(1);
       cta.setColor(`#${accent.toString(16).padStart(6, '0')}`);
-      AudioManager.getInstance().playSFX('ui-click', 0.15);
     });
 
     card.on('pointerout', () => {
