@@ -13,18 +13,38 @@ export class BootScene extends Phaser.Scene {
     const { width, height } = this.cameras.main;
     const barWidth = 300;
     const barX = (width - barWidth) / 2;
-    const barY = height / 2 + 30;
-    const barBg = this.add.rectangle(width / 2, barY, barWidth, 4, 0x21262d).setOrigin(0.5);
+    const barY = height / 2 + 60;
+    this.add.rectangle(width / 2, barY, barWidth, 4, 0x21262d).setOrigin(0.5);
     const bar = this.add.rectangle(barX, barY, 0, 4, 0x58a6ff).setOrigin(0, 0.5);
+    // Asset loading fills to 20%, boot sequence animates the rest
     this.load.on('progress', (value: number) => {
-      bar.width = barWidth * value;
+      bar.width = barWidth * 0.2 * value;
     });
+    // Store bar refs for create() to continue the animation
+    this.data.set('progressBar', bar);
+    this.data.set('barWidth', barWidth);
   }
 
   create(): void {
     AudioManager.getInstance().init(this.game);
 
     const { width, height } = this.cameras.main;
+    const bar = this.data.get('progressBar') as Phaser.GameObjects.Rectangle;
+    const barWidth = this.data.get('barWidth') as number;
+
+    // Helper to tween progress bar to a target percentage
+    const tweenProgress = (toPercent: number, duration: number) => {
+      this.tweens.add({
+        targets: bar,
+        width: barWidth * toPercent,
+        duration,
+        ease: 'Sine.easeInOut',
+      });
+    };
+
+    // Start animating bar from asset-load level (~20%) through POST phase
+    tweenProgress(0.4, 1500);
+
     const postX = 60;
     const postY = 80;
     const lineHeight = 20;
@@ -66,6 +86,8 @@ export class BootScene extends Phaser.Scene {
     });
 
     // Phase 2: Kernel boot (1.5-2.5s)
+    tweenProgress(0.7, 1000);
+
     const kernelLines = [
       { prefix: '[  OK  ]', text: ' Started Agent Runtime Service' },
       { prefix: '[  OK  ]', text: ' Started Token Economy Daemon' },
@@ -100,6 +122,10 @@ export class BootScene extends Phaser.Scene {
     });
 
     // Phase 3: PromptOS splash (2.5-3.5s)
+    this.time.delayedCall(2300, () => {
+      tweenProgress(0.95, 400);
+    });
+
     this.time.delayedCall(2500, () => {
       // Fade out POST text
       allTextObjects.forEach(obj => {
@@ -137,6 +163,10 @@ export class BootScene extends Phaser.Scene {
     });
 
     // Phase 4: Fade to black (3.5-4s)
+    this.time.delayedCall(3300, () => {
+      tweenProgress(1.0, 200);
+    });
+
     this.time.delayedCall(3500, () => {
       this.cameras.main.fadeOut(300, 0, 0, 0);
       this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
