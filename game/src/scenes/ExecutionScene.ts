@@ -350,10 +350,10 @@ export class ExecutionScene extends Phaser.Scene {
     const agentDefs = AgentSystem.getAgentDefs(activeAgentIds);
     const aArea = this.agentWindow.contentArea;
     agentDefs.forEach((agent, i) => {
-      const rowBaseY = 72 + aArea.y + i * 48;
+      const rowBaseY = aArea.y + i * 48;
 
       const label = this.add.text(
-        852 + aArea.x, rowBaseY,
+        aArea.x, rowBaseY,
         `🤖 ${agent.name}`,
         { fontFamily: 'monospace', fontSize: '14px', color: '#e6edf3' }
       );
@@ -362,14 +362,14 @@ export class ExecutionScene extends Phaser.Scene {
       const idleMessages = AGENT_MESSAGES[agent.id]?.idle ?? ['⚡ Working...'];
       const initialMsg = idleMessages[Math.floor(Math.random() * idleMessages.length)];
       const status = this.add.text(
-        852 + aArea.x + 140, rowBaseY,
+        aArea.x + 140, rowBaseY,
         initialMsg,
         { fontFamily: 'monospace', fontSize: '12px', color: '#39d353' }
       );
       this.agentWindow.add(status);
 
       const rowBg = this.add.rectangle(
-        852 + aArea.x, rowBaseY - 4,
+        aArea.x, rowBaseY - 4,
         aArea.width, 44,
         theme.accent
       ).setOrigin(0).setAlpha(0);
@@ -386,7 +386,7 @@ export class ExecutionScene extends Phaser.Scene {
       for (let s = 0; s < 5; s++) {
         const filled = s < agent.speed;
         const speedRect = this.add.rectangle(
-          852 + aArea.x + s * 10,
+          aArea.x + s * 10,
           rowBaseY + 22,
           8, 8,
           filled ? theme.accent : 0x21262d
@@ -396,7 +396,7 @@ export class ExecutionScene extends Phaser.Scene {
 
       // Trait label
       const traitLabel = this.add.text(
-        852 + aArea.x + 58,
+        aArea.x + 58,
         rowBaseY + 21,
         agent.trait,
         { fontFamily: 'monospace', fontSize: '11px', color: '#9da5b0' }
@@ -406,9 +406,9 @@ export class ExecutionScene extends Phaser.Scene {
 
     // Hint if only 1 agent
     if (agentDefs.length === 1) {
-      const hintY = 72 + aArea.y + 1 * 48 + 8;
+      const hintY = aArea.y + 1 * 48 + 8;
       const slotHint = this.add.text(
-        852 + aArea.x,
+        aArea.x,
         hintY,
         '💡 Buy agent slots at Token Market',
         { fontFamily: 'monospace', fontSize: '11px', color: '#9da5b0', fontStyle: 'italic' }
