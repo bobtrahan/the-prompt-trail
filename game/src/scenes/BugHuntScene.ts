@@ -7,13 +7,14 @@ import { Window } from '../ui/Window';
 import { Taskbar } from '../ui/Taskbar';
 import AudioManager from '../systems/AudioManager';
 import { drawWallpaper } from '../ui/DesktopWallpaper';
+import { BUG_DEFS, pickBugType, type BugType } from '../data/bugs';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 const WIN_W = 900;
 const WIN_H = 520;
 const TIMER_BAR_H = 8;
-const ARENA_OFFSET = 24;   // px below caAbsY where arena starts (room for timer bar + stats)
+const ARENA_OFFSET = 24;
 const AMMO_BAR_H = 36;
 const AMMO_CELL_W = 18;
 const AMMO_CELL_H = 14;
@@ -23,8 +24,8 @@ const PLAYER_SPEED = 300;
 const AMMO_MAX = 10;
 const AMMO_REGEN_MS = 3000;
 const CROSSHAIR_DIST = 90;
-const PLAYER_HW = 10;   // player hitbox half-width
-const PLAYER_HH = 12;   // player hitbox half-height
+const PLAYER_HW = 10;
+const PLAYER_HH = 12;
 const BULLET_SPEED = 600;
 const BULLET_LEN = 8;
 const BULLET_THICKNESS = 3;
@@ -35,10 +36,32 @@ const BULLET_DEPTH = 17;
 const BULLET_TRAIL_DEPTH = 16;
 const SPARK_DEPTH = 18;
 
+// Bug spawning + movement
+const BUG_SPAWN_INTERVAL = 3000;
+const MAX_ALIVE_BUGS = 6;
+const DESPAWN_WARN_MS = 1500;
+
+// Chip visual dims (mirrors BugBountyScene)
+const CHIP_W = 120;
+const CHIP_H = 28;
+const CHIP_R = 6;
+
+// Bug speeds (px/sec)
+const SYNTAX_SPEED      = 60;
+const LOGIC_SPEED       = 120;
+const RACE_BURST_SPEED  = 300;
+const MEMLEAK_SPEED     = 40;
+const HEISEN_SPEED      = 80;
+
+// Bug hit radii
+const HIT_RADIUS: Record<BugType, number> = {
+  syntax: 30, logic: 22, race: 15, memleak: 25, heisen: 20,
+};
+
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 interface CodeBlock {
-  x: number;  // top-left absolute scene coord
+  x: number;
   y: number;
   w: number;
   h: number;
@@ -51,6 +74,30 @@ interface Bullet {
   dy: number;
   graphics: Phaser.GameObjects.Graphics;
   trail: Phaser.GameObjects.Graphics;
+}
+
+interface HuntBug {
+  type: BugType;
+  x: number;
+  y: number;
+  container: Phaser.GameObjects.Container;
+  hitRadius: number;
+  spawnedAt: number;
+  alive: boolean;
+  hp: number;
+  direction: { x: number; y: number };
+  lastPause: number;    // logic: timestamp pause started (0 = not paused)
+  lastBurst: number;    // race: timestamp of last burst start; logic: last resume time
+  burstDir: { x: number; y: number };  // race: current burst direction
+  cracked: boolean;     // memleak: hit once
+  invisible: boolean;   // heisen: currently dodging
+  invisibleUntil: number;
+  growScale: number;    // memleak: current scale
+  // Despawn warning
+  despawnWarned: boolean;
+  despawnFlashTimer: Phaser.Time.TimerEvent | null;
+  bgGraphics: Phaser.GameObjects.Graphics;
+  borderRect: Phaser.GameObjects.Rectangle;
 }
 
 // ── Code obstacle text definitions ────────────────────────────────────────────
@@ -67,6 +114,23 @@ const OBSTACLE_SNIPPETS: string[][] = [
 ];
 
 const SYNTAX_ACCENT_COLORS = [0x3fb950, 0x58a6ff, 0xf0883e, 0xf85149];
+
+// ── Chip helpers (mirrors BugBountyScene) ─────────────────────────────────────
+
+function drawChipBg(gfx: Phaser.GameObjects.Graphics, color: number, alpha = 0.85): void {
+  gfx.clear();
+  gfx.fillStyle(color, alpha);
+  gfx.fillRoundedRect(-CHIP_W / 2, -CHIP_H / 2, CHIP_W, CHIP_H, CHIP_R);
+}
+
+function lerpColor(a: number, b: number, t: number): number {
+  const ar = (a >> 16) & 0xff, ag = (a >> 8) & 0xff, ab = a & 0xff;
+  const br = (b >> 16) & 0xff, bg = (b >> 8) & 0xff, bb = b & 0xff;
+  const r   = Math.round(ar + (br - ar) * t);
+  const g   = Math.round(ag + (bg - ag) * t);
+  const bl2 = Math.round(ab + (bb - ab) * t);
+  return (r << 16) | (g << 8) | bl2;
+}
 
 // ── Scene ─────────────────────────────────────────────────────────────────────
 
@@ -120,6 +184,11 @@ export class BugHuntScene extends Phaser.Scene {
   private ended = false;
   private bullets: Bullet[] = [];
 
+  // Bug system
+  private bugs: HuntBug[] = [];
+  private escapedBugs = 0;
+  private lastSpawn = 0;
+
   constructor() {
     super({ key: 'BugHunt' });
   }
@@ -136,6 +205,9 @@ export class BugHuntScene extends Phaser.Scene {
     this.codeBlocks = [];
     this.ammoCells = [];
     this.bullets = [];
+    this.bugs = [];
+    this.escapedBugs = 0;
+    this.lastSpawn = 0;
 
     AudioManager.getInstance().playMusic('bugbounty');
 
@@ -238,6 +310,7 @@ export class BugHuntScene extends Phaser.Scene {
       this.input.off('pointerdown', this.fireBullet, this);
       this.keySpace.off('down', this.fireBullet, this);
       this.destroyAllBullets();
+      this.destroyAllBugs();
       AudioManager.getInstance().playMusic('night');
     });
   }
@@ -267,7 +340,7 @@ export class BugHuntScene extends Phaser.Scene {
 
   private placeCodeBlocks(): void {
     const MARGIN = 24;
-    const PAD = 20;  // min gap between blocks
+    const PAD = 20;
     const count = 6 + Math.floor(Math.random() * 3); // 6–8
 
     for (let i = 0; i < count; i++) {
@@ -534,17 +607,370 @@ export class BugHuntScene extends Phaser.Scene {
     this.bullets = [];
   }
 
+  // ── Bug chip factory ──────────────────────────────────────────────────────
+
+  private buildBugChip(type: BugType): {
+    container: Phaser.GameObjects.Container;
+    bgGraphics: Phaser.GameObjects.Graphics;
+    borderRect: Phaser.GameObjects.Rectangle;
+  } {
+    const def = BUG_DEFS[type];
+    const hw = CHIP_W / 2;
+
+    const glowRect = this.add.rectangle(0, 0, CHIP_W + 8, CHIP_H + 8, def.color, 0.08).setOrigin(0.5);
+    const shadow = this.add.rectangle(2, 2, CHIP_W, CHIP_H, 0x000000, 0.3).setOrigin(0.5);
+    const bgGraphics = this.add.graphics();
+    drawChipBg(bgGraphics, def.color, 0.85);
+    const borderRect = this.add.rectangle(0, 0, CHIP_W, CHIP_H, 0x000000, 0)
+      .setStrokeStyle(2, 0xffffff, 0)
+      .setOrigin(0.5);
+    const dotGfx = this.add.graphics();
+    dotGfx.fillStyle(def.dotColor, 1);
+    dotGfx.fillCircle(-hw + 14, 0, 4);
+    const labelText = this.add.text(-hw + 24, 0, def.label, {
+      fontFamily: 'monospace',
+      fontSize: '11px',
+      color: '#ffffff',
+    }).setOrigin(0, 0.5);
+
+    const container = this.add.container(0, 0, [
+      glowRect, shadow, bgGraphics, borderRect, dotGfx, labelText,
+    ]);
+
+    // Glow pulse
+    this.tweens.add({
+      targets: glowRect,
+      alpha: { from: 0.05, to: 0.12 },
+      duration: 2000,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut',
+    });
+
+    return { container, bgGraphics, borderRect };
+  }
+
+  // ── Bug spawning ──────────────────────────────────────────────────────────
+
+  private randomUnitVector(): { x: number; y: number } {
+    const angle = Math.random() * Math.PI * 2;
+    return { x: Math.cos(angle), y: Math.sin(angle) };
+  }
+
+  private randomDiagonal(): { x: number; y: number } {
+    const angles = [Math.PI / 4, 3 * Math.PI / 4, 5 * Math.PI / 4, 7 * Math.PI / 4];
+    const angle = angles[Math.floor(Math.random() * 4)];
+    return { x: Math.cos(angle), y: Math.sin(angle) };
+  }
+
+  private spawnEdgePosition(hitRadius: number): { x: number; y: number } {
+    const margin = hitRadius + 2;
+    for (let attempt = 0; attempt < 20; attempt++) {
+      const edge = Math.floor(Math.random() * 4);
+      let x = 0, y = 0;
+      switch (edge) {
+        case 0: // top
+          x = this.arenaX + margin + Math.random() * (this.arenaW - margin * 2);
+          y = this.arenaY + margin;
+          break;
+        case 1: // bottom
+          x = this.arenaX + margin + Math.random() * (this.arenaW - margin * 2);
+          y = this.arenaY + this.arenaH - margin;
+          break;
+        case 2: // left
+          x = this.arenaX + margin;
+          y = this.arenaY + margin + Math.random() * (this.arenaH - margin * 2);
+          break;
+        default: // right
+          x = this.arenaX + this.arenaW - margin;
+          y = this.arenaY + margin + Math.random() * (this.arenaH - margin * 2);
+          break;
+      }
+      if (!this.codeBlocks.some(b => this.circleOverlapsRect(x, y, hitRadius, b))) {
+        return { x, y };
+      }
+    }
+    // Fallback: arena center
+    return { x: this.arenaX + this.arenaW / 2, y: this.arenaY + this.arenaH / 2 };
+  }
+
+  private spawnHuntBug(type: BugType, time: number): void {
+    const hitRadius = HIT_RADIUS[type];
+    const pos = this.spawnEdgePosition(hitRadius);
+
+    const { container, bgGraphics, borderRect } = this.buildBugChip(type);
+    container.setPosition(pos.x, pos.y).setDepth(15).setScale(0);
+
+    this.tweens.add({
+      targets: container,
+      scaleX: 1, scaleY: 1,
+      duration: 200,
+      ease: 'Back.easeOut',
+    });
+
+    const initDir  = type === 'logic' ? this.randomDiagonal() : this.randomUnitVector();
+    const burstDir = type === 'race'  ? this.randomUnitVector() : { x: 0, y: 0 };
+
+    const bug: HuntBug = {
+      type,
+      x: pos.x,
+      y: pos.y,
+      container,
+      hitRadius,
+      spawnedAt: time,
+      alive: true,
+      hp: type === 'memleak' ? 2 : 1,
+      direction: type === 'race' ? { ...burstDir } : initDir,
+      lastPause: 0,
+      lastBurst: time,
+      burstDir,
+      cracked: false,
+      invisible: false,
+      invisibleUntil: 0,
+      growScale: 1,
+      despawnWarned: false,
+      despawnFlashTimer: null,
+      bgGraphics,
+      borderRect,
+    };
+
+    this.bugs.push(bug);
+  }
+
+  // ── Despawn warning ───────────────────────────────────────────────────────
+
+  private startDespawnWarning(bug: HuntBug): void {
+    bug.despawnWarned = true;
+    bug.borderRect.setStrokeStyle(2, 0xffffff, 1);
+    let visible = true;
+    bug.despawnFlashTimer = this.time.addEvent({
+      delay: 150,
+      loop: true,
+      callback: () => {
+        visible = !visible;
+        bug.borderRect.setStrokeStyle(2, 0xffffff, visible ? 1 : 0);
+      },
+    });
+  }
+
+  // ── Bug removal ───────────────────────────────────────────────────────────
+
+  removeHuntBug(bug: HuntBug, caught: boolean): void {
+    bug.alive = false;
+    if (bug.despawnFlashTimer) {
+      bug.despawnFlashTimer.destroy();
+      bug.despawnFlashTimer = null;
+    }
+
+    if (caught) {
+      this.tweens.add({
+        targets: bug.container,
+        scaleX: 2, scaleY: 2, angle: 360, alpha: 0,
+        duration: 250, ease: 'Quad.easeOut',
+        onComplete: () => bug.container.destroy(),
+      });
+    } else {
+      // Escaped
+      this.totalEarned = Math.max(0, this.totalEarned - 5);
+      this.escapedBugs++;
+      this.statsText.setText(this.statsStr());
+
+      const txt = this.add.text(bug.x, bug.y, '−$5 ESCAPED', {
+        fontFamily: 'monospace', fontSize: '14px', color: '#ff0000',
+      }).setDepth(30);
+      this.tweens.add({
+        targets: txt, y: txt.y - 30, alpha: 0, duration: 600,
+        onComplete: () => txt.destroy(),
+      });
+
+      this.tweens.add({
+        targets: bug.container, y: bug.container.y - 50, alpha: 0, duration: 500,
+        onComplete: () => bug.container.destroy(),
+      });
+    }
+  }
+
+  private destroyAllBugs(): void {
+    for (const bug of this.bugs) {
+      if (bug.despawnFlashTimer) bug.despawnFlashTimer.destroy();
+      bug.container.destroy();
+    }
+    this.bugs = [];
+  }
+
+  // ── Bug movement helpers ──────────────────────────────────────────────────
+
+  private circleOverlapsRect(cx: number, cy: number, r: number, block: CodeBlock): boolean {
+    const nearX = Phaser.Math.Clamp(cx, block.x, block.x + block.w);
+    const nearY = Phaser.Math.Clamp(cy, block.y, block.y + block.h);
+    return Math.hypot(cx - nearX, cy - nearY) < r;
+  }
+
+  private moveBugLinear(bug: HuntBug, speed: number, dt: number): void {
+    let newX = bug.x + bug.direction.x * speed * dt;
+    let newY = bug.y + bug.direction.y * speed * dt;
+
+    // Arena edge bounce — X
+    if (newX - bug.hitRadius < this.arenaX) {
+      bug.direction.x = Math.abs(bug.direction.x);
+      newX = this.arenaX + bug.hitRadius;
+    } else if (newX + bug.hitRadius > this.arenaX + this.arenaW) {
+      bug.direction.x = -Math.abs(bug.direction.x);
+      newX = this.arenaX + this.arenaW - bug.hitRadius;
+    }
+
+    // Arena edge bounce — Y
+    if (newY - bug.hitRadius < this.arenaY) {
+      bug.direction.y = Math.abs(bug.direction.y);
+      newY = this.arenaY + bug.hitRadius;
+    } else if (newY + bug.hitRadius > this.arenaY + this.arenaH) {
+      bug.direction.y = -Math.abs(bug.direction.y);
+      newY = this.arenaY + this.arenaH - bug.hitRadius;
+    }
+
+    // Code block bounce — X axis (test newX vs current Y)
+    for (const block of this.codeBlocks) {
+      if (this.circleOverlapsRect(newX, bug.y, bug.hitRadius, block)) {
+        bug.direction.x = -bug.direction.x;
+        newX = bug.x;
+        break;
+      }
+    }
+
+    // Code block bounce — Y axis (test current X vs newY)
+    for (const block of this.codeBlocks) {
+      if (this.circleOverlapsRect(bug.x, newY, bug.hitRadius, block)) {
+        bug.direction.y = -bug.direction.y;
+        newY = bug.y;
+        break;
+      }
+    }
+
+    bug.x = newX;
+    bug.y = newY;
+  }
+
+  // ── Bug update loop ───────────────────────────────────────────────────────
+
+  private updateBugs(time: number, dt: number): void {
+    const toRemove: HuntBug[] = [];
+
+    for (const bug of this.bugs) {
+      if (!bug.alive) continue;
+
+      const age      = time - bug.spawnedAt;
+      const def      = BUG_DEFS[bug.type];
+      const timeLeft = def.despawnMs - age;
+
+      if (timeLeft <= 0) {
+        toRemove.push(bug);
+        continue;
+      }
+
+      if (!bug.despawnWarned && timeLeft <= DESPAWN_WARN_MS) {
+        this.startDespawnWarning(bug);
+      }
+
+      switch (bug.type) {
+        case 'syntax':
+          this.moveBugLinear(bug, SYNTAX_SPEED, dt);
+          break;
+
+        case 'logic': {
+          if (bug.lastPause > 0) {
+            // In pause — check if 500ms elapsed
+            if (time - bug.lastPause >= 500) {
+              bug.direction = this.randomDiagonal();
+              bug.lastBurst = time; // resume timestamp
+              bug.lastPause = 0;
+            }
+            // else: frozen
+          } else {
+            // Moving — check if 2s elapsed since last resume
+            if (time - bug.lastBurst >= 2000) {
+              bug.lastPause = time; // enter pause
+            } else {
+              this.moveBugLinear(bug, LOGIC_SPEED, dt);
+            }
+          }
+          break;
+        }
+
+        case 'race': {
+          const elapsed = time - bug.lastBurst;
+          if (elapsed < 800) {
+            // Burst phase
+            this.moveBugLinear(bug, RACE_BURST_SPEED, dt);
+          } else if (elapsed >= 1300) {
+            // Start new burst
+            bug.lastBurst = time;
+            bug.burstDir  = this.randomUnitVector();
+            bug.direction = { ...bug.burstDir };
+          }
+          // 800–1300ms: stopped
+          break;
+        }
+
+        case 'memleak': {
+          this.moveBugLinear(bug, MEMLEAK_SPEED, dt);
+          const growFrac  = Math.min(age / 5000, 1);
+          bug.growScale   = 1 + growFrac;
+          bug.container.setScale(bug.growScale);
+          if (!bug.cracked) {
+            const shifted = lerpColor(def.color, def.dotColor, growFrac * 0.6);
+            drawChipBg(bug.bgGraphics, shifted, 0.85 + growFrac * 0.1);
+          }
+          break;
+        }
+
+        case 'heisen': {
+          this.moveBugLinear(bug, HEISEN_SPEED, dt);
+          // Reappear after invisibility window
+          if (bug.invisible && time >= bug.invisibleUntil) {
+            bug.invisible = false;
+            bug.container.setAlpha(1);
+          }
+          // Check bullet proximity — go invisible if any bullet within 80px
+          if (!bug.invisible) {
+            for (const bullet of this.bullets) {
+              if (Math.hypot(bullet.x - bug.x, bullet.y - bug.y) < 80) {
+                bug.invisible      = true;
+                bug.invisibleUntil = time + 1000;
+                bug.container.setAlpha(0.1);
+                break;
+              }
+            }
+          }
+          break;
+        }
+      }
+
+      bug.container.setPosition(bug.x, bug.y);
+    }
+
+    for (const bug of toRemove) {
+      this.removeHuntBug(bug, false);
+    }
+
+    this.bugs = this.bugs.filter(b => b.alive);
+  }
+
   // ── Update ────────────────────────────────────────────────────────────────
 
   update(time: number, delta: number): void {
     if (this.ended) return;
 
     if (this.startTime === 0) {
-      this.startTime = time;
+      this.startTime    = time;
       this.lastAmmoRegen = time;
+      this.lastSpawn    = time;
+      // Spawn initial 3 bugs immediately
+      this.spawnHuntBug('syntax', time);
+      this.spawnHuntBug('logic',  time);
+      this.spawnHuntBug('syntax', time);
     }
 
-    const elapsed = time - this.startTime;
+    const elapsed   = time - this.startTime;
     const remaining = Math.max(0, GAME_DURATION - elapsed);
 
     this.timerBar.width = this.win.contentArea.width * (remaining / GAME_DURATION);
@@ -559,6 +985,13 @@ export class BugHuntScene extends Phaser.Scene {
       this.ammo = Math.min(AMMO_MAX, this.ammo + 1);
       this.lastAmmoRegen = time;
       this.updateAmmoDisplay();
+    }
+
+    // Periodic bug spawning — every 3s if fewer than 6 alive
+    const aliveBugs = this.bugs.filter(b => b.alive).length;
+    if (aliveBugs < MAX_ALIVE_BUGS && time - this.lastSpawn >= BUG_SPAWN_INTERVAL) {
+      this.spawnHuntBug(pickBugType(), time);
+      this.lastSpawn = time;
     }
 
     // ── Movement ─────────────────────────────────────────────────────────────
@@ -599,6 +1032,7 @@ export class BugHuntScene extends Phaser.Scene {
     this.aimAngle = Math.atan2(ptr.y - this.playerY, ptr.x - this.playerX);
 
     this.updateBullets(dt);
+    this.updateBugs(time, dt);
 
     // ── Redraw dynamic objects ────────────────────────────────────────────────
     this.redrawPlayer();
@@ -640,6 +1074,7 @@ export class BugHuntScene extends Phaser.Scene {
     if (this.ended) return;
     this.ended = true;
     this.destroyAllBullets();
+    this.destroyAllBugs();
 
     const state = getState();
     const returnScene = state.bugHuntReturnScene || 'Night';
@@ -688,7 +1123,7 @@ export class BugHuntScene extends Phaser.Scene {
     }).setOrigin(0.5).setDepth(51).setInteractive({ useHandCursor: true });
 
     btn.on('pointerover', () => btn.setColor('#e6edf3'));
-    btn.on('pointerout', () => btn.setColor('#58a6ff'));
+    btn.on('pointerout',  () => btn.setColor('#58a6ff'));
     btn.on('pointerdown', () => this.scene.start(returnScene));
   }
 
