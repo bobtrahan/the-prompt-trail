@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
-import { COLORS } from '../utils/constants';
+import { getState } from '../systems/GameState';
+import { getTheme } from '../utils/themes';
 
 export interface TerminalConfig {
   scene: Phaser.Scene;
@@ -7,6 +8,9 @@ export interface TerminalConfig {
   y: number;
   width: number;
   height: number;
+  terminalTextColor?: string;
+  terminalBg?: number;
+  cursorChar?: string;
 }
 
 const LINE_HEIGHT = 18;
@@ -20,6 +24,8 @@ export class Terminal {
   scene: Phaser.Scene;
   container: Phaser.GameObjects.Container;
   private bg: Phaser.GameObjects.Rectangle;
+  private terminalTextColor: string;
+  private cursorChar: string;
   private lines: string[] = [];
   private lineTexts: Phaser.GameObjects.Text[] = [];
   private typedText!: Phaser.GameObjects.Text;
@@ -42,17 +48,21 @@ export class Terminal {
   private maxVisibleLines: number;
 
   constructor(config: TerminalConfig) {
+    const theme = getTheme(getState().playerClass ?? undefined);
+
     this.scene = config.scene;
     this.x = config.x;
     this.y = config.y;
     this.width = config.width;
     this.height = config.height;
+    this.terminalTextColor = config.terminalTextColor ?? theme.terminalTextColor;
+    this.cursorChar = config.cursorChar ?? theme.cursorChar;
     this.maxVisibleLines = Math.floor((config.height - RESERVED_BOTTOM) / LINE_HEIGHT);
 
     this.container = config.scene.add.container(config.x, config.y);
 
     // Terminal background
-    this.bg = config.scene.add.rectangle(0, 0, config.width, config.height, COLORS.terminal)
+    this.bg = config.scene.add.rectangle(0, 0, config.width, config.height, config.terminalBg ?? theme.terminalBg)
       .setOrigin(0);
     this.container.add(this.bg);
 
@@ -61,7 +71,7 @@ export class Terminal {
     this.typedText = config.scene.add.text(8, promptY, '', {
       fontFamily: 'monospace',
       fontSize: '14px',
-      color: '#39d353',
+      color: this.terminalTextColor,
     });
     this.cursorText = config.scene.add.text(8, promptY, '', {
       fontFamily: 'monospace',
@@ -95,7 +105,7 @@ export class Terminal {
   }
 
   /** Add a line of output above the prompt */
-  addLine(text: string, color = '#39d353'): void {
+  addLine(text: string, color = this.terminalTextColor): void {
     this.lines.push(text);
     // Keep only visible lines
     if (this.lines.length > this.maxVisibleLines) {
@@ -168,7 +178,7 @@ export class Terminal {
       const t = this.scene.add.text(8, startY + i * LINE_HEIGHT, line, {
         fontFamily: 'monospace',
         fontSize: '13px',
-        color: '#39d353',
+        color: this.terminalTextColor,
       });
       this.container.add(t);
       this.lineTexts.push(t);
@@ -178,10 +188,10 @@ export class Terminal {
   private renderPrompt(): void {
     const typed = this.promptPrefix + this.typedSoFar;
     const remaining = this.currentPrompt.slice(this.typedSoFar.length);
-    const cursor = this.cursorVisible ? '█' : ' ';
+    const cursor = this.cursorVisible ? this.cursorChar : ' ';
 
     this.typedText.setText(typed);
-    this.typedText.setColor('#39d353');
+    this.typedText.setColor(this.terminalTextColor);
 
     // Position cursor after typed text
     this.cursorText.setX(this.typedText.x + this.typedText.width);

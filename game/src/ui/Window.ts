@@ -1,5 +1,7 @@
 import Phaser from 'phaser';
 import { COLORS } from '../utils/constants';
+import { getState } from '../systems/GameState';
+import { getTheme } from '../utils/themes';
 
 export interface WindowConfig {
   scene: Phaser.Scene;
@@ -37,6 +39,7 @@ export class Window {
   constructor(config: WindowConfig) {
     this.scene = config.scene;
     const accent = config.accentColor ?? COLORS.accent;
+    const theme = getTheme(getState().playerClass ?? undefined);
 
     this.container = config.scene.add.container(config.x, config.y);
 
@@ -65,7 +68,7 @@ export class Window {
     this.titleBar = config.scene.add.rectangle(
       this.BORDER_WIDTH, this.BORDER_WIDTH,
       config.width - this.BORDER_WIDTH * 2, this.TITLE_BAR_HEIGHT,
-      COLORS.titleBar
+      theme.titleBarBg
     ).setOrigin(0);
     this.container.add(this.titleBar);
 

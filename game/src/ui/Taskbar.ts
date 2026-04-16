@@ -3,6 +3,7 @@ import { GAME_WIDTH, GAME_HEIGHT, COLORS } from '../utils/constants';
 import { getState } from '../systems/GameState';
 import { DebugMenu } from './DebugMenu';
 import AudioManager from '../systems/AudioManager';
+import { getTheme } from '../utils/themes';
 
 const TASKBAR_HEIGHT = 32;
 
@@ -22,18 +23,19 @@ export class Taskbar {
 
   constructor(scene: Phaser.Scene, accentColor?: number) {
     this.scene = scene;
-    this.accentColor = accentColor ?? COLORS.accent;
+    const theme = getTheme(getState().playerClass ?? undefined);
+    this.accentColor = accentColor ?? theme.accent ?? COLORS.accent;
     const y = GAME_HEIGHT - TASKBAR_HEIGHT;
 
     this.container = scene.add.container(0, y);
     this.container.setDepth(100);
 
     // Background
-    const bg = scene.add.rectangle(0, 0, GAME_WIDTH, TASKBAR_HEIGHT, 0x161b22).setOrigin(0);
+    const bg = scene.add.rectangle(0, 0, GAME_WIDTH, TASKBAR_HEIGHT, theme.taskbarBg).setOrigin(0);
     this.container.add(bg);
 
     // Top border
-    const border = scene.add.rectangle(0, 0, GAME_WIDTH, 1, COLORS.windowBorder).setOrigin(0);
+    const border = scene.add.rectangle(0, 0, GAME_WIDTH, 1, theme.taskbarBorder).setOrigin(0);
     this.container.add(border);
 
     const style: Phaser.Types.GameObjects.Text.TextStyle = {

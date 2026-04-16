@@ -327,6 +327,9 @@ export class ExecutionScene extends Phaser.Scene {
       y: 72 + tArea.y,
       width: tArea.width,
       height: tArea.height,
+      terminalTextColor: theme.terminalTextColor,
+      terminalBg: theme.terminalBg,
+      cursorChar: theme.cursorChar,
     });
 
     // ── Progress bar (bottom of terminal window content, above prompt) ──
