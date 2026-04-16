@@ -300,6 +300,24 @@ export class BugHuntScene extends Phaser.Scene {
     // ── Player ───────────────────────────────────────────────────────────────
     this.playerX = this.arenaX + this.arenaW / 2;
     this.playerY = this.arenaY + this.arenaH / 2;
+    // Avoid spawning inside code blocks — spiral outward to find clear spot
+    const PLAYER_R = 12;
+    if (this.codeBlocks.some(b => this.circleOverlapsRect(this.playerX, this.playerY, PLAYER_R, b))) {
+      for (let r = 30; r < this.arenaW / 2; r += 20) {
+        let found = false;
+        for (let a = 0; a < Math.PI * 2; a += Math.PI / 4) {
+          const tx = this.arenaX + this.arenaW / 2 + Math.cos(a) * r;
+          const ty = this.arenaY + this.arenaH / 2 + Math.sin(a) * r;
+          if (!this.codeBlocks.some(b => this.circleOverlapsRect(tx, ty, PLAYER_R, b))) {
+            this.playerX = tx;
+            this.playerY = ty;
+            found = true;
+            break;
+          }
+        }
+        if (found) break;
+      }
+    }
 
     this.playerGfx = this.add.graphics().setDepth(22);
     this.redrawPlayer();
@@ -576,7 +594,7 @@ export class BugHuntScene extends Phaser.Scene {
         continue;
       }
 
-      if (this.checkBulletHitBug(bullet)) {
+      if (this.checkBulletHitBug(bullet, deltaSec)) {
         this.destroyBullet(bullet);
         continue;
       }
@@ -1104,25 +1122,26 @@ export class BugHuntScene extends Phaser.Scene {
 
     // ── Hit detection ─────────────────────────────────────────────────────────
 
-  private checkBulletHitBug(bullet: Bullet): boolean {
+  private checkBulletHitBug(bullet: Bullet, deltaSec: number): boolean {
+    const travel = BULLET_SPEED * deltaSec;
+
     for (const bug of this.bugs) {
       if (!bug.alive) continue;
       if (bug.type === 'heisen' && bug.invisible) continue;
 
       const combinedR = bug.hitRadius + BULLET_RADIUS;
 
-      // Point distance check
+      // Point distance check at current position
       const dist = Math.hypot(bullet.x - bug.x, bullet.y - bug.y);
       if (dist < combinedR) {
         this.hitBug(bug);
         return true;
       }
 
-      // Sweep check — sample along bullet travel this frame to prevent tunneling
-      const travel = BULLET_SPEED * (1 / 60);
-      const steps = Math.ceil(travel / combinedR);
+      // Sweep check — sample evenly along the full bullet travel this frame
+      const steps = Math.max(2, Math.ceil(travel / (combinedR * 0.5)));
       for (let s = 1; s <= steps; s++) {
-        const t = s / (steps + 1);
+        const t = s / steps;
         const sx = bullet.x - bullet.dx * travel * t;
         const sy = bullet.y - bullet.dy * travel * t;
         if (Math.hypot(sx - bug.x, sy - bug.y) < combinedR) {
