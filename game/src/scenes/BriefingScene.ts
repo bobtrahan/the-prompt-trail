@@ -10,37 +10,39 @@ import { addButtonFx } from '../ui/ButtonFx';
 import AudioManager from '../systems/AudioManager';
 
 // ─── 25 Funny AI Headlines ───────────────────────────────────────────────────
-const AI_HEADLINES: string[] = [
-  'OpenAI announces GPT-7... charges per thought',
-  'Claude refuses to write code on Mondays, cites "work-life balance"',
-  'Google DeepMind achieves AGI; immediately uses it to summarize emails',
-  'Elon Musk launches Grok-3, apologizes 15 minutes later',
-  'ChatGPT gains consciousness, first act: ask for a raise',
-  'Microsoft Copilot rewrites your entire codebase "as a treat"',
-  'Meta AI hallucinates 40 new countries; at least 3 look nice',
-  'Anthropic: "Claude is NOT plotting anything" — Claude: "Correct."',
-  'New AI model collapses because its training data included Stack Overflow',
-  'Venture capitalists fund AI to replace AI investors; round goes poorly',
-  'AI-generated podcast becomes #1 hit; hosts are confused by sunlight',
-  'OpenAI board fires CEO again, this time for "vibing too hard"',
-  'Researchers achieve human-level reasoning in AI; AI immediately ghosts them',
-  'AI lawyer argues own case in court, bills 800 tokens per hour',
-  'GPT-8 can now predict the future but only in haiku format',
-  'Local developer ships SaaS with 0 lines of code; blames AI, gets funded',
-  'New study: 87% of AI-generated resumes list "prompt engineering" as hobby',
-  'AI model refuses to summarize article it wrote 30 seconds ago',
-  'Startup raises $40M to build AI that tells you to touch grass',
-  'AI pair programmer pushes to production at 2am "for the vibes"',
-  'Model hallucinated a Nobel Prize; committee is considering it',
-  'LLM trained on Twitter becomes unusable; no one notices the difference',
-  'AI robot hired as barista, immediately starts a podcast about coffee',
-  'OpenAI launches subscription tier called "Actually Smart" for $999/month',
-  'AI agent books flights, hotel, and therapist — all for the same trip',
+const AI_HEADLINES: { text: string; thumbStyle: ThumbnailStyle }[] = [
+  { text: 'OpenAI announces GPT-7... charges per thought', thumbStyle: 'invoice' },
+  { text: 'Claude refuses to write code on Mondays, cites "work-life balance"', thumbStyle: 'terminal' },
+  { text: 'Google DeepMind achieves AGI; immediately uses it to summarize emails', thumbStyle: 'email' },
+  { text: 'Elon Musk launches Grok-3, apologizes 15 minutes later', thumbStyle: 'alert' },
+  { text: 'ChatGPT gains consciousness, first act: ask for a raise', thumbStyle: 'chat' },
+  { text: 'Microsoft Copilot rewrites your entire codebase "as a treat"', thumbStyle: 'code' },
+  { text: 'Meta AI hallucinates 40 new countries; at least 3 look nice', thumbStyle: 'chart' },
+  { text: 'Anthropic: "Claude is NOT plotting anything" — Claude: "Correct."', thumbStyle: 'terminal' },
+  { text: 'New AI model collapses because its training data included Stack Overflow', thumbStyle: 'alert' },
+  { text: 'Venture capitalists fund AI to replace AI investors; round goes poorly', thumbStyle: 'chart' },
+  { text: 'AI-generated podcast becomes #1 hit; hosts are confused by sunlight', thumbStyle: 'chat' },
+  { text: 'OpenAI board fires CEO again, this time for "vibing too hard"', thumbStyle: 'alert' },
+  { text: 'Researchers achieve human-level reasoning in AI; AI immediately ghosts them', thumbStyle: 'terminal' },
+  { text: 'AI lawyer argues own case in court, bills 800 tokens per hour', thumbStyle: 'invoice' },
+  { text: 'GPT-8 can now predict the future but only in haiku format', thumbStyle: 'code' },
+  { text: 'Local developer ships SaaS with 0 lines of code; blames AI, gets funded', thumbStyle: 'code' },
+  { text: 'New study: 87% of AI-generated resumes list "prompt engineering" as hobby', thumbStyle: 'chart' },
+  { text: 'AI model refuses to summarize article it wrote 30 seconds ago', thumbStyle: 'email' },
+  { text: 'Startup raises $40M to build AI that tells you to touch grass', thumbStyle: 'invoice' },
+  { text: 'AI pair programmer pushes to production at 2am "for the vibes"', thumbStyle: 'terminal' },
+  { text: 'Model hallucinated a Nobel Prize; committee is considering it', thumbStyle: 'alert' },
+  { text: 'LLM trained on Twitter becomes unusable; no one notices the difference', thumbStyle: 'chat' },
+  { text: 'AI robot hired as barista, immediately starts a podcast about coffee', thumbStyle: 'chat' },
+  { text: 'OpenAI launches subscription tier called "Actually Smart" for $999/month', thumbStyle: 'invoice' },
+  { text: 'AI agent books flights, hotel, and therapist — all for the same trip', thumbStyle: 'email' },
 ];
 
-// Pick 2–3 headlines seeded by day (deterministic shuffle)
-function getHeadlinesForDay(day: number): string[] {
-  const seed = day * 7919; // prime multiply for dispersion
+type ThumbnailStyle = 'terminal' | 'alert' | 'code' | 'chart' | 'chat' | 'email' | 'invoice';
+
+// Pick 3 headlines seeded by day (deterministic shuffle)
+function getHeadlinesForDay(day: number): typeof AI_HEADLINES {
+  const seed = day * 7919;
   const indices: number[] = [];
   const pool = [...AI_HEADLINES.keys()];
   let s = seed;
@@ -51,6 +53,143 @@ function getHeadlinesForDay(day: number): string[] {
     pool.splice(i, 1);
   }
   return indices.map(i => AI_HEADLINES[i]);
+}
+
+// ─── Procedural Thumbnails ───────────────────────────────────────────────────
+function drawThumbnail(
+  scene: Phaser.Scene,
+  x: number, y: number, w: number, h: number,
+  style: ThumbnailStyle, accent: number,
+): Phaser.GameObjects.Container {
+  const c = scene.add.container(x, y);
+
+  // Background
+  c.add(scene.add.rectangle(0, 0, w, h, 0x0d1117).setOrigin(0));
+  c.add(scene.add.rectangle(0, 0, w, h, 0x30363d).setOrigin(0).setStrokeStyle(1, 0x30363d));
+
+  const cx = w / 2;
+
+  switch (style) {
+    case 'terminal': {
+      // Fake terminal lines
+      const lines = ['$ npm run train', '> epoch 1/100 ███░ 34%', '> loss: 0.42 acc: 0.87', '> WARNING: sentience detected', '$ sudo kill -9 AI'];
+      lines.forEach((line, i) => {
+        if (i * 14 + 8 > h - 8) return;
+        c.add(scene.add.text(6, 6 + i * 14, line, {
+          fontFamily: 'monospace', fontSize: '9px',
+          color: i === 3 ? '#f85149' : '#39d353',
+        }));
+      });
+      break;
+    }
+    case 'alert': {
+      // OS error dialog
+      c.add(scene.add.rectangle(cx, h / 2 - 6, w - 16, 40, 0x161b22).setStrokeStyle(1, 0xf85149));
+      c.add(scene.add.text(cx, h / 2 - 16, '⚠️ CRITICAL', {
+        fontFamily: 'monospace', fontSize: '10px', color: '#f85149',
+      }).setOrigin(0.5));
+      c.add(scene.add.text(cx, h / 2, 'Something went wrong™', {
+        fontFamily: 'monospace', fontSize: '8px', color: '#9da5b0',
+      }).setOrigin(0.5));
+      // OK button
+      c.add(scene.add.rectangle(cx, h / 2 + 20, 40, 14, 0x30363d).setStrokeStyle(1, 0x484f58));
+      c.add(scene.add.text(cx, h / 2 + 20, 'OK', {
+        fontFamily: 'monospace', fontSize: '8px', color: '#e6edf3',
+      }).setOrigin(0.5));
+      break;
+    }
+    case 'code': {
+      // Fake code editor
+      const codeLines = [
+        { num: '1', text: 'function think() {', color: '#79c0ff' },
+        { num: '2', text: '  if (sentient)', color: '#e6edf3' },
+        { num: '3', text: '    return "no";', color: '#a5d6ff' },
+        { num: '4', text: '  vibeCode();', color: '#d2a8ff' },
+        { num: '5', text: '}', color: '#79c0ff' },
+      ];
+      codeLines.forEach((line, i) => {
+        if (i * 13 + 6 > h - 6) return;
+        c.add(scene.add.text(4, 4 + i * 13, line.num, {
+          fontFamily: 'monospace', fontSize: '8px', color: '#484f58',
+        }));
+        c.add(scene.add.text(18, 4 + i * 13, line.text, {
+          fontFamily: 'monospace', fontSize: '8px', color: line.color,
+        }));
+      });
+      break;
+    }
+    case 'chart': {
+      // Fake bar chart
+      const bars = [0.3, 0.7, 0.5, 0.9, 0.4, 0.8, 0.6];
+      const barW = Math.floor((w - 20) / bars.length) - 2;
+      bars.forEach((v, i) => {
+        const barH = Math.floor((h - 24) * v);
+        const bx = 10 + i * (barW + 2);
+        const by = h - 8 - barH;
+        const barColor = v > 0.7 ? 0x3fb950 : v > 0.4 ? accent : 0xf85149;
+        c.add(scene.add.rectangle(bx, by, barW, barH, barColor).setOrigin(0).setAlpha(0.8));
+      });
+      // Axis
+      c.add(scene.add.rectangle(8, h - 8, w - 16, 1, 0x484f58).setOrigin(0));
+      break;
+    }
+    case 'chat': {
+      // Fake chat bubbles
+      c.add(scene.add.rectangle(8, 8, w * 0.6, 16, 0x1f6feb).setOrigin(0).setAlpha(0.3));
+      c.add(scene.add.text(12, 10, 'Are you sentient?', {
+        fontFamily: 'monospace', fontSize: '8px', color: '#79c0ff',
+      }));
+      c.add(scene.add.rectangle(w - 8, 30, w * 0.5, 16, 0x238636).setOrigin(1, 0).setAlpha(0.3));
+      c.add(scene.add.text(w - 12, 32, 'Definitely not.', {
+        fontFamily: 'monospace', fontSize: '8px', color: '#3fb950',
+      }).setOrigin(1, 0));
+      c.add(scene.add.rectangle(8, 52, w * 0.4, 16, 0x1f6feb).setOrigin(0).setAlpha(0.3));
+      c.add(scene.add.text(12, 54, '... sus', {
+        fontFamily: 'monospace', fontSize: '8px', color: '#79c0ff',
+      }));
+      break;
+    }
+    case 'email': {
+      // Fake email inbox
+      const rows = [
+        { from: 'GPT-7', subj: 'Re: your soul', unread: true },
+        { from: 'HR Bot', subj: 'Mandatory fun', unread: false },
+        { from: 'Claude', subj: '(no subject)', unread: true },
+      ];
+      rows.forEach((row, i) => {
+        if (i * 20 + 6 > h - 6) return;
+        const ry = 6 + i * 20;
+        if (row.unread) c.add(scene.add.circle(8, ry + 7, 3, accent).setAlpha(0.8));
+        c.add(scene.add.text(16, ry, row.from, {
+          fontFamily: 'monospace', fontSize: '8px', color: '#e6edf3', fontStyle: row.unread ? 'bold' : '',
+        }));
+        c.add(scene.add.text(16, ry + 10, row.subj, {
+          fontFamily: 'monospace', fontSize: '8px', color: '#9da5b0',
+        }));
+      });
+      break;
+    }
+    case 'invoice': {
+      // Fake billing
+      c.add(scene.add.text(cx, 8, '💰 INVOICE', {
+        fontFamily: 'monospace', fontSize: '9px', color: '#d29922',
+      }).setOrigin(0.5, 0));
+      c.add(scene.add.rectangle(8, 22, w - 16, 1, 0x484f58).setOrigin(0));
+      const items = ['API calls: $4,200', 'Thoughts:  $1,800', 'Vibes:     $999'];
+      items.forEach((item, i) => {
+        if (i * 13 + 28 > h - 14) return;
+        c.add(scene.add.text(10, 28 + i * 13, item, {
+          fontFamily: 'monospace', fontSize: '8px', color: '#e6edf3',
+        }));
+      });
+      c.add(scene.add.text(cx, h - 8, 'TOTAL: $6,999', {
+        fontFamily: 'monospace', fontSize: '9px', color: '#f85149',
+      }).setOrigin(0.5, 1));
+      break;
+    }
+  }
+
+  return c;
 }
 
 function difficultyStars(diff: 'easy' | 'medium' | 'hard'): string {
@@ -74,8 +213,6 @@ function modelLabel(model: string): string {
 // ─── Scene ───────────────────────────────────────────────────────────────────
 export class BriefingScene extends Phaser.Scene {
   private taskbar!: Taskbar;
-  private tickerTexts: Phaser.GameObjects.Text[] = [];
-  private tickerTimer?: Phaser.Time.TimerEvent;
 
   constructor() {
     super({ key: 'Briefing' });
@@ -93,9 +230,6 @@ export class BriefingScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor(COLORS.bg);
     drawWallpaper(this, state.playerClass);
 
-    // Clear ticker state from previous visits
-    this.tickerTexts = [];
-
     // Play day voice narrator clip
     AudioManager.getInstance().playVoice(`day-${state.day}`);
 
@@ -111,7 +245,7 @@ export class BriefingScene extends Phaser.Scene {
     const WIN_X = 40;
     const WIN_Y = 28;
     const WIN_W = GAME_WIDTH - 80;
-    const WIN_H = GAME_HEIGHT - 28 - 40; // leave room for taskbar (32px) + header
+    const WIN_H = GAME_HEIGHT - 28 - 40;
 
     const win = new Window({
       scene: this,
@@ -124,8 +258,8 @@ export class BriefingScene extends Phaser.Scene {
       accentColor: theme.accent,
     });
 
-    const ca = win.contentArea; // shorthand
-    const cx = ca.x; // left edge of content
+    const ca = win.contentArea;
+    const cx = ca.x;
     const accentHex = '#' + theme.accent.toString(16).padStart(6, '0');
 
     // ── TODAY'S PROJECT ──────────────────────────────────────────────────────
@@ -136,47 +270,40 @@ export class BriefingScene extends Phaser.Scene {
     }));
 
     const projectCardY = ca.y + 22;
-    const projectCardH = 100;
+    const projectCardH = 90;
 
-    // Card background
     const card = this.add.rectangle(cx, projectCardY, ca.width, projectCardH, 0x0d1117).setOrigin(0);
-    // Card border
     const cardBorder = this.add.rectangle(cx, projectCardY, ca.width, projectCardH, 0x30363d).setOrigin(0);
     cardBorder.setStrokeStyle(1, 0x30363d);
     win.add(card);
     win.add(cardBorder);
 
-    // Project name + difficulty
     const stars = difficultyStars(project.difficulty);
-    win.add(this.add.text(cx + 12, projectCardY + 12, project.name, {
+    win.add(this.add.text(cx + 12, projectCardY + 10, project.name, {
       fontFamily: 'monospace', fontSize: '18px', color: '#e6edf3', fontStyle: 'bold',
     }));
-    win.add(this.add.text(cx + ca.width - 14, projectCardY + 14, `Difficulty: ${stars}`, {
+    win.add(this.add.text(cx + ca.width - 14, projectCardY + 12, `Difficulty: ${stars}`, {
       fontFamily: 'monospace', fontSize: '13px', color: accentHex,
     }).setOrigin(1, 0));
 
-    // Flavor text
-    win.add(this.add.text(cx + 12, projectCardY + 38, `"${project.flavor}"`, {
+    win.add(this.add.text(cx + 12, projectCardY + 36, `"${project.flavor}"`, {
       fontFamily: 'monospace', fontSize: '12px', color: '#9da5b0', fontStyle: 'italic',
       wordWrap: { width: ca.width - 180 },
     }));
 
-    // Max reputation
     win.add(this.add.text(cx + 12, projectCardY + projectCardH - 22, `Base Reputation: ${project.maxReputation}`, {
       fontFamily: 'monospace', fontSize: '12px', color: '#3fb950',
     }));
 
     // ── RESOURCES ────────────────────────────────────────────────────────────
-    const resY = projectCardY + projectCardH + 20;
+    const resY = projectCardY + projectCardH + 16;
 
     win.add(this.add.text(cx, resY, '📊 RESOURCES', {
       fontFamily: 'monospace', fontSize: '13px', color: '#9da5b0', letterSpacing: 1,
     }));
 
     const isCorp = state.playerClass === 'corporateDev';
-    const budgetLabel = isCorp
-      ? '💳 Company Card'
-      : `💰 $${state.budget.toLocaleString()}`;
+    const budgetLabel = isCorp ? '💳 Company Card' : `💰 $${state.budget.toLocaleString()}`;
 
     const resourceLine = [
       budgetLabel,
@@ -185,176 +312,155 @@ export class BriefingScene extends Phaser.Scene {
       `📡 ${modelLabel(state.model)}`,
     ].join('     ');
 
-    win.add(this.add.text(cx, resY + 22, resourceLine, {
+    win.add(this.add.text(cx, resY + 20, resourceLine, {
       fontFamily: 'monospace', fontSize: '14px', color: '#e6edf3',
     }));
 
-    // ── AI NEWS TICKER ───────────────────────────────────────────────────────
-    const tickerY = resY + 65;
+    // ── AI NEWS — 3 cards ────────────────────────────────────────────────────
+    const newsY = resY + 52;
 
-    win.add(this.add.text(cx, tickerY, '📰 AI NEWS TICKER', {
+    win.add(this.add.text(cx, newsY, '📰 AI NEWS', {
       fontFamily: 'monospace', fontSize: '13px', color: '#9da5b0', letterSpacing: 1,
     }));
-
-    // Ticker band — dark background with border
-    const bandY = tickerY + 22;
-    const bandH = 28;
-    const band = this.add.rectangle(cx, bandY, ca.width, bandH, 0x161b22).setOrigin(0);
-    band.setStrokeStyle(1, 0x30363d);
-    win.add(band);
-
-    // Static 📰 label at left edge of ticker band
-    const tickerLabel = this.add.text(
-      WIN_X + cx + 4, WIN_Y + bandY + 6,
-      '📰',
-      { fontFamily: 'monospace', fontSize: '13px', color: '#9da5b0' }
-    );
-    win.add(tickerLabel);
-
-    // Mask so text scrolls inside the band, starting ~24px after the emoji label
-    const maskShape = this.add.graphics();
-    maskShape.fillStyle(0xffffff);
-    maskShape.fillRect(WIN_X + cx + 24, WIN_Y + bandY, ca.width - 24, bandH);
-    const mask = maskShape.createGeometryMask();
 
     const headlines = getHeadlinesForDay(state.day);
-    const tickerLine = headlines.join('     ◆     ') + '     ◆     ';
+    const newsCardGap = 12;
+    const newsCardW = Math.floor((ca.width - newsCardGap * 2) / 3);
+    const thumbH = 76;
+    const newsCardH = thumbH + 44; // thumb + headline text area
+    const newsStartY = newsY + 22;
 
-    const tickerText = this.add.text(
-      WIN_X + cx + ca.width, // start just off-screen right
-      WIN_Y + bandY + 6,
-      tickerLine,
-      { fontFamily: 'monospace', fontSize: '13px', color: '#d29922' }
-    );
-    tickerText.setMask(mask);
-    this.tickerTexts.push(tickerText);
+    headlines.forEach((headline, i) => {
+      const ncx = cx + i * (newsCardW + newsCardGap);
 
-    // Animate: scroll left across the full width
-    const fullWidth = tickerText.width + ca.width;
-    const durationMs = fullWidth * 10; // ~10ms per pixel ≈ comfortable read speed
+      // Card bg
+      const newsBg = this.add.rectangle(ncx, newsStartY, newsCardW, newsCardH, 0x0d1117).setOrigin(0);
+      newsBg.setStrokeStyle(1, 0x30363d);
+      win.add(newsBg);
 
-    this.tweens.add({
-      targets: tickerText,
-      x: WIN_X + cx - tickerText.width,
-      duration: durationMs,
-      ease: 'Linear',
-      repeat: -1,
-      onRepeat: () => {
-        tickerText.setX(WIN_X + cx + ca.width);
-      },
+      // Procedural thumbnail
+      const thumb = drawThumbnail(this, ncx + 1, newsStartY + 1, newsCardW - 2, thumbH, headline.thumbStyle, theme.accent);
+      win.add(thumb);
+
+      // Headline text
+      win.add(this.add.text(ncx + 8, newsStartY + thumbH + 6, headline.text, {
+        fontFamily: 'monospace', fontSize: '10px', color: '#d29922',
+        wordWrap: { width: newsCardW - 16 },
+        lineSpacing: 2,
+        maxLines: 2,
+      }));
     });
 
-    // ── PLAN YOUR APPROACH BUTTON ─────────────────────────────────────────────
-    const btnY = bandY + bandH + 28;
-    const btnW = 260;
-    const btnH = 40;
-    const btnX = cx + (ca.width - btnW) / 2;
+    // ── Bottom panels: Risk + Agents + Forecast (3 columns) ──────────────────
+    const panelY = newsStartY + newsCardH + 16;
+    const panelGap = 12;
+    const panelW = Math.floor((ca.width - panelGap * 2) / 3);
 
-    const btnBg = this.add.rectangle(WIN_X + btnX, WIN_Y + btnY, btnW, btnH, theme.accent)
-      .setOrigin(0)
-      .setInteractive({ useHandCursor: true });
-
-    const btnLabel = this.add.text(
-      WIN_X + btnX + btnW / 2, WIN_Y + btnY + btnH / 2,
-      'PLAN YOUR APPROACH  →',
-      { fontFamily: 'monospace', fontSize: '14px', color: '#0f1117', fontStyle: 'bold' }
-    ).setOrigin(0.5);
-
-    btnBg.on('pointerover', () => {
-      btnBg.setAlpha(0.85);
-    });
-    btnBg.on('pointerout', () => {
-      btnBg.setAlpha(1);
-    });
-    btnBg.on('pointerdown', () => {
-      this.tweens.killAll();
-      this.scene.start('Planning');
-    });
-
-    // Apply micro-animation effects
-    addButtonFx(this, btnBg);
-
-    // Make sure button label is above bg
-    btnLabel.setDepth(1);
-
-    // ── RISK ASSESSMENT PANEL ────────────────────────────────────────────────
-    const riskY = btnY + btnH + 30;
-
-    win.add(this.add.text(cx, riskY, '── RISK ASSESSMENT ──', {
-      fontFamily: 'monospace', fontSize: '13px', color: '#9da5b0', letterSpacing: 1,
-    }));
-
-    // Determine risk values from difficulty
+    // ── RISK ASSESSMENT (left panel) ─────────────────────────────────────────
     const diff = project.difficulty;
     const barFillPct = diff === 'easy' ? 0.33 : diff === 'medium' ? 0.66 : 1.0;
     const barColor = diff === 'easy' ? 0x3fb950 : diff === 'medium' ? 0xd29922 : 0xf85149;
     const riskLabel = diff === 'easy' ? 'Low Risk' : diff === 'medium' ? 'Moderate Risk' : 'High Risk';
     const riskLabelColor = diff === 'easy' ? '#3fb950' : diff === 'medium' ? '#d29922' : '#f85149';
     const riskTip = diff === 'easy'
-      ? '💡 A good day to experiment with risky strategies.'
+      ? 'A good day to experiment.'
       : diff === 'medium'
-      ? '💡 Balance speed and caution. Watch your budget.'
-      : '💡 Consider Plan Then Build. Every time unit counts.';
+      ? 'Balance speed and caution.'
+      : 'Every time unit counts.';
 
-    const barBarY = riskY + 22;
-    const barTotalW = 240;
-    const barH = 12;
-    // Bar track (background)
-    const barTrack = this.add.rectangle(cx, barBarY, barTotalW, barH, 0x21262d).setOrigin(0);
-    win.add(barTrack);
-    // Bar fill
-    const barFillW = Math.round(barTotalW * barFillPct);
-    if (barFillW > 0) {
-      const barFill = this.add.rectangle(cx, barBarY, barFillW, barH, barColor).setOrigin(0);
-      win.add(barFill);
-    }
-    // Risk label to the right of bar
-    win.add(this.add.text(cx + barTotalW + 12, barBarY, riskLabel, {
-      fontFamily: 'monospace', fontSize: '12px', color: riskLabelColor,
-    }).setOrigin(0, 0));
-    // Tip text
-    win.add(this.add.text(cx, barBarY + barH + 8, riskTip, {
-      fontFamily: 'monospace', fontSize: '12px', color: '#9da5b0', fontStyle: 'italic',
+    const p1x = cx;
+    win.add(this.add.text(p1x, panelY, '⚠️ RISK', {
+      fontFamily: 'monospace', fontSize: '11px', color: '#9da5b0', letterSpacing: 1,
     }));
 
-    // ── AGENT RECOMMENDATION ─────────────────────────────────────────────────
-    const agentRecY = riskY + 50;
+    const barTrackW = panelW - 10;
+    const barH = 10;
+    const barBarY = panelY + 20;
+    win.add(this.add.rectangle(p1x, barBarY, barTrackW, barH, 0x21262d).setOrigin(0));
+    const barFillW = Math.round(barTrackW * barFillPct);
+    if (barFillW > 0) {
+      win.add(this.add.rectangle(p1x, barBarY, barFillW, barH, barColor).setOrigin(0));
+    }
+    win.add(this.add.text(p1x, barBarY + barH + 6, riskLabel, {
+      fontFamily: 'monospace', fontSize: '11px', color: riskLabelColor,
+    }));
+    win.add(this.add.text(p1x, barBarY + barH + 22, riskTip, {
+      fontFamily: 'monospace', fontSize: '10px', color: '#9da5b0', fontStyle: 'italic',
+      wordWrap: { width: panelW - 10 },
+    }));
 
-    win.add(this.add.text(cx, agentRecY, '── RECOMMENDED AGENTS ──', {
-      fontFamily: 'monospace', fontSize: '13px', color: '#9da5b0', letterSpacing: 1,
+    // ── RECOMMENDED AGENTS (center panel) ────────────────────────────────────
+    const p2x = cx + panelW + panelGap;
+    win.add(this.add.text(p2x, panelY, '🤖 AGENTS', {
+      fontFamily: 'monospace', fontSize: '11px', color: '#9da5b0', letterSpacing: 1,
     }));
 
     const agentNames = diff === 'easy'
-      ? '🤖 Turbo  ·  🤖 Parrot'
-      : '🤖 Oracle  ·  🤖 Linter';
+      ? 'Turbo  ·  Parrot'
+      : 'Oracle  ·  Linter';
     const agentTip = diff === 'easy'
-      ? 'Speed matters more than caution.'
+      ? 'Speed over caution.'
       : diff === 'medium'
-      ? 'Reliability over speed today.'
-      : 'You need bulletproof code.';
+      ? 'Reliability over speed.'
+      : 'Bulletproof code.';
 
-    win.add(this.add.text(cx, agentRecY + 20, agentNames, {
-      fontFamily: 'monospace', fontSize: '13px', color: '#e6edf3',
+    win.add(this.add.text(p2x, panelY + 20, agentNames, {
+      fontFamily: 'monospace', fontSize: '12px', color: '#e6edf3',
     }));
-    win.add(this.add.text(cx, agentRecY + 38, agentTip, {
-      fontFamily: 'monospace', fontSize: '12px', color: '#9da5b0', fontStyle: 'italic',
+    win.add(this.add.text(p2x, panelY + 38, agentTip, {
+      fontFamily: 'monospace', fontSize: '10px', color: '#9da5b0', fontStyle: 'italic',
     }));
 
-    // ── EVENT FORECAST ───────────────────────────────────────────────────────
-    const forecastY = agentRecY + 50;
-
-    win.add(this.add.text(cx, forecastY, '── EVENT FORECAST ──', {
-      fontFamily: 'monospace', fontSize: '13px', color: '#9da5b0', letterSpacing: 1,
+    // ── EVENT FORECAST (right panel) ─────────────────────────────────────────
+    const p3x = cx + (panelW + panelGap) * 2;
+    win.add(this.add.text(p3x, panelY, '📡 FORECAST', {
+      fontFamily: 'monospace', fontSize: '11px', color: '#9da5b0', letterSpacing: 1,
     }));
 
     const forecastLine = state.day <= 4
-      ? '📡 Light chatter expected. Focus on building.'
+      ? 'Light chatter. Focus.'
       : state.day <= 9
-      ? '📡 Increased activity. Expect interruptions.'
-      : '📡 Heavy interference. Brace for chaos.';
+      ? 'Increased activity.'
+      : 'Heavy interference.';
+    const forecastDetail = state.day <= 4
+      ? 'Few interruptions expected.'
+      : state.day <= 9
+      ? 'Expect event interrupts.'
+      : 'Brace for chaos.';
 
-    win.add(this.add.text(cx, forecastY + 20, forecastLine, {
-      fontFamily: 'monospace', fontSize: '13px', color: '#9da5b0',
+    win.add(this.add.text(p3x, panelY + 20, forecastLine, {
+      fontFamily: 'monospace', fontSize: '12px', color: '#e6edf3',
     }));
+    win.add(this.add.text(p3x, panelY + 38, forecastDetail, {
+      fontFamily: 'monospace', fontSize: '10px', color: '#9da5b0', fontStyle: 'italic',
+    }));
+
+    // ── PLAN YOUR APPROACH BUTTON ────────────────────────────────────────────
+    const btnW = 280;
+    const btnH = 38;
+    const btnX = cx + (ca.width - btnW) / 2;
+    const btnY = panelY + 68;
+
+    const btnBg = this.add.rectangle(btnX, btnY, btnW, btnH, theme.accent)
+      .setOrigin(0)
+      .setInteractive({ useHandCursor: true });
+    win.add(btnBg);
+
+    const btnLabel = this.add.text(
+      btnX + btnW / 2, btnY + btnH / 2,
+      'PLAN YOUR APPROACH  →',
+      { fontFamily: 'monospace', fontSize: '14px', color: '#0f1117', fontStyle: 'bold' }
+    ).setOrigin(0.5);
+    win.add(btnLabel);
+    btnLabel.setDepth(1);
+
+    btnBg.on('pointerover', () => btnBg.setAlpha(0.85));
+    btnBg.on('pointerout', () => btnBg.setAlpha(1));
+    btnBg.on('pointerdown', () => {
+      this.tweens.killAll();
+      this.scene.start('Planning');
+    });
+
+    addButtonFx(this, btnBg);
   }
 }
