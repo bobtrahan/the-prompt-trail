@@ -5,6 +5,7 @@ import { CLASS_DEFS } from '../data/classes';
 import { Telemetry } from '../systems/Telemetry';
 import type { PlayerClass } from '../systems/GameState';
 import { addButtonFx } from '../ui/ButtonFx';
+import AudioManager from '../systems/AudioManager';
 
 const CLASS_EMOJI: Record<string, string> = {
   techBro: '🤑',
@@ -136,6 +137,12 @@ export class ClassSelectScene extends Phaser.Scene {
 
       // Selection animation (D)
       addButtonFx(this, card);
+      const classVoiceMap: Record<PlayerClass, string> = {
+        techBro: 'class-techbro',
+        indieHacker: 'class-indie',
+        collegeStudent: 'class-student',
+        corporateDev: 'class-corporate',
+      };
       card.on('pointerdown', () => {
         // Tween scale
         this.tweens.add({
@@ -150,6 +157,8 @@ export class ClassSelectScene extends Phaser.Scene {
         this.time.delayedCall(100, () => {
           card.setStrokeStyle(2, accent);
         });
+        // Play class voice clip
+        AudioManager.getInstance().playVoice(classVoiceMap[def.id]);
         // Delay scene start
         this.time.delayedCall(200, () => {
           this.selectClass(def.id);

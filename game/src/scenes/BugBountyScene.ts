@@ -710,6 +710,9 @@ export class BugBountyScene extends Phaser.Scene {
       state.hardwareHp = Math.min(100, state.hardwareHp + 5);
       bonusHp = true;
     }
+    if (this.bugCount >= 15) {
+      AudioManager.getInstance().playVoice('event-bug-bounty');
+    }
 
     // Overlay
     const overlayX = GAME_WIDTH / 2;

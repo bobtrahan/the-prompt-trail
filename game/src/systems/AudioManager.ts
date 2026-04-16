@@ -15,6 +15,14 @@ const SFX_KEYS = [
   'choice-select', 'ui-click', 'bug-squash', 'bug-miss', 'purchase',
   'day-complete', 'rep-gain', 'rep-loss', 'hw-damage', 'boot', 'score-tick',
 ] as const;
+const VOICE_IDS = [
+  'class-techbro', 'class-indie', 'class-student', 'class-corporate',
+  'day-1', 'day-2', 'day-3', 'day-4', 'day-5', 'day-6', 'day-7',
+  'day-8', 'day-9', 'day-10', 'day-11', 'day-12', 'day-13',
+  'event-bankruptcy', 'event-low-hp', 'event-day13', 'event-rate-limit',
+  'event-clash', 'event-bug-bounty',
+  'rank-s', 'rank-ab', 'rank-c', 'rank-df',
+] as const;
 
 class AudioManager {
   private static instance: AudioManager | null = null;
@@ -24,6 +32,7 @@ class AudioManager {
   // Stored as the concrete union so setVolume() is available without re-casting.
   // Phaser's sound.add() returns BaseSound, so we narrow at the assignment site.
   private currentMusic: Phaser.Sound.WebAudioSound | Phaser.Sound.HTML5AudioSound | null = null;
+  private currentVoice: Phaser.Sound.WebAudioSound | Phaser.Sound.HTML5AudioSound | null = null;
 
   private _masterVolume = 1;
   private _musicVolume = 0.7;
@@ -67,6 +76,9 @@ class AudioManager {
     }
     for (const key of SFX_KEYS) {
       scene.load.audio(key, `assets/audio/sfx/${key}.mp3`);
+    }
+    for (const id of VOICE_IDS) {
+      scene.load.audio(`voice-${id}`, `assets/audio/voice/${id}.mp3`);
     }
   }
 
@@ -157,6 +169,61 @@ class AudioManager {
     const rate = 1.0 + (Math.random() * 2 - 1) * rateVariation;
     const vol = this._masterVolume * this._sfxVolume;
     this.game.sound.play(key, { volume: vol, rate });
+  }
+
+  playVoice(clipId: string): void {
+    if (!this.game) return;
+    if (this.isMuted) return;
+
+    const key = `voice-${clipId}`;
+    if (!this.game.cache.audio.has(key)) return;
+
+    // Stop any in-progress voice clip
+    if (this.currentVoice) {
+      this.currentVoice.stop();
+      this.currentVoice.destroy();
+      this.currentVoice = null;
+    }
+
+    const targetMusicVol = this._masterVolume * this._musicVolume;
+    const scene = this.game.scene.scenes.find(s => s.scene.isActive());
+
+    // Duck music to 30%
+    if (this.currentMusic) {
+      if (scene) {
+        scene.tweens.add({
+          targets: this.currentMusic,
+          volume: targetMusicVol * 0.3,
+          duration: 200,
+          ease: 'Linear',
+        });
+      } else {
+        this.currentMusic.setVolume(targetMusicVol * 0.3);
+      }
+    }
+
+    const voice = this.game.sound.add(key, { volume: this._masterVolume }) as
+      Phaser.Sound.WebAudioSound | Phaser.Sound.HTML5AudioSound;
+    voice.play();
+    this.currentVoice = voice;
+
+    // Restore music on clip end
+    voice.once('complete', () => {
+      this.currentVoice = null;
+      if (this.currentMusic) {
+        const activeScene = this.game?.scene.scenes.find(s => s.scene.isActive());
+        if (activeScene) {
+          activeScene.tweens.add({
+            targets: this.currentMusic,
+            volume: targetMusicVol,
+            duration: 500,
+            ease: 'Linear',
+          });
+        } else {
+          this.currentMusic.setVolume(targetMusicVol);
+        }
+      }
+    });
   }
 
   // ── Volume ───────────────────────────────────────────────────

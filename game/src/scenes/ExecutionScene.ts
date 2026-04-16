@@ -114,6 +114,11 @@ export class ExecutionScene extends Phaser.Scene {
   private modelQualityMod: number = 0;
   private traitResults: { agentId: string; trait: string; fired: boolean; description: string }[] = [];
 
+  // Voice narrator state
+  private clashActive = false;
+  private clashVoicedToday = false;
+  private dayFirstEvent = true;
+
   private processConsumables(): void {
     const state = getState();
     if (!state.activeConsumables || state.activeConsumables.length === 0) return;
@@ -429,6 +434,7 @@ export class ExecutionScene extends Phaser.Scene {
     }
     for (const pair of CLASH_PAIRS) {
       if (pair.agents.every(id => activeAgentIds.includes(id))) {
+        this.clashActive = true;
         const sortedKey = [...pair.agents].sort().join('+');
         const originalKey = [...pair.agents].join('+');
         const message = CLASH_MESSAGES[sortedKey] ?? CLASH_MESSAGES[originalKey];
@@ -877,6 +883,7 @@ export class ExecutionScene extends Phaser.Scene {
     this.terminal.addLine(`> Event: ${autoResolved ? 'auto-resolved' : 'chose "' + choice.text + '"'}`);
 
     const state = getState();
+    const resolvedEventId = this.currentEvent?.id;
     const logs = this.eventEngine.applyEffects(choice, state);
     Telemetry.logEvent(this.currentEvent?.id ?? 'auto-resolve', choiceIndex, logs);
     for (const line of logs) {
@@ -886,6 +893,35 @@ export class ExecutionScene extends Phaser.Scene {
     if (this.currentEvent) {
       this.eventEngine.markFired(this.currentEvent.id, state.day);
       this.currentEvent = undefined;
+    }
+
+    // ── Voice narrator triggers (priority order, first match wins) ──
+    {
+      const am = AudioManager.getInstance();
+      let voiced = false;
+      if (!voiced && state.budget <= 0) {
+        am.playVoice('event-bankruptcy');
+        voiced = true;
+      }
+      if (!voiced && state.hardwareHp <= 20) {
+        am.playVoice('event-low-hp');
+        voiced = true;
+      }
+      if (!voiced && state.day === 13 && this.dayFirstEvent) {
+        am.playVoice('event-day13');
+        voiced = true;
+      }
+      if (!voiced && resolvedEventId === 'rate-limited') {
+        am.playVoice('event-rate-limit');
+        voiced = true;
+      }
+      if (!voiced && this.clashActive && !this.clashVoicedToday) {
+        am.playVoice('event-clash');
+        this.clashVoicedToday = true;
+        voiced = true;
+      }
+      void voiced;
+      this.dayFirstEvent = false;
     }
 
     // Sync local timeUnits from state (in case event changed time)

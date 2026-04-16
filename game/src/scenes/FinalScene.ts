@@ -209,6 +209,22 @@ export class FinalScene extends Phaser.Scene {
             AudioManager.getInstance().playSFX('day-complete');
           }
 
+          // Play rank voice 500ms after rank reveal
+          const rankVoiceMap: Record<string, string> = {
+            S: 'rank-s',
+            A: 'rank-ab',
+            B: 'rank-ab',
+            C: 'rank-c',
+            D: 'rank-df',
+            F: 'rank-df',
+          };
+          const voiceClip = rankVoiceMap[this.rank];
+          if (voiceClip) {
+            this.time.delayedCall(500, () => {
+              AudioManager.getInstance().playVoice(voiceClip);
+            });
+          }
+
           // Camera effects for bad grades
           if (['D', 'F'].includes(this.rank)) {
             this.cameras.main.shake(300, 0.008);

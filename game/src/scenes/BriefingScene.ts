@@ -7,6 +7,7 @@ import { Window } from '../ui/Window';
 import { Taskbar } from '../ui/Taskbar';
 import { drawWallpaper } from '../ui/DesktopWallpaper';
 import { addButtonFx } from '../ui/ButtonFx';
+import AudioManager from '../systems/AudioManager';
 
 // ─── 25 Funny AI Headlines ───────────────────────────────────────────────────
 const AI_HEADLINES: string[] = [
@@ -94,6 +95,9 @@ export class BriefingScene extends Phaser.Scene {
 
     // Clear ticker state from previous visits
     this.tickerTexts = [];
+
+    // Play day voice narrator clip
+    AudioManager.getInstance().playVoice(`day-${state.day}`);
 
     // ── Taskbar ──────────────────────────────────────────────────────────────
     this.taskbar = new Taskbar(this, theme.accent);
