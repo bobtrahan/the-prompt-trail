@@ -100,7 +100,7 @@ export class Taskbar {
 
   refresh(): void {
     const s = getState();
-    this.budgetText.setText(`💰 $${s.budget.toLocaleString()}`);
+    this.budgetText.setText(s.playerClass === 'corporateDev' ? '💳 $∞' : `💰 $${s.budget.toLocaleString()}`);
     this.healthText.setText(`🖥️ HW: ${s.hardwareHp}%`);
     this.repText.setText(`⭐ Rep: ${s.reputation}`);
     this.clockText.setText(`Day ${s.day}/13`);

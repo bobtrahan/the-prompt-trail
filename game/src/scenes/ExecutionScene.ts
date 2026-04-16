@@ -627,11 +627,12 @@ export class ExecutionScene extends Phaser.Scene {
       onComplete: () => this.typeHint.destroy(),
     });
 
-    // Calculate final timer: base 45s + agent speed mod + event bonuses
+    // Calculate final timer: base (45s, or 22s for Corporate Dev) + modifiers
     const state = getState();
-    const agentSpeedSeconds = Math.round(BASE_TIMER_SECONDS * this.speedMod);
+    const baseTimer = state.playerClass === 'corporateDev' ? 22 : BASE_TIMER_SECONDS;
+    const agentSpeedSeconds = Math.round(baseTimer * this.speedMod);
     const eventBonus = state.timerBonusSeconds;
-    this.timeSeconds = Math.max(10, BASE_TIMER_SECONDS + agentSpeedSeconds + eventBonus);
+    this.timeSeconds = Math.max(10, baseTimer + agentSpeedSeconds + eventBonus);
     this.maxTimeSeconds = this.timeSeconds;
 
     this.dayTimer = this.time.addEvent({
