@@ -25,7 +25,7 @@ const SCRIPTS = [
   // Day intros
   { id: 'day-1', text: "Day one. Email automation. How hard could it be?" },
   { id: 'day-2', text: "Day two. A Twitter reply bot. What could possibly go wrong?" },
-  { id: 'day-3', text: "Day three. Resume optimization. You're teaching an AI to lie on your behalf." },
+  { id: 'day-3', text: "Day three. Résumé optimization. You're teaching an AI to lie on your behalf." },
   { id: 'day-4', text: "Day four. AI meal planning. The fridge is empty. The algorithm is optimistic." },
   { id: 'day-5', text: "Day five. Smart home dashboard. Your toaster now has an IP address. Congratulations." },
   { id: 'day-6', text: "Day six. Code review agent. It has opinions. You won't like them." },
