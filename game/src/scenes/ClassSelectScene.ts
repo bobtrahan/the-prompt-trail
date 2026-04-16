@@ -81,13 +81,13 @@ export class ClassSelectScene extends Phaser.Scene {
         .setAlpha(0.06)
         .setDepth(2);
 
-      // Emoji — vertically centered in header band (nudge up to compensate for emoji descent)
-      this.add.text(x, y - halfH + 36, CLASS_EMOJI[def.id] ?? '💻', {
+      // Emoji — vertically centered in header band 
+      this.add.text(x, y - halfH + 44, CLASS_EMOJI[def.id] ?? '💻', {
         fontSize: '40px',
       }).setOrigin(0.5).setDepth(2);
 
       // Class name — below header with breathing room
-      const nameGap = 30; // gap between header bottom (80) and class name
+      const nameGap = 40; // gap between header bottom (80) and class name
       this.add.text(x, y - halfH + 80 + nameGap, def.name, {
         fontFamily: 'monospace',
         fontSize: '22px',
@@ -105,19 +105,19 @@ export class ClassSelectScene extends Phaser.Scene {
       }).setOrigin(0.5, 0).setDepth(2);
 
       // Divider line — separates bio from difficulty + stats
-      this.add.rectangle(x, y - halfH + 210, cardWidth - 40, 1, COLORS.textDim)
+      this.add.rectangle(x, y - halfH + 220, cardWidth - 40, 1, COLORS.textDim)
         .setAlpha(0.2)
         .setDepth(2);
 
       // Difficulty badge — below divider
-      this.add.text(x, y - halfH + 228, DIFFICULTY[def.id], {
+      this.add.text(x, y - halfH + 242, DIFFICULTY[def.id], {
         fontFamily: 'monospace',
-        fontSize: '14px',
+        fontSize: '16px',
         color: accentHex,
       }).setOrigin(0.5).setDepth(2);
 
       // Stats
-      const statsY = y - halfH + 258;
+      const statsY = y - halfH + 276;
       const stats = [
         `Budget: $${def.startingBudget.toLocaleString()}`,
         `Hardware: ${def.hardwareHp} HP`,
