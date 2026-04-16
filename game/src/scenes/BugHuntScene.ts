@@ -326,6 +326,7 @@ export class BugHuntScene extends Phaser.Scene {
 
     // ── Input (WASD/arrows aim, space fires — Oregon Trail style) ─────────
     const kb = this.input.keyboard!;
+    kb.removeAllKeys(true); // clean slate from previous scene
     this.keyUp    = kb.addKey(Phaser.Input.Keyboard.KeyCodes.UP);
     this.keyDown  = kb.addKey(Phaser.Input.Keyboard.KeyCodes.DOWN);
     this.keyLeft  = kb.addKey(Phaser.Input.Keyboard.KeyCodes.LEFT);
@@ -336,9 +337,7 @@ export class BugHuntScene extends Phaser.Scene {
     this.keyD = kb.addKey(Phaser.Input.Keyboard.KeyCodes.D);
     this.keySpace = kb.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
 
-    this.keySpace.on('down', this.fireBullet, this);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
-      this.keySpace.off('down', this.fireBullet, this);
       this.destroyAllBullets();
       this.destroyAllBugs();
       AudioManager.getInstance().playMusic('night');
@@ -1082,6 +1081,11 @@ export class BugHuntScene extends Phaser.Scene {
     }
     this.aimAngle = Math.atan2(this.aimDirY, this.aimDirX);
 
+    // Fire on space (poll-based, not event-based)
+    if (Phaser.Input.Keyboard.JustDown(this.keySpace)) {
+      this.fireBullet();
+    }
+
     this.updateBullets(dt);
     this.updateBugs(time, dt);
 
@@ -1097,8 +1101,22 @@ export class BugHuntScene extends Phaser.Scene {
       if (!bug.alive) continue;
       if (bug.type === 'heisen' && bug.invisible) continue;
 
+      const combinedR = bug.hitRadius + BULLET_RADIUS;
+
+      // Point distance check
       const dist = Math.hypot(bullet.x - bug.x, bullet.y - bug.y);
-      if (dist < bug.hitRadius + BULLET_RADIUS) {
+      if (dist < combinedR) {
+        this.hitBug(bug);
+        return true;
+      }
+
+      // Sweep check — test midpoint of bullet travel this frame to prevent tunneling
+      const prevX = bullet.x - bullet.dx * BULLET_SPEED * (1 / 60);
+      const prevY = bullet.y - bullet.dy * BULLET_SPEED * (1 / 60);
+      const midX = (prevX + bullet.x) / 2;
+      const midY = (prevY + bullet.y) / 2;
+      const midDist = Math.hypot(midX - bug.x, midY - bug.y);
+      if (midDist < combinedR) {
         this.hitBug(bug);
         return true;
       }
