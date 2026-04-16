@@ -1035,16 +1035,16 @@ export class BugHuntScene extends Phaser.Scene {
     let newX = this.playerX + dx * PLAYER_SPEED * dt;
     let newY = this.playerY + dy * PLAYER_SPEED * dt;
 
-    // Constrain to arena bounds
-    newX = Phaser.Math.Clamp(newX, this.arenaX + PLAYER_HW, this.arenaX + this.arenaW - PLAYER_HW);
-    newY = Phaser.Math.Clamp(newY, this.arenaY + PLAYER_HH, this.arenaY + this.arenaH - PLAYER_HH);
-
-    // Code block AABB collision resolution
+    // Code block AABB collision resolution FIRST (before arena clamp)
     for (const block of this.codeBlocks) {
       const r = this.resolveAABB(newX, newY, block);
       newX = r.x;
       newY = r.y;
     }
+
+    // Then constrain to arena bounds
+    newX = Phaser.Math.Clamp(newX, this.arenaX + PLAYER_HW, this.arenaX + this.arenaW - PLAYER_HW);
+    newY = Phaser.Math.Clamp(newY, this.arenaY + PLAYER_HH, this.arenaY + this.arenaH - PLAYER_HH);
 
     this.playerX = newX;
     this.playerY = newY;
