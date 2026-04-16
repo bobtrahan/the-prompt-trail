@@ -97,6 +97,8 @@ class AudioManager {
       volume: 0,
     }) as Phaser.Sound.WebAudioSound | Phaser.Sound.HTML5AudioSound;
 
+    // Mute the sound object before play() to prevent a 1-frame audio blip
+    if (this.isMuted) incoming.setMute(true);
     incoming.play();
 
     const targetVol = this.isMuted ? 0 : this._masterVolume * this._musicVolume;
