@@ -189,6 +189,13 @@ export class BugHuntScene extends Phaser.Scene {
   private escapedBugs = 0;
   private lastSpawn = 0;
 
+  // Scoring + combo
+  private shotsHit = 0;
+  private lastCatchTime = 0;
+  private comboCount = 0;
+  private maxCombo = 0;
+  private comboText!: Phaser.GameObjects.Text;
+
   constructor() {
     super({ key: 'BugHunt' });
   }
@@ -208,6 +215,10 @@ export class BugHuntScene extends Phaser.Scene {
     this.bugs = [];
     this.escapedBugs = 0;
     this.lastSpawn = 0;
+    this.shotsHit = 0;
+    this.lastCatchTime = 0;
+    this.comboCount = 0;
+    this.maxCombo = 0;
 
     AudioManager.getInstance().playMusic('bugbounty');
 
@@ -266,6 +277,12 @@ export class BugHuntScene extends Phaser.Scene {
 
     // Faint grid lines
     this.drawGrid();
+
+    // ── Combo text ───────────────────────────────────────────────────────────
+    this.comboText = this.add.text(
+      this.arenaX + 8, this.arenaY + 8, '',
+      { fontFamily: 'monospace', fontSize: '24px', color: '#ffff00', fontStyle: 'bold' }
+    ).setOrigin(0, 0).setDepth(24).setAlpha(0);
 
     // ── Code block obstacles ─────────────────────────────────────────────────
     this.placeCodeBlocks();
@@ -549,6 +566,11 @@ export class BugHuntScene extends Phaser.Scene {
 
       if (this.hitCodeBlock(bullet)) {
         this.spawnSpark(bullet.x, bullet.y);
+        this.destroyBullet(bullet);
+        continue;
+      }
+
+      if (this.checkBulletHitBug(bullet)) {
         this.destroyBullet(bullet);
         continue;
       }
@@ -1068,6 +1090,132 @@ export class BugHuntScene extends Phaser.Scene {
     }
   }
 
+  // ── Hit detection ─────────────────────────────────────────────────────────
+
+  private checkBulletHitBug(bullet: Bullet): boolean {
+    for (const bug of this.bugs) {
+      if (!bug.alive) continue;
+      if (bug.type === 'heisen' && bug.invisible) continue;
+
+      const dist = Math.hypot(bullet.x - bug.x, bullet.y - bug.y);
+      if (dist < bug.hitRadius + BULLET_RADIUS) {
+        this.hitBug(bug);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private hitBug(bug: HuntBug): void {
+    this.shotsHit++;
+    AudioManager.getInstance().playSFX('key-correct');
+
+    if (bug.type === 'memleak' && !bug.cracked) {
+      bug.cracked = true;
+      // Flicker the chip background to signal damage
+      this.tweens.add({
+        targets: bug.bgGraphics,
+        alpha: { from: 0.5, to: 1.0 },
+        duration: 80,
+        yoyo: true,
+        repeat: 6,
+      });
+      return;
+    }
+
+    this.killBug(bug);
+  }
+
+  private killBug(bug: HuntBug): void {
+    bug.alive = false;
+    if (bug.despawnFlashTimer) {
+      bug.despawnFlashTimer.destroy();
+      bug.despawnFlashTimer = null;
+    }
+
+    // Combo tracking
+    const now = this.time.now;
+    if (now - this.lastCatchTime < 2000) {
+      this.comboCount++;
+    } else {
+      if (this.comboCount >= 2) {
+        this.tweens.add({ targets: this.comboText, alpha: 0, duration: 300 });
+      }
+      this.comboCount = 1;
+    }
+    this.lastCatchTime = now;
+    if (this.comboCount > this.maxCombo) this.maxCombo = this.comboCount;
+
+    const comboMultiplier = 1 + (this.comboCount - 1) * 0.25;
+
+    // Camera shake (stronger for heisen + white flash)
+    if (bug.type === 'heisen') {
+      this.cameras.main.shake(120, 0.008);
+      const whiteFlash = this.add.rectangle(
+        this.arenaX, this.arenaY, this.arenaW, this.arenaH, 0xffffff, 0.3
+      ).setOrigin(0).setDepth(25);
+      this.tweens.add({
+        targets: whiteFlash, alpha: 0, duration: 50,
+        onComplete: () => whiteFlash.destroy(),
+      });
+    } else {
+      const shakeIntensity = 0.004 * Math.min(2, 1 + this.comboCount * 0.1);
+      this.cameras.main.shake(80, shakeIntensity);
+    }
+
+    // 6-particle color burst
+    const pColor = BUG_DEFS[bug.type].color;
+    for (let i = 0; i < 6; i++) {
+      const p = this.add.circle(bug.x, bug.y, 4, pColor).setDepth(25);
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 50 + Math.random() * 100;
+      this.tweens.add({
+        targets: p,
+        x: p.x + Math.cos(angle) * speed,
+        y: p.y + Math.sin(angle) * speed,
+        alpha: 0, duration: 400,
+        onComplete: () => p.destroy(),
+      });
+    }
+
+    // Scoring
+    const def = BUG_DEFS[bug.type];
+    let reward: number;
+    if (bug.type === 'memleak') {
+      reward = Math.floor((10 + bug.growScale * 10) * comboMultiplier);
+    } else {
+      reward = Math.floor(def.reward * comboMultiplier);
+    }
+
+    this.totalEarned += reward;
+    this.bugCount++;
+    this.statsText.setText(this.statsStr());
+
+    // Combo UI
+    if (this.comboCount >= 2) {
+      this.comboText.setText(`COMBO ×${this.comboCount}`).setAlpha(1);
+      this.tweens.add({ targets: this.comboText, scaleX: 1.2, scaleY: 1.2, duration: 100, yoyo: true });
+    }
+
+    // Floating reward text
+    const rewardStr = this.comboCount >= 2 ? `+$${reward} ×${this.comboCount}` : `+$${reward}`;
+    const txt = this.add.text(bug.x, bug.y - 10, rewardStr, {
+      fontFamily: 'monospace', fontSize: '14px', color: '#ffd700',
+    }).setDepth(30);
+    this.tweens.add({
+      targets: txt, y: txt.y - 30, alpha: 0, duration: 600,
+      ease: 'Quad.easeOut', onComplete: () => txt.destroy(),
+    });
+
+    // Bug death animation: scale 2x + spin + fade
+    this.tweens.add({
+      targets: bug.container,
+      scaleX: 2, scaleY: 2, angle: 360, alpha: 0,
+      duration: 250, ease: 'Quad.easeOut',
+      onComplete: () => bug.container.destroy(),
+    });
+  }
+
   // ── End game ──────────────────────────────────────────────────────────────
 
   private endGame(): void {
@@ -1082,12 +1230,24 @@ export class BugHuntScene extends Phaser.Scene {
 
     const earned1_5x = Math.floor(this.totalEarned * 1.5);
     state.budget += earned1_5x;
+    state.totalBugsSquashed += this.bugCount;
     if (returnScene === 'Night') {
       state.bountyPlayedTonight = true;
     }
-    Telemetry.patchBugBounty(this.totalEarned, this.bugCount, 'oldschool', this.shotsFired, 0);
 
-    // End overlay — same structure as BugBountyScene
+    let bonusHp = false;
+    if (this.bugCount >= 10) {
+      state.hardwareHp = Math.min(100, state.hardwareHp + 5);
+      bonusHp = true;
+    }
+
+    Telemetry.patchBugBounty(this.totalEarned, this.bugCount, 'oldschool', this.shotsFired, this.shotsHit);
+
+    const accuracy = this.shotsFired > 0
+      ? Math.round((this.shotsHit / this.shotsFired) * 100)
+      : 0;
+
+    // End overlay
     const overlayX = GAME_WIDTH / 2;
     const overlayY = GAME_HEIGHT / 2;
 
@@ -1096,10 +1256,19 @@ export class BugHuntScene extends Phaser.Scene {
       { text: "Time's up!", color: '#58a6ff', size: '26px' },
       { text: `Bugs squashed: ${this.bugCount}`, color: '#e6edf3', size: '16px' },
       { text: `Earned: $${this.totalEarned}`, color: '#e6edf3', size: '16px' },
-      { text: `Shots fired: ${this.shotsFired}`, color: '#9da5b0', size: '16px' },
       { text: 'Old School Bonus: ×1.5', color: '#ffd700', size: '16px' },
       { text: `Total: $${earned1_5x}`, color: '#3fb950', size: '18px' },
+      { text: `Shots fired: ${this.shotsFired} | Accuracy: ${accuracy}%`, color: '#9da5b0', size: '14px' },
     ];
+    if (this.escapedBugs > 0) {
+      lines.push({ text: `Escaped: ${this.escapedBugs} (−$${this.escapedBugs * 5})`, color: '#f85149', size: '14px' });
+    }
+    if (bonusHp) {
+      lines.push({ text: '+5 HP hardware repair bonus', color: '#3fb950', size: '16px' });
+    }
+    if (this.maxCombo >= 2) {
+      lines.push({ text: `Best combo: ×${this.maxCombo}`, color: '#3fb950', size: '16px' });
+    }
 
     const overlayH = 120 + lines.length * 34;
     this.add.rectangle(overlayX, overlayY, WIN_W - 40, overlayH, 0x0f1117, 0.95)
