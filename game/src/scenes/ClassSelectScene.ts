@@ -183,7 +183,8 @@ export class ClassSelectScene extends Phaser.Scene {
     });
 
     // Continue button — hidden until a class is selected
-    this.continueBtn = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 30, '[ Continue → ]', {
+    // Center between bottom of cards (y=570) and taskbar (y=688)
+    this.continueBtn = this.add.text(GAME_WIDTH / 2, 629, '[ Continue → ]', {
       fontFamily: 'monospace',
       fontSize: '16px',
       color: '#e6edf3',
