@@ -18,6 +18,8 @@ import { AgentSystem } from '../systems/AgentSystem';
 import AudioManager from '../systems/AudioManager';
 import type { EventDef, EventChoice, EventEffect } from '../data/events';
 import { drawWallpaper } from '../ui/DesktopWallpaper';
+import { AGENT_MESSAGES, EVENT_REACTIONS, SYNERGY_MESSAGES, CLASH_MESSAGES, CONSUMABLE_REACTIONS } from '../data/agentMessages';
+import { SYNERGY_PAIRS, CLASH_PAIRS } from '../data/agents';
 
 function formatEffectHint(effects: EventEffect[]): string {
   const formatSigned = (value: number): string => `${value >= 0 ? '+' : '−'}${Math.abs(value)}`;
@@ -47,6 +49,13 @@ function formatEffectHint(effects: EventEffect[]): string {
 
 
 
+interface AgentPanelState {
+  id: string;
+  statusText: Phaser.GameObjects.Text;
+  nextMessageAt: number;
+  rowBg?: Phaser.GameObjects.Rectangle;
+}
+
 export class ExecutionScene extends Phaser.Scene {
   private taskbar!: Taskbar;
   private terminalWindow!: Window;
@@ -55,6 +64,7 @@ export class ExecutionScene extends Phaser.Scene {
   private agentWindow!: Window;
   private resourceWindow!: Window;
   private typoForgiveness = 0;
+  private agentPanelStates: AgentPanelState[] = [];
 
   // Progress
   private progressBar!: Phaser.GameObjects.Rectangle;
@@ -252,6 +262,7 @@ export class ExecutionScene extends Phaser.Scene {
     this.progress = 0;
     this.timeUnits = state.timeUnitsRemaining;
     this.startedTyping = false;
+    this.agentPanelStates = [];
 
     // Initialise systems
     this.eventEngine = new EventEngine(state);
@@ -341,17 +352,27 @@ export class ExecutionScene extends Phaser.Scene {
       );
       this.agentWindow.add(label);
 
+      const idleMessages = AGENT_MESSAGES[agent.id]?.idle ?? ['⚡ Working...'];
+      const initialMsg = idleMessages[Math.floor(Math.random() * idleMessages.length)];
       const status = this.add.text(
         852 + aArea.x + 140, rowBaseY,
-        '⚡ Working...',
+        initialMsg,
         { fontFamily: 'monospace', fontSize: '12px', color: '#39d353' }
       );
       this.agentWindow.add(status);
 
-      let dots = 0;
-      this.time.addEvent({
-        delay: 600 + i * 200, loop: true,
-        callback: () => { dots = (dots + 1) % 4; status.setText('⚡ Working' + '.'.repeat(dots)); },
+      const rowBg = this.add.rectangle(
+        852 + aArea.x, rowBaseY - 4,
+        aArea.width, 44,
+        theme.accent
+      ).setOrigin(0).setAlpha(0);
+      this.agentWindow.add(rowBg);
+
+      this.agentPanelStates.push({
+        id: agent.id,
+        statusText: status,
+        nextMessageAt: this.time.now + i * 1500 + 2000 + Math.random() * 2000,
+        rowBg,
       });
 
       // Speed bar: 5 × 8×8 rectangles, 2px gap
@@ -386,6 +407,41 @@ export class ExecutionScene extends Phaser.Scene {
         { fontFamily: 'monospace', fontSize: '11px', color: '#9da5b0', fontStyle: 'italic' }
       );
       this.agentWindow.add(slotHint);
+    }
+
+    // ── Synergy / clash announcements ──
+    const holdUntil = this.time.now + 4000;
+    for (const pair of SYNERGY_PAIRS) {
+      if (pair.agents.every(id => activeAgentIds.includes(id))) {
+        const sortedKey = [...pair.agents].sort().join('+');
+        const originalKey = [...pair.agents].join('+');
+        const message = SYNERGY_MESSAGES[sortedKey] ?? SYNERGY_MESSAGES[originalKey];
+        if (message) {
+          for (const agentId of pair.agents) {
+            const agentState = this.agentPanelStates.find(a => a.id === agentId);
+            if (agentState) {
+              agentState.statusText.setColor('#3fb950').setText(message);
+              agentState.nextMessageAt = holdUntil;
+            }
+          }
+        }
+      }
+    }
+    for (const pair of CLASH_PAIRS) {
+      if (pair.agents.every(id => activeAgentIds.includes(id))) {
+        const sortedKey = [...pair.agents].sort().join('+');
+        const originalKey = [...pair.agents].join('+');
+        const message = CLASH_MESSAGES[sortedKey] ?? CLASH_MESSAGES[originalKey];
+        if (message) {
+          for (const agentId of pair.agents) {
+            const agentState = this.agentPanelStates.find(a => a.id === agentId);
+            if (agentState) {
+              agentState.statusText.setColor('#f85149').setText(message);
+              agentState.nextMessageAt = holdUntil;
+            }
+          }
+        }
+      }
     }
 
     // ── Resource Panel ──
@@ -493,6 +549,30 @@ export class ExecutionScene extends Phaser.Scene {
     
     // Show consumable notifications, then show typing hint
     this.showConsumableNotifications().then(() => {
+      // Consumable reactions — show on random agents
+      const consumableKeyMap: Record<string, string> = {
+        'con-coffee': 'coffee',
+        'con-energy': 'energyDrink',
+        'con-backup': 'cloudBackup',
+        'con-api': 'apiCredits',
+        'con-duck': 'rubberDuck',
+      };
+      const consumablesUsed = getState().consumablesUsedToday ?? [];
+      let consumableDelay = 0;
+      for (const consumableId of consumablesUsed) {
+        const key = consumableKeyMap[consumableId];
+        if (!key || !CONSUMABLE_REACTIONS[key] || this.agentPanelStates.length === 0) continue;
+        const msgs = CONSUMABLE_REACTIONS[key];
+        const msg = msgs[Math.floor(Math.random() * msgs.length)];
+        const agentState = this.agentPanelStates[Math.floor(Math.random() * this.agentPanelStates.length)];
+        this.time.delayedCall(consumableDelay, () => {
+          agentState.statusText.setAlpha(0).setText(msg).setColor('#39d353');
+          this.tweens.add({ targets: agentState.statusText, alpha: 1, duration: 200, ease: 'Power2' });
+          agentState.nextMessageAt = this.time.now + 3000;
+        });
+        consumableDelay += 500;
+      }
+
       // After notifications complete, show the "START TYPING" hint
       this.typeHint = this.add.text(
         16 + tArea.x + tArea.width / 2,
@@ -814,6 +894,25 @@ export class ExecutionScene extends Phaser.Scene {
     // ── Parse logs for impact feedback ──
     this.applyImpactFeedback(logs, state);
 
+    // ── Event reaction on a random agent ──
+    if (this.agentPanelStates.length > 0) {
+      const randomAgent = this.agentPanelStates[Math.floor(Math.random() * this.agentPanelStates.length)];
+      const reaction = EVENT_REACTIONS[Math.floor(Math.random() * EVENT_REACTIONS.length)];
+      randomAgent.statusText.setAlpha(0).setText(reaction).setColor('#39d353');
+      this.tweens.add({ targets: randomAgent.statusText, alpha: 1, duration: 200, ease: 'Power2' });
+      randomAgent.nextMessageAt = this.time.now + 3000;
+      // Trait trigger flash on the agent row
+      if (randomAgent.rowBg) {
+        this.tweens.add({
+          targets: randomAgent.rowBg,
+          alpha: { from: 0, to: 0.3 },
+          duration: 200,
+          yoyo: true,
+          ease: 'Power2',
+        });
+      }
+    }
+
     // Close modal
     if (this.modalGroup) {
       this.tweens.add({
@@ -1102,6 +1201,18 @@ export class ExecutionScene extends Phaser.Scene {
   }
 
   update(): void {
+    // Idle message rotation for agent panel
+    const time = this.time.now;
+    for (const agentState of this.agentPanelStates) {
+      if (time > agentState.nextMessageAt) {
+        const messages = AGENT_MESSAGES[agentState.id]?.idle ?? ['⚡ Working...'];
+        const msg = messages[Math.floor(Math.random() * messages.length)];
+        agentState.statusText.setAlpha(0).setText(msg).setColor('#39d353');
+        this.tweens.add({ targets: agentState.statusText, alpha: 1, duration: 200, ease: 'Power2' });
+        agentState.nextMessageAt = time + 4000 + Math.random() * 2000;
+      }
+    }
+
     const state = getState();
     const hw = state.hardwareHp;
     if (this.hwBar && hw !== this.lastHw) {
