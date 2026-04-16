@@ -1053,8 +1053,10 @@ export class BugHuntScene extends Phaser.Scene {
           // Check bullet proximity — go invisible if any bullet within 40px
           // Short 400ms dodge window so players can actually land hits
           if (!bug.invisible) {
+            const heisR = bug.hitRadius + BULLET_RADIUS;
             for (const bullet of this.bullets) {
-              if (Math.hypot(bullet.x - bug.x, bullet.y - bug.y) < 40) {
+              const d = Math.hypot(bullet.x - bug.x, bullet.y - bug.y);
+              if (d < 40 && d >= heisR) {
                 bug.invisible      = true;
                 bug.invisibleUntil = time + 400;
                 bug.container.setAlpha(0.15);
@@ -1210,7 +1212,8 @@ export class BugHuntScene extends Phaser.Scene {
       if (!bug.alive) continue;
       if (bug.type === 'heisen' && bug.invisible) continue;
 
-      const combinedR = bug.hitRadius + BULLET_RADIUS;
+      const effectiveR = bug.type === 'memleak' ? bug.hitRadius * bug.growScale : bug.hitRadius;
+      const combinedR = effectiveR + BULLET_RADIUS;
 
       // Point distance check at current position
       const dist = Math.hypot(bullet.x - bug.x, bullet.y - bug.y);
