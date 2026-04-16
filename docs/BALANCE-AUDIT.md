@@ -1,8 +1,8 @@
 # Balance Audit — The Prompt Trail
 
-_Generated Apr 16, 2026. Pre-tuning assessment._
+_Generated Apr 16, 2026. Design decisions locked._
 
-## How You Gain Rep (the only thing that matters)
+## How You Gain Rep
 
 Rep is the single scoring axis. Final score = sum of day scores × class multiplier.
 
@@ -11,110 +11,104 @@ Rep is the single scoring axis. Final score = sum of day scores × class multipl
 baseRep = (progress / 100) × maxRepForDay
 accuracyBonus = accuracy × 0.3 × baseRep
 strategyBonus = baseRep × strategyMod
-dayTotal = baseRep + accuracyBonus + strategyBonus + overtimeBonus
+modelBonus = baseRep × modelQualityMod        ← NEW: actually applied now
+dayTotal = baseRep + accuracyBonus + strategyBonus + modelBonus + overtimeBonus
 ```
 
-### Progress
-- Now driven purely by **prompts completed / total** (power curve)
-- Completing all prompts = 100% progress, always
-- Timer (45s) runs independently — if it expires before all prompts, day ends with partial progress
-- **Problem**: A decent typist will always complete all prompts within 45s, making progress almost always 100%. The timer is rarely a real threat on early days (4 prompts).
-
-### What Factors Are Supposed to Matter But DON'T
-
-| Factor | Status | Why It's Broken |
-|--------|--------|----------------|
-| **Speed modifiers** (events, agents, models) | ❌ NO-OP | `speedModifier` was used in the old progress formula. Now progress = prompts/total. Speed changes nothing. 24 event effects reference speed. |
-| **Model quality** | ❌ NO-OP | `modelQualityMod` was used in old progress formula. Now cosmetic only — displays in terminal but doesn't affect scoring. |
-| **Time unit bonuses** (strategy `timeBonus`, events) | ❌ NO-OP | `timeUnitsRemaining` is set but progress is prompt-driven. Extra time units do nothing. Strategy `planThenBuild` gives +2 time units that mean nothing. |
-| **agentSpeed effects** | ❌ NO-OP | Stores a flag but nothing reads it. |
-| **modelSwitch effects** | ⚠️ ADVISORY ONLY | Sets a flag but no scene code reads it to actually switch the model. |
-
-### What Actually Works
-
-| Factor | Status | Impact |
-|--------|--------|--------|
-| **Strategy choice** | ✅ Works | planThenBuild +15% rep, justStart 0%, oneShot -10%, vibeCode random(-20% to +40%). But the *cost* of strategies is almost irrelevant (see economy below). |
-| **Typing accuracy** | ✅ Works | Up to +30% bonus rep based on accuracy. Real impact. |
-| **Event budget/rep/hardware effects** | ✅ Works | Direct budget/rep/hardware changes apply correctly. |
-| **Overtime prompts** | ✅ Works | +3 rep per overtime prompt after completing all required prompts. Minor. |
-| **Bug Bounty earnings** | ✅ Works | Adds budget (not rep). |
-
-## Economy Assessment
-
-### Starting Budgets vs Costs
-| Class | Budget | Daily Cost (standard model + planThenBuild) | Days Before Broke |
-|-------|--------|----------------------------------------------|-------------------|
-| Tech Bro | $10,000 | $90/day | 111 days (never) |
-| Corporate Dev | $99,999 | $0 (costs skipped!) | ∞ |
-| Indie Hacker | $2,000 | $90/day | 22 days (never) |
-| College Student | $500 | $0 (free model) + $60 strategy = $60/day | 8 days |
-
-**Verdict**: Tech Bro and Corporate Dev have effectively infinite money. Indie Hacker is comfortable. Only College Student faces real budget pressure. The economy is meaningless for 3 of 4 classes.
-
-### Model Tiers — Why Bother?
-| Model | Daily Cost | Quality Mod | Actual Effect |
-|-------|-----------|-------------|---------------|
-| Free | $0 | -15% | NO-OP (cosmetic) |
-| Sketchy | $5 | -10% | NO-OP |
-| Local | $0 | -5% | NO-OP |
-| Open Source | $10 | 0% | NO-OP |
-| Standard | $30 | +5% | NO-OP |
-| Frontier | $100 | +15% | NO-OP |
-
-**Verdict**: Model selection is completely meaningless. It costs money but provides zero benefit. Optimal play = always use Free model.
-
-### Token Market Items
-Need separate audit — many items likely reference defunct systems (speed boosts, etc.)
-
-## Event Audit Summary
-
-55 events with choices. Effect types used:
-- **budget**: 67 references — WORKS
-- **reputation**: 53 references — WORKS
-- **hardware**: referenced via hardwareHp — WORKS
-- **speed/agentSpeed**: 24+ references — ALL NO-OPS
-- **time**: referenced via timeUnitsRemaining — NO-OP
-- **modelSwitch**: 9 references — ADVISORY ONLY (no code reads the flags)
-
-**Estimated**: ~30-40% of event choice consequences are no-ops that do nothing. Players picking between "lose $50" and "+10% speed" are picking between a real consequence and nothing.
-
-## Recommendations (Priority Order)
-
-### 1. Make speed matter again
-Speed should affect the 45-second timer or typing difficulty. Options:
-- **Speed modifies timer duration**: base 45s ± speed modifier (e.g. +10% speed = 49.5s)
-- **Speed modifies typo forgiveness**: faster = more forgiving input
-- **Speed modifies prompt count**: fewer prompts needed to hit 100%
-
-### 2. Make model quality matter
-Options:
-- **Model quality → accuracy bonus multiplier**: higher quality model = bigger accuracy bonus
-- **Model quality → event probability**: better models trigger fewer negative events
-- **Model quality → direct rep multiplier**: simplest — model quality directly scales day rep
-
-### 3. Tighten the economy
-- Cut starting budgets significantly (Tech Bro: $3000, Indie: $1000)
-- Increase model/strategy costs
-- Corporate Dev should still pay *something* (maybe 50% discount instead of free)
-- Make going broke have real consequences beyond model downgrade
-
-### 4. Audit all 55 events individually
-Categorize each event choice as:
-- **Real impact**: budget/rep/hardware effects that work
-- **No-op**: speed/time/agentSpeed effects that do nothing
-- **Mixed**: some choices real, some no-op
-
-Fix no-op choices by replacing defunct effects with working ones.
-
-### 5. Audit Token Market items
-Same analysis — which items actually do something vs reference broken systems.
-
-### 6. Strategy picker
-`planThenBuild` is strictly dominant — +15% rep, +2 time (no-op), costs $60 which is irrelevant. No reason to ever pick anything else except vibeCode for gambling.
+Progress = prompts completed / total (power curve). Timer = 45s base ± modifiers.
 
 ---
 
-## Next Steps
+## Design Decisions (Locked)
 
-Full event-by-event audit needed to produce the sorted impact list. This doc is the framework.
+### 1. Model Quality → Direct Rep Multiplier
+Model quality mod applies directly to day rep calculation. Free = -15%, Frontier = +15%. Uses existing `modelQualityMod` values in `EconomySystem.getModelQualityMod()`.
+
+**Implementation**: Add `modelBonus = baseRep × modelQualityMod` to `ScoringSystem.calcDayReputation()`. Pass model tier in.
+
+### 2. Speed → Timer Duration
+Speed modifiers adjust the 45-second execution timer. +10% speed = +4.5s. Negative speed = less time. This makes every speed event effect meaningful.
+
+**Implementation**: 
+- Base timer = 45s
+- Collect speed modifiers from: agent speed bonuses, event effects, model/strategy (if any)
+- Final timer = `Math.round(45 × (1 + totalSpeedMod))`
+- Apply in `ExecutionScene.onFirstKeystroke()` when starting the day timer
+
+### 3. Time Units → Seconds (Direct Replacement)
+Kill the `timeUnitsRemaining` system. Replace all references with direct timer seconds:
+- Strategy `planThenBuild`: +6 seconds
+- Strategy `oneShot`: -6 seconds
+- Strategy `vibeCode`: +3 seconds
+- Strategy `justStart`: +0 seconds
+- Event `time` effects: convert to equivalent seconds (1 time unit ≈ 3 seconds)
+
+### 4. Economy — Tightened
+
+| Class | Budget | Model | Timer | Costs | Feel |
+|-------|--------|-------|-------|-------|------|
+| Tech Bro | $2,000 | standard | 45s | Normal | Comfortable but not infinite |
+| Indie Hacker | $800 | standard | 45s | Normal | Tight, real choices |
+| College Student | $200 | free | 45s | Normal | Desperate, survival mode |
+| Corporate Dev | $∞ (display "∞") | standard | **22s (half!)** | $0 | Time is the enemy, money is irrelevant |
+
+**Corporate Dev design**: Money is infinite and displayed as such — no budget stress. But timer is halved (22s base). Corporate Dev's constraint is pure time pressure. Events that cost money are meaningless to them; events that cost time are devastating. This creates a unique playstyle where you're always racing the clock while having all the resources in the world.
+
+**Implementation**:
+- Corporate Dev budget display: "∞" in taskbar, skip cost deductions (already done)
+- Corporate Dev starting budget: set high enough to never run out (keep $99,999)
+- Corporate Dev base timer: 22s instead of 45s
+- Tech Bro: $2,000 (was $10,000)
+- Indie Hacker: $800 (was $2,000)  
+- College Student: $200 (was $500)
+
+### 5. Strategy Table (Final)
+
+| Strategy | Rep Mod | Timer Mod | Cost | Identity |
+|----------|---------|-----------|------|----------|
+| planThenBuild | +15% | +6s | $60 | Safe, expensive, more time |
+| justStart | +0% | +0s | $30 | Middle ground |
+| oneShot | -10% | -6s | $10 | Risky, cheap, less time |
+| vibeCode | -20% to +40% | +3s | $45 | Gambling with slight time bonus |
+
+### 6. Events — Every Decision Must Have Impact
+
+**Rules:**
+- Every event choice must have at least one working effect
+- No-op effects (old speed/time/agentSpeed) must be replaced with budget/rep/hardware
+- Effect hints in UI must highlight (already show on buttons, already preview on hover)
+- `modelSwitch` effects should be implemented for real (force model change)
+
+**Replacement strategy for defunct effects:**
+- `speed +X%` → convert to meaningful equivalent: `reputation +Y` or `timer +Zs` (stored as event flag, applied in ExecutionScene)
+- `time +N` → `timer +N×3 seconds`
+- `agentSpeed +X%` → `reputation +small` or `budget +small`
+- `modelSwitch` → actually switch the model in GameState
+
+---
+
+## Implementation Order
+
+1. **Wire model quality into scoring** — `ScoringSystem.calcDayReputation()`
+2. **Wire speed into timer** — `ExecutionScene` timer calculation
+3. **Replace time units with seconds** — strategy table, remove timeUnitsRemaining
+4. **Adjust starting budgets** — `classes.ts`
+5. **Corporate Dev half-timer + infinite money display** — `ExecutionScene` + `Taskbar`
+6. **Audit all 55 events** — replace no-op effects, ensure every choice has impact
+7. **Audit Token Market items** — same treatment
+8. **Audit agent synergy/clash effects** — ensure they map to working systems
+9. **Test 2-3 full runs** per class, verify tension curve
+
+---
+
+## Re-Entry Prompt
+
+> Picking up balance tuning for The Prompt Trail. Read `~/Developer/gamedevjs-2026/CONTEXT.md` for project context, then `~/Developer/gamedevjs-2026/docs/BALANCE-AUDIT.md` for the full balance audit with locked design decisions.
+>
+> **Summary of what's broken**: When progress was changed to prompt-count-based, three systems disconnected from scoring: speed modifiers (24+ event effects are no-ops), model quality (cosmetic only), and time units (orphaned). ~30-40% of event choices have no real consequence. Economy is too loose for 3 of 4 classes.
+>
+> **Locked design decisions**: (1) Model quality → direct rep multiplier on day score. (2) Speed → modifies 45s execution timer. (3) Time units → replaced with direct timer seconds (+6s for planThenBuild, -6s for oneShot, etc). (4) Budgets slashed: Tech Bro $2k, Indie $800, Student $200, Corporate $∞ with half timer (22s). (5) Every event choice must have at least one working effect — replace all no-ops.
+>
+> **Implementation order**: 1. Model quality into scoring, 2. Speed into timer, 3. Time units → seconds, 4. Budgets, 5. Corporate Dev half-timer + ∞ display, 6. Event audit (all 55), 7. Token Market audit, 8. Agent audit, 9. Playtesting.
+>
+> Start with step 1.
