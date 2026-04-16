@@ -1242,7 +1242,8 @@ export class ExecutionScene extends Phaser.Scene {
       this.typingEngine.getAccuracy(),
       state.strategy!,
       CLASS_DEFS[state.playerClass!],
-      state.day
+      state.day,
+      state.model
     );
 
     // Add overtime bonus to total

@@ -60,22 +60,37 @@ describe('ScoringSystem.calcDayReputation', () => {
     }
   });
 
-  it('total = baseRep + accuracyBonus + strategyBonus — complex case', () => {
-    // progress=80, accuracy=0.75, planThenBuild, day=5 (maxRep=120)
+  it('total = baseRep + accuracyBonus + strategyBonus + modelBonus — complex case', () => {
+    // progress=80, accuracy=0.75, planThenBuild, day=5 (maxRep=120), model=standard
     // baseRep = floor(80/100 * 120) = 96
     // accuracyBonus = floor(0.75 * 0.3 * 96) = floor(21.6) = 21
     // strategyBonus = floor(96 * 0.15) = floor(14.4) = 14
-    // total = 96 + 21 + 14 = 131
-    const result = ScoringSystem.calcDayReputation(80, 0.75, 'planThenBuild', dummyClass, 5);
+    // modelBonus = floor(96 * 0.05) = 4  (standard = +5%)
+    // total = 96 + 21 + 14 + 4 = 135
+    const result = ScoringSystem.calcDayReputation(80, 0.75, 'planThenBuild', dummyClass, 5, 'standard');
     expect(result.baseRep).toBe(96);
     expect(result.accuracyBonus).toBe(21);
     expect(result.strategyBonus).toBe(14);
-    expect(result.total).toBe(131);
+    expect(result.modelBonus).toBe(4);
+    expect(result.total).toBe(135);
+  });
+
+  it('free model gives -15% modelBonus — baseRep=50 → modelBonus=-8', () => {
+    const result = ScoringSystem.calcDayReputation(100, 0, 'justStart', dummyClass, 1, 'free');
+    expect(result.modelBonus).toBe(Math.floor(50 * -0.15)); // -8
+    expect(result.total).toBe(50 + 0 + 0 + Math.floor(50 * -0.15)); // 42
+  });
+
+  it('frontier model gives +15% modelBonus — baseRep=50 → modelBonus=7', () => {
+    const result = ScoringSystem.calcDayReputation(100, 0, 'justStart', dummyClass, 1, 'frontier');
+    expect(result.modelBonus).toBe(Math.floor(50 * 0.15)); // 7
+    expect(result.total).toBe(50 + 0 + 0 + 7); // 57
   });
 
   it('day 13 uses maxReputation 500', () => {
-    const result = ScoringSystem.calcDayReputation(100, 0, 'justStart', dummyClass, 13);
+    const result = ScoringSystem.calcDayReputation(100, 0, 'justStart', dummyClass, 13, 'openSource');
     expect(result.baseRep).toBe(500);
+    expect(result.modelBonus).toBe(0); // openSource = 0% mod
   });
 });
 

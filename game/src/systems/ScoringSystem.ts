@@ -1,11 +1,13 @@
 import { PROJECTS } from '../data/projects';
-import type { Strategy } from './GameState';
+import type { Strategy, ModelTier } from './GameState';
 import type { ClassDef } from '../data/classes';
+import { EconomySystem } from './EconomySystem';
 
 export interface DayScore {
   baseRep: number;
   accuracyBonus: number;
   strategyBonus: number;
+  modelBonus: number;
   total: number;
 }
 
@@ -22,7 +24,8 @@ export class ScoringSystem {
     accuracy: number,
     strategy: Strategy,
     _classDef: ClassDef, // Keeping for API consistency, underscore for unused
-    day: number
+    day: number,
+    model: ModelTier = 'standard'
   ): DayScore {
     const project = PROJECTS[day - 1];
     const maxRepForDay = project ? project.maxReputation : 100;
@@ -56,12 +59,18 @@ export class ScoringSystem {
     }
 
     const strategyBonus = Math.floor(baseRep * strategyMod);
-    const total = baseRep + accuracyBonus + strategyBonus;
+
+    // Model quality bonus: free = -15%, frontier = +15%
+    const modelQualityMod = EconomySystem.getModelQualityMod(model);
+    const modelBonus = Math.floor(baseRep * modelQualityMod);
+
+    const total = baseRep + accuracyBonus + strategyBonus + modelBonus;
 
     return {
       baseRep,
       accuracyBonus,
       strategyBonus,
+      modelBonus,
       total,
     };
   }

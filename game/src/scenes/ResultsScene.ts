@@ -31,6 +31,7 @@ export class ResultsScene extends Phaser.Scene {
   private baseRepText!: Phaser.GameObjects.Text;
   private accuracyBonusText!: Phaser.GameObjects.Text;
   private strategyBonusText!: Phaser.GameObjects.Text;
+  private modelBonusText!: Phaser.GameObjects.Text;
   private overtimeBonusText!: Phaser.GameObjects.Text;
   private totalRepText!: Phaser.GameObjects.Text;
   private budgetDeltaText!: Phaser.GameObjects.Text;
@@ -116,18 +117,24 @@ export class ResultsScene extends Phaser.Scene {
 
     const strategyLabel = this.getStrategyLabel(state.strategy || 'justStart');
     const hasOvertime = state.overtimeBonus > 0;
-    this.yShift = hasOvertime ? 25 : 0;
-    const yShift = this.yShift;
+    this.yShift = 25; // model bonus row always present
 
     this.window.add(this.add.text(x + 20, y + 175, 'Strategy ♙:', labelStyle));
     this.strategyBonusText = this.add.text(x + 140, y + 175, `+0  (${strategyLabel})`, valueStyle);
     this.window.add(this.strategyBonusText);
 
+    this.window.add(this.add.text(x + 20, y + 200, 'Model ♙:', labelStyle));
+    this.modelBonusText = this.add.text(x + 140, y + 200, '+0', valueStyle);
+    this.window.add(this.modelBonusText);
+
     if (hasOvertime) {
-      this.window.add(this.add.text(x + 20, y + 200, 'Production ♙:', labelStyle));
-      this.overtimeBonusText = this.add.text(x + 140, y + 200, '+0', valueStyle);
+      this.yShift += 25;
+      this.window.add(this.add.text(x + 20, y + 225, 'Production ♙:', labelStyle));
+      this.overtimeBonusText = this.add.text(x + 140, y + 225, '+0', valueStyle);
       this.window.add(this.overtimeBonusText);
     }
+
+    const yShift = this.yShift;
 
     // Footer Divider
     this.window.add(this.add.text(x + width/2, y + 205 + yShift, '───────────', {
@@ -192,6 +199,9 @@ export class ResultsScene extends Phaser.Scene {
     
     const strategyLabel = this.getStrategyLabel(state.strategy || 'justStart');
     this.strategyBonusText.setText(`${curStratBonus >= 0 ? '+' : ''}${curStratBonus}  (${strategyLabel})`);
+
+    const curModelBonus = Math.floor(result.score.modelBonus * factor);
+    this.modelBonusText.setText(`${curModelBonus >= 0 ? '+' : ''}${curModelBonus}`);
 
     if (this.overtimeBonusText) {
       this.overtimeBonusText.setText(`+${curOvertime}`);
