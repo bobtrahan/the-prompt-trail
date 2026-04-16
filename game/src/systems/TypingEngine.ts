@@ -92,6 +92,10 @@ export class TypingEngine {
     return { ...this.stats };
   }
 
+  getTotalDayPrompts(): number {
+    return this.dayPrompts?.length ?? 0;
+  }
+
   getAccuracy(): number {
     const total = this.stats.correct + this.stats.incorrect;
     return total === 0 ? 1 : this.stats.correct / total;

@@ -642,11 +642,12 @@ export class ExecutionScene extends Phaser.Scene {
   }
 
   private onPromptComplete(): void {
-    const accuracy = this.typingEngine.getAccuracy();
-    const baseGain = 8 + Math.floor(accuracy * 7);
-    const speedModFactor = this.typingEngine.speedModifier + this.speedMod;
-    const gain = Math.round(baseGain * speedModFactor * (1 + this.modelQualityMod));
-    this.progress = Math.min(100, this.progress + gain);
+    // Progress driven by prompts completed out of total
+    const completed = this.typingEngine.getStats().promptsCompleted;
+    const total = this.typingEngine.getTotalDayPrompts();
+    if (total > 0) {
+      this.progress = Math.min(100, Math.round((completed / total) * 100));
+    }
     this.updateProgressBar();
 
     if (this.progress >= 100 && !this.completionShown && !this.inOvertime) {
