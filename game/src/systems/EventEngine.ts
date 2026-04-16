@@ -1,7 +1,8 @@
 import type { GameState } from './GameState';
-import type { EventDef, EventChoice } from '../data/events';
+import type { EventDef, EventChoice, EventEffect } from '../data/events';
 import { EVENTS } from '../data/events';
 import { BASE_TIMER_SECONDS } from '../utils/constants';
+import { ROLL_RESOLUTIONS } from '../data/rollResolutions';
 
 export class EventEngine {
   private state: GameState;
@@ -97,8 +98,26 @@ export class EventEngine {
   applyEffects(choice: EventChoice, state: GameState): string[] {
     const logs: string[] = [];
 
+    // Check for roll flags — if present, resolve the gamble and replace
+    // the deterministic companion effects with the roll outcome
+    let effects: EventEffect[] = [...choice.effects];
+    const rollFlags = effects.filter(e => e.type === 'flag' && ROLL_RESOLUTIONS[e.value as string]);
+    if (rollFlags.length > 0) {
+      // Take the first roll flag (one gamble per choice)
+      const rollFlag = rollFlags[0];
+      const resolution = ROLL_RESOLUTIONS[rollFlag.value as string];
+      const won = Math.random() < resolution.chance;
+      const outcome = won ? resolution.good : resolution.bad;
+
+      // Strip all non-flag effects (the deterministic ones Boris added)
+      // Keep only flags + replace with roll outcome effects
+      effects = effects.filter(e => e.type === 'flag');
+      effects.push(...outcome.effects);
+      if (outcome.log) logs.push(outcome.log);
+    }
+
     // Backup protection
-    const causesLoss = choice.effects.some(e => 
+    const causesLoss = effects.some(e => 
       (e.type === 'budget' && (e.value as number) < 0) || 
       (e.type === 'hardware' && (e.value as number) < 0) ||
       (e.type === 'reputation' && (e.value as number) < 0) ||
@@ -111,7 +130,7 @@ export class EventEngine {
       return logs;
     }
 
-    for (const effect of choice.effects) {
+    for (const effect of effects) {
       switch (effect.type) {
         case 'budget': {
           const amount = effect.value as number;
