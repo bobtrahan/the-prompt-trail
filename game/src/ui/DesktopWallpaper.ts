@@ -74,6 +74,16 @@ function drawTechBro(scene: Phaser.Scene): void {
     const row = Math.floor(rand() * rowsCount);
     gfx.fillRect(col * STEP - 2, row * STEP - 2, 4, 4);
   }
+
+  // Floating hex values at random grid intersections
+  for (let i = 0; i < 8; i++) {
+    const col = Math.floor(rand() * colsCount);
+    const row = Math.floor(rand() * rowsCount);
+    const hex = `0x${Math.floor(rand() * 0xFFFF).toString(16).padStart(4, '0')}`;
+    scene.add.text(col * STEP + 4, row * STEP + 2, hex, {
+      fontFamily: 'monospace', fontSize: '8px', color: '#00ffcc',
+    }).setAlpha(0.06).setDepth(-10);
+  }
 }
 
 function drawIndieHacker(scene: Phaser.Scene): void {
@@ -82,6 +92,18 @@ function drawIndieHacker(scene: Phaser.Scene): void {
 
   const color = 0xf0883e;
   const baseY = GAME_HEIGHT * 0.7;
+
+  // Star scatter above the mountain line
+  const state = getState();
+  const rand = makeLCG((state.day ?? 1) + 100);
+  for (let i = 0; i < 30; i++) {
+    const sx = Math.floor(rand() * GAME_WIDTH);
+    const sy = Math.floor(rand() * baseY * 0.8);
+    const size = 1 + Math.floor(rand() * 2);
+    const alpha = 0.03 + rand() * 0.05;
+    gfx.fillStyle(0xffffff, alpha);
+    gfx.fillRect(sx, sy, size, size);
+  }
 
   // Back range (taller peaks, offset, lower alpha)
   gfx.fillStyle(color, 0.02);
@@ -163,6 +185,33 @@ function drawCollegeStudent(scene: Phaser.Scene): void {
   for (const frac of [0.25, 0.5, 0.75]) {
     gfx.strokeCircle(holeX, GAME_HEIGHT * frac, 10);
   }
+
+  // Doodle scribbles — scattered notebook marginalia
+  const doodles = [
+    { x: 120, y: 80, text: 'TODO' },
+    { x: 900, y: 150, text: '← fix this' },
+    { x: 600, y: 500, text: '???' },
+    { x: 200, y: 400, text: '(╯°□°)╯' },
+    { x: 1050, y: 380, text: 'due tmrw' },
+    { x: 400, y: 120, text: '☆ ☆ ☆' },
+  ];
+  for (const d of doodles) {
+    scene.add.text(d.x, d.y, d.text, {
+      fontFamily: 'monospace', fontSize: '10px', color: '#ff79c6',
+    }).setAlpha(0.04).setDepth(-10);
+  }
+
+  // Doodle circles
+  gfx.lineStyle(1, 0xff79c6, 0.03);
+  gfx.strokeCircle(750, 280, 20);
+  gfx.strokeCircle(300, 550, 15);
+  // Arrow
+  gfx.lineStyle(1, 0x8be9fd, 0.04);
+  gfx.beginPath();
+  gfx.moveTo(500, 300);
+  gfx.lineTo(540, 280);
+  gfx.lineTo(535, 290);
+  gfx.strokePath();
 }
 
 function drawCorporateDev(scene: Phaser.Scene): void {
@@ -172,6 +221,7 @@ function drawCorporateDev(scene: Phaser.Scene): void {
   const color = 0x6e7681;
   const STEP = 20;
 
+  // Vertical pinstripes
   for (let i = 0, x = 0; x <= GAME_WIDTH; x += STEP, i++) {
     const alpha = i % 5 === 0 ? 0.05 : 0.03;
     gfx.lineStyle(1, color, alpha);
@@ -180,4 +230,18 @@ function drawCorporateDev(scene: Phaser.Scene): void {
     gfx.lineTo(x, GAME_HEIGHT);
     gfx.strokePath();
   }
+
+  // Horizontal lines — spreadsheet cells
+  for (let y = 0; y <= GAME_HEIGHT; y += STEP * 2) {
+    gfx.lineStyle(1, color, 0.025);
+    gfx.beginPath();
+    gfx.moveTo(0, y);
+    gfx.lineTo(GAME_WIDTH, y);
+    gfx.strokePath();
+  }
+
+  // CONFIDENTIAL watermark
+  scene.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2, 'CONFIDENTIAL', {
+    fontFamily: 'monospace', fontSize: '48px', color: '#6e7681',
+  }).setOrigin(0.5).setAlpha(0.02).setDepth(-10).setAngle(-15);
 }
