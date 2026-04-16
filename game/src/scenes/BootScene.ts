@@ -14,14 +14,13 @@ export class BootScene extends Phaser.Scene {
     const barWidth = 300;
     const barX = (width - barWidth) / 2;
     const barY = height / 2 + 60;
-    this.add.rectangle(width / 2, barY, barWidth, 4, 0x21262d).setOrigin(0.5);
+    const barBg = this.add.rectangle(width / 2, barY, barWidth, 4, 0x21262d).setOrigin(0.5);
     const bar = this.add.rectangle(barX, barY, 0, 4, 0x58a6ff).setOrigin(0, 0.5);
-    // Asset loading fills to 20%, boot sequence animates the rest
-    this.load.on('progress', (value: number) => {
-      bar.width = barWidth * 0.2 * value;
-    });
-    // Store bar refs for create() to continue the animation
+    // Hide bar during asset loading — boot sequence drives it entirely
+    barBg.setAlpha(0);
+    bar.setAlpha(0);
     this.data.set('progressBar', bar);
+    this.data.set('progressBarBg', barBg);
     this.data.set('barWidth', barWidth);
   }
 
@@ -30,7 +29,13 @@ export class BootScene extends Phaser.Scene {
 
     const { width, height } = this.cameras.main;
     const bar = this.data.get('progressBar') as Phaser.GameObjects.Rectangle;
+    const barBg = this.data.get('progressBarBg') as Phaser.GameObjects.Rectangle;
     const barWidth = this.data.get('barWidth') as number;
+
+    // Show bar and start from 0
+    barBg.setAlpha(1);
+    bar.setAlpha(1);
+    bar.width = 0;
 
     // Helper to tween progress bar to a target percentage
     const tweenProgress = (toPercent: number, duration: number) => {
@@ -38,12 +43,12 @@ export class BootScene extends Phaser.Scene {
         targets: bar,
         width: barWidth * toPercent,
         duration,
-        ease: 'Sine.easeInOut',
+        ease: 'Sine.easeOut',
       });
     };
 
-    // Start animating bar from asset-load level (~20%) through POST phase
-    tweenProgress(0.4, 1500);
+    // Phase 0→40% during POST lines
+    tweenProgress(0.4, 1400);
 
     const postX = 60;
     const postY = 80;
@@ -86,7 +91,9 @@ export class BootScene extends Phaser.Scene {
     });
 
     // Phase 2: Kernel boot (1.5-2.5s)
-    tweenProgress(0.7, 1000);
+    this.time.delayedCall(1400, () => {
+      tweenProgress(0.75, 900);
+    });
 
     const kernelLines = [
       { prefix: '[  OK  ]', text: ' Started Agent Runtime Service' },
@@ -121,12 +128,12 @@ export class BootScene extends Phaser.Scene {
       });
     });
 
-    // Phase 3: PromptOS splash (2.5-3.5s)
+    // Phase 3: Fill to 100% and show splash (2.3s)
     this.time.delayedCall(2300, () => {
-      tweenProgress(0.95, 400);
+      tweenProgress(1.0, 400);
     });
 
-    this.time.delayedCall(2500, () => {
+    this.time.delayedCall(2700, () => {
       // Fade out POST text
       allTextObjects.forEach(obj => {
         this.tweens.add({
@@ -162,12 +169,8 @@ export class BootScene extends Phaser.Scene {
       AudioManager.getInstance().playSFX('boot');
     });
 
-    // Phase 4: Fade to black (3.5-4s)
-    this.time.delayedCall(3300, () => {
-      tweenProgress(1.0, 200);
-    });
-
-    this.time.delayedCall(3500, () => {
+    // Phase 4: Hold at 100% for ~1.5s, then fade to black
+    this.time.delayedCall(4500, () => {
       this.cameras.main.fadeOut(300, 0, 0, 0);
       this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
         this.scene.start('Title');
