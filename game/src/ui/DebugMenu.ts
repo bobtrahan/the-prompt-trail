@@ -71,7 +71,7 @@ export class DebugMenu extends Phaser.GameObjects.Container {
     const hasDebug = DEV_CONFIG.debugMenu === true;
 
     // Row count: 1 sound + 1 reboot + (hasDebug ? separator + 8 debug buttons : 0)
-    const debugRows = hasDebug ? 9 : 0; // separator counts as a row
+    const debugRows = hasDebug ? 11 : 0; // separator counts as a row
     const rows = 2 + debugRows;
     const panelH = PAD + rows * (BTN_H + 4) + PAD;
 
@@ -177,6 +177,18 @@ export class DebugMenu extends Phaser.GameObjects.Container {
         if (!s.ownedUpgrades.includes(id)) s.ownedUpgrades.push(id);
       });
       s.agentSlots = 3;
+    });
+    curY += BTN_H + 4;
+
+    // ── Bug Bounty ──
+    makeButton(scene, this, '[ → Bug Bounty ]', innerX, curY, '#9da5b0', () => {
+      scene.scene.start('BugBountySelect');
+    });
+    curY += BTN_H + 4;
+
+    // ── Token Market ──
+    makeButton(scene, this, '[ → Token Market ]', innerX, curY, '#9da5b0', () => {
+      scene.scene.start('Night');
     });
     curY += BTN_H + 4;
 
