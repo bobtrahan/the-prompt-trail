@@ -164,10 +164,13 @@ export class EventEngine {
         }
 
         case 'modelSwitch': {
-          const model = effect.value as string;
-          logs.push(`> MODEL SWITCH → ${model}`);
-          // Model switch is advisory — the caller/scene handles actual model assignment
-          state.eventFlags[`modelSwitch_${model}`] = true;
+          const raw = effect.value as string;
+          // Map descriptive names to actual ModelTier values
+          const modelMap: Record<string, string> = { backup: 'openSource', sketchy: 'sketchy', smaller: 'local' };
+          const tier = (modelMap[raw] ?? 'openSource') as import('./GameState').ModelTier;
+          state.model = tier;
+          state.eventFlags[`modelSwitch_${raw}`] = true;
+          logs.push(`> MODEL SWITCH → ${tier}`);
           break;
         }
 
