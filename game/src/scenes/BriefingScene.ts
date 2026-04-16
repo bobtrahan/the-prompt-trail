@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
-import { GAME_WIDTH, GAME_HEIGHT, COLORS, TIME_UNITS_PER_DAY } from '../utils/constants';
+import { GAME_WIDTH, GAME_HEIGHT, COLORS } from '../utils/constants';
+import { DAY_PROMPTS } from '../data/prompts';
 import { getState } from '../systems/GameState';
 import { PROJECTS } from '../data/projects';
 import { getTheme } from '../utils/themes';
@@ -225,7 +226,9 @@ export class BriefingScene extends Phaser.Scene {
     // Snapshot day-start resources
     state.dayStartBudget = state.budget;
     state.dayStartHardware = state.hardwareHp;
-    state.timeUnitsRemaining = TIME_UNITS_PER_DAY;
+    const dayPromptCount = DAY_PROMPTS.find(d => d.day === state.day)?.prompts.length ?? 10;
+    state.timeUnitsRemaining = dayPromptCount;
+    state.dayStartTimeUnits = dayPromptCount;
     
     this.cameras.main.setBackgroundColor(COLORS.bg);
     drawWallpaper(this, state.playerClass);

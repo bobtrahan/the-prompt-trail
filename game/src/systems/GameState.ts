@@ -67,6 +67,7 @@ export interface GameState {
   bugHuntReturnScene: string;
   dayStartBudget: number;
   dayStartHardware: number;
+  dayStartTimeUnits?: number;
 }
 
 export function createInitialState(): GameState {
@@ -103,6 +104,7 @@ export function createInitialState(): GameState {
     bugHuntReturnScene: 'Night',
     dayStartBudget: 0,
     dayStartHardware: 100,
+    dayStartTimeUnits: undefined,
   };
 }
 

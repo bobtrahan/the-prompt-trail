@@ -422,7 +422,8 @@ export class PlanningScene extends Phaser.Scene {
     this.selectedStrategy = option.id;
     const state = getState();
     state.strategy = option.id;
-    state.timeUnitsRemaining = TIME_UNITS_PER_DAY + option.timeBonus;
+    const base = state.dayStartTimeUnits ?? TIME_UNITS_PER_DAY;
+    state.timeUnitsRemaining = base + option.timeBonus;
 
     // Highlight selected card
     this.cards.forEach((c, i) => {

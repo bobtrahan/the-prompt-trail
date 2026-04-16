@@ -542,12 +542,16 @@ export class ExecutionScene extends Phaser.Scene {
       this.onPromptComplete();
     }, () => {
       this.onFirstKeystroke();
-    }, this.typoForgiveness);
+    }, this.typoForgiveness, () => {
+      this.onAllPromptsComplete();
+    });
 
-    // Wire day-specific prompts
+    // Wire day-specific prompts and set time units to match prompt count
     const dayPromptDef = DAY_PROMPTS.find(d => d.day === state.day);
     if (dayPromptDef) {
       this.typingEngine.setDayPrompts(dayPromptDef.prompts);
+      this.timeUnits = dayPromptDef.prompts.length + (state.timeUnitsRemaining - this.timeUnits);
+      state.timeUnitsRemaining = this.timeUnits;
     }
 
     // ── Process consumables and show notification sequence before typing begins ──
@@ -624,6 +628,17 @@ export class ExecutionScene extends Phaser.Scene {
     this.terminal.addLine('Ready. Building...');
   }
 
+  private onAllPromptsComplete(): void {
+    // All day prompts typed — end the day successfully
+    this.terminal.addLine('\n✅ All prompts complete!');
+    if (this.dayTimer) {
+      this.dayTimer.destroy();
+    }
+    this.time.delayedCall(600, () => {
+      this.endDay();
+    });
+  }
+
   private onPromptComplete(): void {
     const accuracy = this.typingEngine.getAccuracy();
     const baseGain = 8 + Math.floor(accuracy * 7);
@@ -659,7 +674,8 @@ export class ExecutionScene extends Phaser.Scene {
     const state = getState();
     state.timeUnitsRemaining = this.timeUnits;
 
-    const frac = this.timeUnits / TIME_UNITS_PER_DAY;
+    const initialTimeUnits = getState().dayStartTimeUnits ?? TIME_UNITS_PER_DAY;
+    const frac = this.timeUnits / initialTimeUnits;
     this.timeBar.width = this.timeBg.width * frac;
     if (frac <= 0.3) this.timeBar.setFillStyle(COLORS.error);
 
@@ -997,7 +1013,8 @@ export class ExecutionScene extends Phaser.Scene {
         const label = m ? `${m[1]} ⏱️` : '⏱️';
         summaryParts.push(label);
         // Color pulse on time bar
-        const origColor = this.timeUnits / 10 <= 0.3 ? COLORS.error : COLORS.warning;
+        const initTU = getState().dayStartTimeUnits ?? TIME_UNITS_PER_DAY;
+        const origColor = this.timeUnits / initTU <= 0.3 ? COLORS.error : COLORS.warning;
         this.timeBar.setFillStyle(0xffffff);
         this.time.delayedCall(200, () => this.timeBar.setFillStyle(origColor));
       } else if (log.startsWith('> HARDWARE')) {

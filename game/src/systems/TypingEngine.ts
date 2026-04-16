@@ -36,6 +36,7 @@ export class TypingEngine {
   private currentWrongCount = 0;
   private onPromptComplete?: () => void;
   private onFirstKeystroke?: () => void;
+  private onAllPromptsComplete?: () => void;
   private hasTypedOnce = false;
   private lastSFXTime = 0;
   public speedModifier = 1.0;
@@ -47,12 +48,14 @@ export class TypingEngine {
     onPromptComplete?: () => void,
     onFirstKeystroke?: () => void,
     typoForgiveness = 0,
+    onAllPromptsComplete?: () => void,
   ) {
     this.scene = scene;
     this.terminal = terminal;
     this.onPromptComplete = onPromptComplete;
     this.onFirstKeystroke = onFirstKeystroke;
     this.typoForgiveness = typoForgiveness;
+    this.onAllPromptsComplete = onAllPromptsComplete;
 
     scene.input.keyboard!.on('keydown', this.handleKey, this);
   }
@@ -120,8 +123,14 @@ export class TypingEngine {
     }
 
     if (this.dayPrompts && this.dayPrompts.length > 0) {
+      if (this.dayPromptIndex >= this.dayPrompts.length) {
+        // All day prompts completed
+        this.active = false;
+        this.onAllPromptsComplete?.();
+        return;
+      }
       const prompt = this.dayPrompts[this.dayPromptIndex];
-      this.dayPromptIndex = (this.dayPromptIndex + 1) % this.dayPrompts.length;
+      this.dayPromptIndex++;
       this.currentWrongCount = 0;
       this.terminal.setPrompt(prompt);
       return;
