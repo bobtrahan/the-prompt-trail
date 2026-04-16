@@ -1034,12 +1034,17 @@ export class BugHuntScene extends Phaser.Scene {
     if (keys.has('w') || keys.has('arrowup'))    dy -= 1;
     if (keys.has('s') || keys.has('arrowdown'))  dy += 1;
 
-    // Turn to face that direction (and start walking)
+    // Turn to face that direction (and start walking on new direction)
     if (dx !== 0 || dy !== 0) {
       const len = Math.hypot(dx, dy);
-      this.facingX = dx / len;
-      this.facingY = dy / len;
-      this.walking = true;
+      const newFX = dx / len;
+      const newFY = dy / len;
+      // Only restart walking if direction changed
+      if (newFX !== this.facingX || newFY !== this.facingY) {
+        this.facingX = newFX;
+        this.facingY = newFY;
+        this.walking = true;
+      }
     }
 
     // Enter toggles walk

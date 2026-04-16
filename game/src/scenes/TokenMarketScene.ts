@@ -68,6 +68,11 @@ export class TokenMarketScene extends Phaser.Scene {
   private detailEffect!: Phaser.GameObjects.Text;
   private detailAfford!: Phaser.GameObjects.Text;
   private detailPaneY!: number;
+  private scrollOffset = 0;
+  private maxScroll = 0;
+  private listMask!: Phaser.Display.Masks.GeometryMask;
+  private listClipY = 0;
+  private listClipH = 0;
 
   constructor() {
     super({ key: 'TokenMarket' });
@@ -248,6 +253,7 @@ export class TokenMarketScene extends Phaser.Scene {
 
   private selectTab(category: TabCategory): void {
     this.activeTab = category;
+    this.scrollOffset = 0;
     this.tabObjects.forEach(({ category: cat, text, underline }) => {
       const active = cat === category;
       text.setColor(active ? '#e6edf3' : '#9da5b0');
@@ -280,6 +286,14 @@ export class TokenMarketScene extends Phaser.Scene {
     const { width: cw } = this.marketWin.contentArea;
     const listStartY = cy + 48; // below tabs
     const rowHeight = 54;
+    const listEndY = this.detailPaneY - 4;
+    this.listClipY = listStartY;
+    this.listClipH = listEndY - listStartY;
+
+    // Calculate scroll bounds
+    const totalListH = filtered.length * rowHeight;
+    this.maxScroll = Math.max(0, totalListH - this.listClipH);
+    this.scrollOffset = Math.min(this.scrollOffset, this.maxScroll);
     // Reset highlight when re-rendering
     if (this.highlightRect) this.highlightRect.setAlpha(0);
     const colNameX = cx;
@@ -287,8 +301,29 @@ export class TokenMarketScene extends Phaser.Scene {
     const colDescX = cx;
     const colBtnX = cx + 760;
 
+    // Mouse wheel scrolling
+    this.input.off('wheel'); // remove previous listener
+    if (this.maxScroll > 0) {
+      this.input.on('wheel', (_ptr: unknown, _gos: unknown, _dx: number, dy: number) => {
+        this.scrollOffset = Phaser.Math.Clamp(this.scrollOffset + dy * 0.5, 0, this.maxScroll);
+        this.renderItems();
+      });
+    }
+
+    // Scroll indicator
+    if (this.maxScroll > 0 && this.scrollOffset < this.maxScroll) {
+      const moreText = this.add.text(cx + cw / 2, listEndY - 4, '▼ scroll for more', {
+        fontFamily: 'monospace', fontSize: '10px', color: '#9da5b0',
+      }).setOrigin(0.5, 1);
+      this.marketWin.add(moreText);
+      this.itemListObjects.push(moreText);
+    }
+
     filtered.forEach((item, i) => {
-      const ry = listStartY + i * rowHeight;
+      const ry = listStartY + i * rowHeight - this.scrollOffset;
+
+      // Skip rows outside visible area
+      if (ry + rowHeight < listStartY - 4 || ry > listEndY) return;
       const price = prices.get(item.id) ?? item.baseCost;
       const isDeal = item.id === dealId;
       const canBuyResult = ShopSystem.canBuy(state, item, isDeal ? Math.round(price / 2) : price);
