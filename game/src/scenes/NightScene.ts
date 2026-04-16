@@ -273,13 +273,13 @@ export class NightScene extends Phaser.Scene {
 
     if (disabled) {
       // Dimmed overlay
-      const dimmer = this.add.rectangle(x, y, w, h, 0x0d1117, 0.6).setOrigin(0);
+      const dimmer = this.add.rectangle(x, y, w, h, 0x0d1117, 0.92).setOrigin(0);
       win.add(dimmer);
       if (opts.disabledText) {
-        win.add(this.add.text(x + w / 2, y + h / 2, opts.disabledText, {
+        win.add(this.add.text(x + w / 2, y + h / 2, `🪲  ${opts.disabledText}`, {
           fontFamily: 'monospace',
-          fontSize: '11px',
-          color: '#9da5b0',
+          fontSize: '13px',
+          color: '#6e7681',
         }).setOrigin(0.5));
       }
       return;
