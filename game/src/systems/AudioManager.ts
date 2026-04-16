@@ -23,6 +23,7 @@ const VOICE_IDS = [
   'event-bankruptcy', 'event-low-hp', 'event-day13', 'event-rate-limit',
   'event-clash', 'event-bug-bounty',
   'rank-s', 'rank-ab', 'rank-c', 'rank-df',
+  'night-bugbounty', 'night-tokenmarket', 'mode-oldschool', 'mode-useai',
 ] as const;
 
 class AudioManager {

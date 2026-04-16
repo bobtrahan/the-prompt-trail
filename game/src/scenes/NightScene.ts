@@ -179,7 +179,7 @@ export class NightScene extends Phaser.Scene {
       disabledText: 'Already played tonight',
       drawThumb: (tx, ty, tw, th) => drawBugBountyThumb(this, tx, ty, tw, th, theme.accent),
       onClick: () => {
-        AudioManager.getInstance().playSFX('ui-click');
+        AudioManager.getInstance().playVoice('night-bugbounty');
         state.bugHuntReturnScene = 'Night';
         this.scene.start('BugBountySelect');
       },
@@ -199,7 +199,7 @@ export class NightScene extends Phaser.Scene {
       disabled: false,
       drawThumb: (tx, ty, tw, th) => drawTokenMarketThumb(this, tx, ty, tw, th, theme.accent),
       onClick: () => {
-        AudioManager.getInstance().playSFX('ui-click');
+        AudioManager.getInstance().playVoice('night-tokenmarket');
         this.scene.start('TokenMarket');
       },
     });

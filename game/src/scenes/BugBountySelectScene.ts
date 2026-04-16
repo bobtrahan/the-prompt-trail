@@ -181,7 +181,8 @@ export class BugBountySelectScene extends Phaser.Scene {
       const state = getState();
       state.bugHuntMode = option.key;
       state.bugHuntReturnScene = returnScene;
-      AudioManager.getInstance().playSFX('ui-click');
+      const voiceId = option.key === 'oldschool' ? 'mode-oldschool' : 'mode-useai';
+      AudioManager.getInstance().playVoice(voiceId);
       this.scene.start(option.targetScene);
     });
   }
