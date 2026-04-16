@@ -264,6 +264,14 @@ export class TokenMarketScene extends Phaser.Scene {
     this.renderItems();
   }
 
+  /** Re-add tab objects on top of the display list so they receive input over item rows */
+  private bringTabsToFront(): void {
+    for (const { text, underline } of this.tabObjects) {
+      this.marketWin.container.bringToTop(text);
+      this.marketWin.container.bringToTop(underline);
+    }
+  }
+
   private renderItems(): void {
     // Destroy previous list
     this.itemListObjects.forEach(o => o.destroy());
@@ -449,6 +457,9 @@ export class TokenMarketScene extends Phaser.Scene {
       this.marketWin.add(emptyText);
       this.itemListObjects.push(emptyText);
     }
+
+    // Ensure tabs stay on top of the display list for input priority
+    this.bringTabsToFront();
   }
 
   private handleBuy(item: ItemDef, price: number): void {
