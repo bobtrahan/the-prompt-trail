@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT, COLORS } from '../utils/constants';
 import { getState } from '../systems/GameState';
+import { Telemetry } from '../systems/Telemetry';
 import { getTheme } from '../utils/themes';
 import { Window } from '../ui/Window';
 import { Taskbar } from '../ui/Taskbar';
@@ -24,6 +25,15 @@ const AMMO_REGEN_MS = 3000;
 const CROSSHAIR_DIST = 90;
 const PLAYER_HW = 10;   // player hitbox half-width
 const PLAYER_HH = 12;   // player hitbox half-height
+const BULLET_SPEED = 600;
+const BULLET_LEN = 8;
+const BULLET_THICKNESS = 3;
+const BULLET_TRAIL_LEN = 12;
+const BULLET_TRAIL_ALPHA = 0.3;
+const BULLET_RADIUS = 4;
+const BULLET_DEPTH = 17;
+const BULLET_TRAIL_DEPTH = 16;
+const SPARK_DEPTH = 18;
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -32,6 +42,15 @@ interface CodeBlock {
   y: number;
   w: number;
   h: number;
+}
+
+interface Bullet {
+  x: number;
+  y: number;
+  dx: number;
+  dy: number;
+  graphics: Phaser.GameObjects.Graphics;
+  trail: Phaser.GameObjects.Graphics;
 }
 
 // ── Code obstacle text definitions ────────────────────────────────────────────
@@ -80,6 +99,8 @@ export class BugHuntScene extends Phaser.Scene {
   // Aiming
   private crosshairGfx!: Phaser.GameObjects.Graphics;
   private aimAngle = 0;
+  private crosshairX = 0;
+  private crosshairY = 0;
 
   // Input
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
@@ -87,14 +108,17 @@ export class BugHuntScene extends Phaser.Scene {
   private keyA!: Phaser.Input.Keyboard.Key;
   private keyS!: Phaser.Input.Keyboard.Key;
   private keyD!: Phaser.Input.Keyboard.Key;
+  private keySpace!: Phaser.Input.Keyboard.Key;
 
   // Game state
   private bugCount = 0;
   private totalEarned = 0;
   private ammo = AMMO_MAX;
+  private shotsFired = 0;
   private lastAmmoRegen = 0;
   private startTime = 0;
   private ended = false;
+  private bullets: Bullet[] = [];
 
   constructor() {
     super({ key: 'BugHunt' });
@@ -105,11 +129,13 @@ export class BugHuntScene extends Phaser.Scene {
     this.bugCount = 0;
     this.totalEarned = 0;
     this.ammo = AMMO_MAX;
+    this.shotsFired = 0;
     this.lastAmmoRegen = 0;
     this.startTime = 0;
     this.ended = false;
     this.codeBlocks = [];
     this.ammoCells = [];
+    this.bullets = [];
 
     AudioManager.getInstance().playMusic('bugbounty');
 
@@ -204,6 +230,16 @@ export class BugHuntScene extends Phaser.Scene {
     this.keyA = wasdKeys['A'];
     this.keyS = wasdKeys['S'];
     this.keyD = wasdKeys['D'];
+    this.keySpace = kb.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+
+    this.input.on('pointerdown', this.fireBullet, this);
+    this.keySpace.on('down', this.fireBullet, this);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.input.off('pointerdown', this.fireBullet, this);
+      this.keySpace.off('down', this.fireBullet, this);
+      this.destroyAllBullets();
+      AudioManager.getInstance().playMusic('night');
+    });
   }
 
   // ── Grid lines ────────────────────────────────────────────────────────────
@@ -336,6 +372,8 @@ export class BugHuntScene extends Phaser.Scene {
 
     const cx = this.playerX + Math.cos(this.aimAngle) * CROSSHAIR_DIST;
     const cy = this.playerY + Math.sin(this.aimAngle) * CROSSHAIR_DIST;
+    this.crosshairX = cx;
+    this.crosshairY = cy;
     const ARM = 8;
     const GAP = 3;
 
@@ -372,6 +410,128 @@ export class BugHuntScene extends Phaser.Scene {
     for (let i = 0; i < AMMO_MAX; i++) {
       this.ammoCells[i].setAlpha(i < this.ammo ? 1.0 : 0.18);
     }
+  }
+
+  private fireBullet(): void {
+    if (this.ended || this.ammo <= 0) return;
+
+    const dirX = this.crosshairX - this.playerX;
+    const dirY = this.crosshairY - this.playerY;
+    const len = Math.hypot(dirX, dirY);
+    if (len === 0) return;
+
+    const dx = dirX / len;
+    const dy = dirY / len;
+    const trail = this.add.graphics().setDepth(BULLET_TRAIL_DEPTH);
+    const graphics = this.add.graphics().setDepth(BULLET_DEPTH);
+    const bullet: Bullet = {
+      x: this.playerX,
+      y: this.playerY,
+      dx,
+      dy,
+      graphics,
+      trail,
+    };
+
+    this.bullets.push(bullet);
+    this.ammo--;
+    this.shotsFired++;
+    this.updateAmmoDisplay();
+    this.redrawBullet(bullet);
+  }
+
+  private redrawBullet(bullet: Bullet): void {
+    const angle = Math.atan2(bullet.dy, bullet.dx);
+    const cos = Math.cos(angle);
+    const sin = Math.sin(angle);
+
+    bullet.graphics.clear();
+    bullet.graphics.x = bullet.x;
+    bullet.graphics.y = bullet.y;
+    bullet.graphics.rotation = angle;
+    bullet.graphics.fillStyle(0xf8fafc, 1);
+    bullet.graphics.fillRect(-BULLET_LEN / 2, -BULLET_THICKNESS / 2, BULLET_LEN, BULLET_THICKNESS);
+    bullet.graphics.fillStyle(this.accentColor, 0.95);
+    bullet.graphics.fillRect(0, -BULLET_THICKNESS / 2, BULLET_LEN / 2, BULLET_THICKNESS);
+
+    bullet.trail.clear();
+    bullet.trail.x = bullet.x - cos * 7;
+    bullet.trail.y = bullet.y - sin * 7;
+    bullet.trail.rotation = angle;
+    bullet.trail.fillStyle(this.accentColor, BULLET_TRAIL_ALPHA);
+    bullet.trail.fillRect(-BULLET_TRAIL_LEN / 2, -2, BULLET_TRAIL_LEN, 4);
+  }
+
+  private updateBullets(deltaSec: number): void {
+    const activeBullets: Bullet[] = [];
+
+    for (const bullet of this.bullets) {
+      bullet.x += bullet.dx * BULLET_SPEED * deltaSec;
+      bullet.y += bullet.dy * BULLET_SPEED * deltaSec;
+
+      if (!this.isPointInArena(bullet.x, bullet.y)) {
+        this.destroyBullet(bullet);
+        continue;
+      }
+
+      if (this.hitCodeBlock(bullet)) {
+        this.spawnSpark(bullet.x, bullet.y);
+        this.destroyBullet(bullet);
+        continue;
+      }
+
+      this.redrawBullet(bullet);
+      activeBullets.push(bullet);
+    }
+
+    this.bullets = activeBullets;
+  }
+
+  private hitCodeBlock(bullet: Bullet): boolean {
+    return this.codeBlocks.some(block =>
+      bullet.x + BULLET_RADIUS > block.x &&
+      bullet.x - BULLET_RADIUS < block.x + block.w &&
+      bullet.y + BULLET_RADIUS > block.y &&
+      bullet.y - BULLET_RADIUS < block.y + block.h
+    );
+  }
+
+  private isPointInArena(x: number, y: number): boolean {
+    return (
+      x >= this.arenaX &&
+      x <= this.arenaX + this.arenaW &&
+      y >= this.arenaY &&
+      y <= this.arenaY + this.arenaH
+    );
+  }
+
+  private spawnSpark(x: number, y: number): void {
+    const spark = this.add.graphics().setDepth(SPARK_DEPTH);
+    spark.fillStyle(0xf8fafc, 1);
+    spark.fillRect(-7, -1, 14, 2);
+    spark.fillRect(-1, -7, 2, 14);
+    spark.x = x;
+    spark.y = y;
+
+    this.tweens.add({
+      targets: spark,
+      alpha: 0,
+      scaleX: 1.8,
+      scaleY: 1.8,
+      duration: 150,
+      ease: 'Quad.easeOut',
+      onComplete: () => spark.destroy(),
+    });
+  }
+
+  private destroyBullet(bullet: Bullet): void {
+    bullet.graphics.destroy();
+    bullet.trail.destroy();
+  }
+
+  private destroyAllBullets(): void {
+    this.bullets.forEach((bullet) => this.destroyBullet(bullet));
+    this.bullets = [];
   }
 
   // ── Update ────────────────────────────────────────────────────────────────
@@ -438,6 +598,8 @@ export class BugHuntScene extends Phaser.Scene {
     const ptr = this.input.activePointer;
     this.aimAngle = Math.atan2(ptr.y - this.playerY, ptr.x - this.playerX);
 
+    this.updateBullets(dt);
+
     // ── Redraw dynamic objects ────────────────────────────────────────────────
     this.redrawPlayer();
     this.redrawCrosshair();
@@ -477,6 +639,7 @@ export class BugHuntScene extends Phaser.Scene {
   private endGame(): void {
     if (this.ended) return;
     this.ended = true;
+    this.destroyAllBullets();
 
     const state = getState();
     const returnScene = state.bugHuntReturnScene || 'Night';
@@ -487,6 +650,7 @@ export class BugHuntScene extends Phaser.Scene {
     if (returnScene === 'Night') {
       state.bountyPlayedTonight = true;
     }
+    Telemetry.patchBugBounty(this.totalEarned, this.bugCount, 'oldschool', this.shotsFired, 0);
 
     // End overlay — same structure as BugBountyScene
     const overlayX = GAME_WIDTH / 2;
@@ -497,6 +661,7 @@ export class BugHuntScene extends Phaser.Scene {
       { text: "Time's up!", color: '#58a6ff', size: '26px' },
       { text: `Bugs squashed: ${this.bugCount}`, color: '#e6edf3', size: '16px' },
       { text: `Earned: $${this.totalEarned}`, color: '#e6edf3', size: '16px' },
+      { text: `Shots fired: ${this.shotsFired}`, color: '#9da5b0', size: '16px' },
       { text: 'Old School Bonus: ×1.5', color: '#ffd700', size: '16px' },
       { text: `Total: $${earned1_5x}`, color: '#3fb950', size: '18px' },
     ];
@@ -527,7 +692,5 @@ export class BugHuntScene extends Phaser.Scene {
     btn.on('pointerdown', () => this.scene.start(returnScene));
   }
 
-  shutdown(): void {
-    AudioManager.getInstance().playMusic('night');
-  }
+  shutdown(): void {}
 }
