@@ -226,9 +226,7 @@ export class BriefingScene extends Phaser.Scene {
     // Snapshot day-start resources
     state.dayStartBudget = state.budget;
     state.dayStartHardware = state.hardwareHp;
-    const dayPromptCount = DAY_PROMPTS.find(d => d.day === state.day)?.prompts.length ?? 10;
-    state.timeUnitsRemaining = dayPromptCount;
-    state.dayStartTimeUnits = dayPromptCount;
+    // Timer is now seconds-based — no time unit initialization needed
     
     this.cameras.main.setBackgroundColor(COLORS.bg);
     drawWallpaper(this, state.playerClass);

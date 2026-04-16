@@ -22,7 +22,7 @@ export interface DaySnapshot {
   agents: string[];
   progress: number; // 0-100
   accuracy: number; // 0-1
-  timeUnitsRemaining: number;
+  timerBonusSeconds: number;
   baseRep: number;
   accuracyBonus: number;
   strategyBonus: number;
@@ -86,7 +86,7 @@ function createBlankSnapshot(
     agents: [...state.activeAgents],
     progress: state.lastDayResult?.progress ?? 0,
     accuracy: state.lastDayResult?.accuracy ?? 0,
-    timeUnitsRemaining: state.timeUnitsRemaining,
+    timerBonusSeconds: state.timerBonusSeconds,
     baseRep: dayScore.baseRep,
     accuracyBonus: dayScore.accuracyBonus,
     strategyBonus: dayScore.strategyBonus,

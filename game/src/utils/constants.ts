@@ -4,8 +4,7 @@ export const GAME_HEIGHT = 720;
 
 // Timing
 export const TOTAL_DAYS = 13;
-export const TIME_UNITS_PER_DAY = 10;
-export const TYPING_INTERVAL_MS = 4500; // ~4.5 sec per time unit
+export const BASE_TIMER_SECONDS = 45;
 export const EVENT_INTERVAL_MS = 9000; // event every ~9 sec
 
 // Colors — PromptOS base theme (overridden per class)

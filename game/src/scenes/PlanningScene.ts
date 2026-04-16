@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { GAME_WIDTH, GAME_HEIGHT, COLORS, TIME_UNITS_PER_DAY } from '../utils/constants';
+import { GAME_WIDTH, GAME_HEIGHT, COLORS } from '../utils/constants';
 import { getState } from '../systems/GameState';
 import type { Strategy, ModelTier } from '../systems/GameState';
 import { getTheme } from '../utils/themes';
@@ -24,15 +24,15 @@ interface StrategyOption {
   name: string;
   icon: string;
   desc: string;
-  timeBonus: number;  // extra time units
+  timeBonus: number;  // timer seconds bonus
   riskLabel: string;
 }
 
 const STRATEGIES: StrategyOption[] = [
-  { id: 'planThenBuild', name: 'Plan Then Build', icon: '🎯', desc: 'Slower start, higher success rate, fewer hallucinations.', timeBonus: 2, riskLabel: EconomySystem.getStrategyModifier('planThenBuild').riskLabel },
+  { id: 'planThenBuild', name: 'Plan Then Build', icon: '🎯', desc: 'Slower start, higher success rate, fewer hallucinations.', timeBonus: 6, riskLabel: EconomySystem.getStrategyModifier('planThenBuild').riskLabel },
   { id: 'justStart', name: 'Just Start Building', icon: '🚀', desc: 'Medium speed, medium risk. The reliable choice.', timeBonus: 0, riskLabel: EconomySystem.getStrategyModifier('justStart').riskLabel },
-  { id: 'oneShot', name: 'One-Shot It', icon: '🎲', desc: 'Fast and cheap on time. High hallucination chance.', timeBonus: -2, riskLabel: EconomySystem.getStrategyModifier('oneShot').riskLabel },
-  { id: 'vibeCode', name: 'Vibe Code', icon: '🧠', desc: 'Wildcard. Could be brilliant or catastrophic.', timeBonus: 1, riskLabel: EconomySystem.getStrategyModifier('vibeCode').riskLabel },
+  { id: 'oneShot', name: 'One-Shot It', icon: '🎲', desc: 'Fast and cheap on time. High hallucination chance.', timeBonus: -6, riskLabel: EconomySystem.getStrategyModifier('oneShot').riskLabel },
+  { id: 'vibeCode', name: 'Vibe Code', icon: '🧠', desc: 'Wildcard. Could be brilliant or catastrophic.', timeBonus: 3, riskLabel: EconomySystem.getStrategyModifier('vibeCode').riskLabel },
 ];
 
 export class PlanningScene extends Phaser.Scene {
@@ -418,12 +418,16 @@ export class PlanningScene extends Phaser.Scene {
     }
   }
 
+  private lastStrategyTimeBonus = 0;
+
   private selectStrategy(option: StrategyOption, index: number): void {
     this.selectedStrategy = option.id;
     const state = getState();
     state.strategy = option.id;
-    const base = state.dayStartTimeUnits ?? TIME_UNITS_PER_DAY;
-    state.timeUnitsRemaining = base + option.timeBonus;
+    // Undo previous selection's bonus, apply new one
+    state.timerBonusSeconds -= this.lastStrategyTimeBonus;
+    state.timerBonusSeconds += option.timeBonus;
+    this.lastStrategyTimeBonus = option.timeBonus;
 
     // Highlight selected card
     this.cards.forEach((c, i) => {

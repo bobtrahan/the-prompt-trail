@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { GAME_WIDTH, GAME_HEIGHT, COLORS, TIME_UNITS_PER_DAY } from '../utils/constants';
+import { GAME_WIDTH, GAME_HEIGHT, COLORS, BASE_TIMER_SECONDS } from '../utils/constants';
 import { DAY_PROMPTS, OVERTIME_PROMPTS } from '../data/prompts';
 import { EVENT_SCHEDULE } from '../data/eventTriggers';
 import { getState, type GameState } from '../systems/GameState';
@@ -29,14 +29,14 @@ function formatEffectHint(effects: EventEffect[]): string {
       case 'budget':
         return typeof effect.value === 'number' ? `${effect.value >= 0 ? '+' : '−'}$${Math.abs(effect.value)}` : [];
       case 'time':
-        return typeof effect.value === 'number' ? `${formatSigned(effect.value)}s` : [];
+        return typeof effect.value === 'number' ? `${formatSigned(effect.value * 3)}s timer` : [];
       case 'hardware':
         return typeof effect.value === 'number' ? `${formatSigned(effect.value)} HP` : [];
       case 'reputation':
         return typeof effect.value === 'number' ? `${formatSigned(effect.value)} rep` : [];
       case 'agentSpeed': {
         if (typeof effect.value !== 'number') return [];
-        const secs = Math.round(45 * (effect.value / 100));
+        const secs = Math.round(BASE_TIMER_SECONDS * (effect.value / 100));
         return `${secs >= 0 ? '+' : '−'}${Math.abs(secs)}s timer`;
       }
       case 'flag':
@@ -72,7 +72,6 @@ export class ExecutionScene extends Phaser.Scene {
   private progressBg!: Phaser.GameObjects.Rectangle;
   private progressText!: Phaser.GameObjects.Text;
   private progress = 0;
-  private timeUnits = TIME_UNITS_PER_DAY;
   private timeSeconds = 45;
   private maxTimeSeconds = 45;
   private timeBar!: Phaser.GameObjects.Rectangle;
@@ -269,7 +268,6 @@ export class ExecutionScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor(COLORS.bg);
     drawWallpaper(this, state.playerClass);
     this.progress = 0;
-    this.timeUnits = state.timeUnitsRemaining;
     this.startedTyping = false;
     this.agentPanelStates = [];
 
@@ -529,14 +527,14 @@ export class ExecutionScene extends Phaser.Scene {
     this.traitResults.forEach(res => {
       if (res.fired) {
         if (res.trait === 'architecture_debates') {
-          state.timeUnitsRemaining -= 1;
+          state.timerBonusSeconds -= 3; // costs 1 time unit = 3s
           this.terminal.addLine("🤖 Linter: 'We need to discuss the architecture first.'");
         } else if (res.trait === 'deploy_unapproved') {
           this.progress = Math.min(100, this.progress + 10);
           state.eventFlags['turbo_deployed'] = true;
           this.terminal.addLine("🤖 Turbo: 'Already deployed. You're welcome.'");
         } else if (res.trait === 'feature_creep') {
-          state.timeUnitsRemaining -= 2;
+          state.timerBonusSeconds -= 6; // costs 2 time units = 6s
           this.terminal.addLine("🤖 Scope: 'I added dark mode and a settings page! You're welcome!'");
         } else if (res.trait === 'low_hallucination') {
           this.terminal.addLine("🤖 Oracle: 'I have seen the future. It is... mostly fine.'");
@@ -548,8 +546,6 @@ export class ExecutionScene extends Phaser.Scene {
       }
     });
 
-    // Update timeUnits in case traits changed it
-    this.timeUnits = state.timeUnitsRemaining;
     this.updateProgressBar();
 
     // ── Typing engine — timers start on first keystroke ──
@@ -565,8 +561,7 @@ export class ExecutionScene extends Phaser.Scene {
     const dayPromptDef = DAY_PROMPTS.find(d => d.day === state.day);
     if (dayPromptDef) {
       this.typingEngine.setDayPrompts(dayPromptDef.prompts);
-      this.timeUnits = dayPromptDef.prompts.length + (state.timeUnitsRemaining - this.timeUnits);
-      state.timeUnitsRemaining = this.timeUnits;
+      // Prompt count is tracked by TypingEngine, no time unit mapping needed
     }
 
     // ── Process consumables and show notification sequence before typing begins ──
@@ -634,10 +629,9 @@ export class ExecutionScene extends Phaser.Scene {
 
     // Calculate final timer: base 45s + agent speed mod + event bonuses
     const state = getState();
-    const BASE_TIMER = 45;
-    const agentSpeedSeconds = Math.round(BASE_TIMER * this.speedMod);
+    const agentSpeedSeconds = Math.round(BASE_TIMER_SECONDS * this.speedMod);
     const eventBonus = state.timerBonusSeconds;
-    this.timeSeconds = Math.max(10, BASE_TIMER + agentSpeedSeconds + eventBonus);
+    this.timeSeconds = Math.max(10, BASE_TIMER_SECONDS + agentSpeedSeconds + eventBonus);
     this.maxTimeSeconds = this.timeSeconds;
 
     this.dayTimer = this.time.addEvent({
@@ -695,9 +689,7 @@ export class ExecutionScene extends Phaser.Scene {
   private tickTime(): void {
     if (window.__GOD_MODE) return;
     this.timeSeconds--;
-    this.timeUnits--;
     const state = getState();
-    state.timeUnitsRemaining = this.timeUnits;
 
     const frac = this.timeSeconds / this.maxTimeSeconds;
     this.timeBar.width = this.timeBg.width * frac;
@@ -925,6 +917,7 @@ export class ExecutionScene extends Phaser.Scene {
 
     const state = getState();
     const resolvedEventId = this.currentEvent?.id;
+    const timerBefore = state.timerBonusSeconds;
     const logs = this.eventEngine.applyEffects(choice, state);
     Telemetry.logEvent(this.currentEvent?.id ?? 'auto-resolve', choiceIndex, logs);
     for (const line of logs) {
@@ -965,8 +958,12 @@ export class ExecutionScene extends Phaser.Scene {
       this.dayFirstEvent = false;
     }
 
-    // Sync local timeUnits from state (in case event changed time)
-    this.timeUnits = state.timeUnitsRemaining;
+    // Apply any mid-execution timer changes from this event
+    const timerDelta = state.timerBonusSeconds - timerBefore;
+    if (timerDelta !== 0 && this.dayTimer) {
+      this.timeSeconds = Math.max(0, this.timeSeconds + timerDelta);
+      this.maxTimeSeconds = Math.max(this.maxTimeSeconds, this.timeSeconds);
+    }
 
     // ── Parse logs for impact feedback ──
     this.applyImpactFeedback(logs, state);

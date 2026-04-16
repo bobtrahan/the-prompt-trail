@@ -19,8 +19,7 @@ export interface GameState {
   budget: number;
   hardwareHp: number;
   reputation: number;
-  timeUnitsRemaining: number;
-  timerBonusSeconds: number; // accumulated from events (agentSpeed/time effects)
+  timerBonusSeconds: number; // accumulated from events/strategy/traits
 
   // Current day config
   strategy: Strategy | null;
@@ -68,7 +67,7 @@ export interface GameState {
   bugHuntReturnScene: string;
   dayStartBudget: number;
   dayStartHardware: number;
-  dayStartTimeUnits?: number;
+
 }
 
 export function createInitialState(): GameState {
@@ -80,7 +79,6 @@ export function createInitialState(): GameState {
     budget: 0,
     hardwareHp: 100,
     reputation: 0,
-    timeUnitsRemaining: 10,
     timerBonusSeconds: 0,
     strategy: null,
     model: 'free',
@@ -106,7 +104,7 @@ export function createInitialState(): GameState {
     bugHuntReturnScene: 'Night',
     dayStartBudget: 0,
     dayStartHardware: 100,
-    dayStartTimeUnits: undefined,
+
   };
 }
 
