@@ -111,11 +111,7 @@ gamedevjs-2026/
 
 ### Remaining
 
-- [ ] **Audio normalization** — levels are uneven across music/SFX/voice; normalize all assets to consistent loudness
-- [ ] **Granular audio controls** — add PromptOS settings panel with sliders for Master, Music, SFX, Voice, plus mute toggle (AudioManager already supports per-channel volumes)
-- [ ] **Debug menu: scene jumps** — add Bug Bounty and Token Market jump buttons to the debug menu
-- [ ] **Balance tuning** — play 2-3 runs, review telemetry, adjust difficulty curve, costs, event frequency
-- [ ] **Per-class visual differentiation** — terminal themes beyond accent colors (wallpapers already done)
+- [ ] **Balance audit + tuning** — full mechanics audit (events, items, strategies, agents), fix no-op decisions, tune economy. TOP PRIORITY.
 - [ ] **Deploy** — itch.io, GitHub Pages, Wavedash. Vite build + test
 - [ ] **README + screenshots** for jam submission
 
@@ -129,8 +125,31 @@ gamedevjs-2026/
 | 6: Code Crusades | ✅ Complete |
 | 6.5: New Features | ✅ Complete (Bug Hunt, typing rework, events, Agent Manager, voice) |
 | 7: Visual Polish | ✅ Complete (Apr 15 evening session — see below) |
-| 8: Audio + Controls Polish | In Progress |
-| 9: Balance + Deploy + Submit | Pending (deadline: Apr 26) |
+| 8: Audio + Controls Polish | ✅ Complete (Apr 15-16 late session) |
+| 8.5: Per-Class Visual Differentiation | ✅ Complete (Apr 16 late session) |
+| 9: Balance + Deploy + Submit | In Progress (deadline: Apr 26) |
+
+### Phase 8: Audio + Controls Polish (Apr 15-16 late session)
+- [x] **Audio normalization** — all 48 files: music -16 LUFS, voice -16 LUFS, SFX -12 LUFS
+- [x] **SFX volume rebalance** — all SFX normalized to boot reference level (-13.8dB mean)
+- [x] **SFX replacement** — key-correct (real CC0 mechanical keyboard sample), ui-click (noise thock), choice-select (noise double-tap)
+- [x] **Granular audio controls** — voiceVolume channel in AudioManager + PromptOS settings panel (Master/Music/SFX/Voice sliders + mute)
+- [x] **Debug menu scene jumps** — Bug Bounty + Token Market buttons
+- [x] **Removed hover SFX** — Night scene and BugBountySelect no longer play sounds on hover
+- [x] **Day 3 résumé fix** — regenerated voice clip with correct pronunciation
+- [x] **Night dialog redesign** — side-by-side cards with procedural illustrations (bug/crosshair, shop/coins), tomorrow preview cut
+- [x] **Narrator descriptions** — 4 new voice clips (Bug Bounty, Token Market, Old School, Use AI) with ? info buttons
+- [x] **ClassSelect rework** — voice on click (not hover), selected state, Continue button
+- [x] **Progress bar fix** — power-curve driven by prompts completed (slow buildup, big final-prompt payoff)
+- [x] **Bug fixes** — Token Market tab input priority, bullet collision sweep, player spawn overlap, disabled card opacity
+
+### Phase 8.5: Per-Class Visual Differentiation (Apr 16 late session)
+- [x] **Theme system expansion** — per-class: terminal text/bg, title bar, taskbar bg/border, cursor character
+- [x] **Terminal/Taskbar/Window wiring** — Boris wired theme values through all UI components
+- [x] **Boot sequence per-class** — Vlad added unique POST messages (Tech Bro overclocked, Indie budget, Student campus, Corporate VPN)
+- [x] **Wallpaper enhancements** — floating hex (Tech Bro), star scatter (Indie), notebook doodles (Student), spreadsheet + CONFIDENTIAL (Corporate)
+- [x] **Agent Manager tinting** — subtle accent tint on panel background
+- [x] **Cursor styles** — Tech Bro █, Indie Hacker _, College Student |, Corporate Dev ▌
 
 ### Phase 7: Visual Polish (Apr 15 evening)
 - [x] **Boot sequence** — progress bar fills smoothly through POST/kernel/splash, holds at 100% before transition
