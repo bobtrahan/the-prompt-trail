@@ -36,6 +36,11 @@ export function telemetryPlugin(): Plugin {
                   const dir = path.join(baseDir, 'runs');
                   fs.mkdirSync(dir, { recursive: true });
                   filePath = path.join(dir, `${date}_${playerClass}_${rank}_run.json`);
+                } else if (url.includes('/bughunt')) {
+                  const dir = path.join(baseDir, 'bughunt');
+                  fs.mkdirSync(dir, { recursive: true });
+                  const dd = String(day || 0).padStart(2, '0');
+                  filePath = path.join(dir, `${date}_${playerClass}_day${dd}_bughunt.json`);
                 }
 
                 if (filePath) {
