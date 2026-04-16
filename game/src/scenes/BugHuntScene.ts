@@ -158,31 +158,24 @@ export class BugHuntScene extends Phaser.Scene {
   // Code block obstacles
   private codeBlocks: CodeBlock[] = [];
 
-  // Player (auto-walk)
+  // Player
   private playerX = 0;
   private playerY = 0;
   private playerGfx!: Phaser.GameObjects.Graphics;
-  private playerDir = { x: 1, y: 0.6 }; // auto-walk direction
-  private playerSpeed = PLAYER_SPEED;
+  private facingX = 0;
+  private facingY = -1; // facing up by default
+  private walking = false;
 
   // Aiming
   private crosshairGfx!: Phaser.GameObjects.Graphics;
-  private aimAngle = 0;
+  private aimAngle = -Math.PI / 2;
   private crosshairX = 0;
   private crosshairY = 0;
 
-  // Input
-  private keyUp!: Phaser.Input.Keyboard.Key;
-  private keyDown!: Phaser.Input.Keyboard.Key;
-  private keyLeft!: Phaser.Input.Keyboard.Key;
-  private keyRight!: Phaser.Input.Keyboard.Key;
-  private keyW!: Phaser.Input.Keyboard.Key;
-  private keyA!: Phaser.Input.Keyboard.Key;
-  private keyS!: Phaser.Input.Keyboard.Key;
-  private keyD!: Phaser.Input.Keyboard.Key;
-  private keySpace!: Phaser.Input.Keyboard.Key;
-  private aimDirX = 0;
-  private aimDirY = -1; // default aim up
+  // Input (raw DOM to avoid Phaser keyboard conflicts)
+  private keysDown = new Set<string>();
+  private keyDownHandler!: (e: KeyboardEvent) => void;
+  private keyUpHandler!: (e: KeyboardEvent) => void;
 
   // Game state
   private bugCount = 0;
@@ -225,9 +218,10 @@ export class BugHuntScene extends Phaser.Scene {
     this.bugs = [];
     this.escapedBugs = 0;
     this.lastSpawn = 0;
-    // Randomize initial auto-walk direction
-    const angle = Math.random() * Math.PI * 2;
-    this.playerDir = { x: Math.cos(angle), y: Math.sin(angle) };
+    this.facingX = 0;
+    this.facingY = -1;
+    this.walking = false;
+    this.keysDown.clear();
     this.shotsHit = 0;
     this.lastCatchTime = 0;
     this.comboCount = 0;
@@ -324,20 +318,23 @@ export class BugHuntScene extends Phaser.Scene {
       ease: 'Sine.easeInOut',
     });
 
-    // ── Input (WASD/arrows aim, space fires — Oregon Trail style) ─────────
-    const kb = this.input.keyboard!;
-    kb.removeAllKeys(true); // clean slate from previous scene
-    this.keyUp    = kb.addKey(Phaser.Input.Keyboard.KeyCodes.UP);
-    this.keyDown  = kb.addKey(Phaser.Input.Keyboard.KeyCodes.DOWN);
-    this.keyLeft  = kb.addKey(Phaser.Input.Keyboard.KeyCodes.LEFT);
-    this.keyRight = kb.addKey(Phaser.Input.Keyboard.KeyCodes.RIGHT);
-    this.keyW = kb.addKey(Phaser.Input.Keyboard.KeyCodes.W);
-    this.keyA = kb.addKey(Phaser.Input.Keyboard.KeyCodes.A);
-    this.keyS = kb.addKey(Phaser.Input.Keyboard.KeyCodes.S);
-    this.keyD = kb.addKey(Phaser.Input.Keyboard.KeyCodes.D);
-    this.keySpace = kb.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+    // ── Input (raw DOM — bypasses Phaser keyboard conflicts) ─────────────
+    this.keyDownHandler = (e: KeyboardEvent) => {
+      const k = e.key.toLowerCase();
+      if (['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright','enter',' '].includes(k)) {
+        e.preventDefault();
+      }
+      this.keysDown.add(k);
+    };
+    this.keyUpHandler = (e: KeyboardEvent) => {
+      this.keysDown.delete(e.key.toLowerCase());
+    };
+    window.addEventListener('keydown', this.keyDownHandler);
+    window.addEventListener('keyup', this.keyUpHandler);
 
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      window.removeEventListener('keydown', this.keyDownHandler);
+      window.removeEventListener('keyup', this.keyUpHandler);
       this.destroyAllBullets();
       this.destroyAllBugs();
       AudioManager.getInstance().playMusic('night');
@@ -517,13 +514,10 @@ export class BugHuntScene extends Phaser.Scene {
   private fireBullet(): void {
     if (this.ended || this.ammo <= 0) return;
 
-    const dirX = this.crosshairX - this.playerX;
-    const dirY = this.crosshairY - this.playerY;
-    const len = Math.hypot(dirX, dirY);
-    if (len === 0) return;
-
-    const dx = dirX / len;
-    const dy = dirY / len;
+    // Fire in facing direction
+    const dx = this.facingX;
+    const dy = this.facingY;
+    if (dx === 0 && dy === 0) return;
     const trail = this.add.graphics().setDepth(BULLET_TRAIL_DEPTH);
     const graphics = this.add.graphics().setDepth(BULLET_DEPTH);
     const bullet: Bullet = {
@@ -1028,62 +1022,70 @@ export class BugHuntScene extends Phaser.Scene {
       this.lastSpawn = time;
     }
 
-    // ── Auto-walk (Oregon Trail style — player bounces around, you just aim) ──
+    // ── Oregon Trail controls: WASD/arrows turn, Enter walks, Space fires ──
     const dt = delta / 1000;
+    const keys = this.keysDown;
 
-    let newX = this.playerX + this.playerDir.x * this.playerSpeed * dt;
-    let newY = this.playerY + this.playerDir.y * this.playerSpeed * dt;
+    // Direction input
+    let dx = 0;
+    let dy = 0;
+    if (keys.has('a') || keys.has('arrowleft'))  dx -= 1;
+    if (keys.has('d') || keys.has('arrowright')) dx += 1;
+    if (keys.has('w') || keys.has('arrowup'))    dy -= 1;
+    if (keys.has('s') || keys.has('arrowdown'))  dy += 1;
 
-    // Arena edge bounce
-    if (newX - PLAYER_HW < this.arenaX) {
-      this.playerDir.x = Math.abs(this.playerDir.x);
-      newX = this.arenaX + PLAYER_HW;
-    } else if (newX + PLAYER_HW > this.arenaX + this.arenaW) {
-      this.playerDir.x = -Math.abs(this.playerDir.x);
-      newX = this.arenaX + this.arenaW - PLAYER_HW;
-    }
-    if (newY - PLAYER_HH < this.arenaY) {
-      this.playerDir.y = Math.abs(this.playerDir.y);
-      newY = this.arenaY + PLAYER_HH;
-    } else if (newY + PLAYER_HH > this.arenaY + this.arenaH) {
-      this.playerDir.y = -Math.abs(this.playerDir.y);
-      newY = this.arenaY + this.arenaH - PLAYER_HH;
+    // Turn to face that direction (and start walking)
+    if (dx !== 0 || dy !== 0) {
+      const len = Math.hypot(dx, dy);
+      this.facingX = dx / len;
+      this.facingY = dy / len;
+      this.walking = true;
     }
 
-    // Code block bounce
-    for (const block of this.codeBlocks) {
-      if (this.circleOverlapsRect(newX, this.playerY, PLAYER_HW, block)) {
-        this.playerDir.x = -this.playerDir.x;
-        newX = this.playerX;
+    // Enter toggles walk
+    if (keys.has('enter')) {
+      this.walking = !this.walking;
+      keys.delete('enter'); // consume so it doesn't toggle every frame
+    }
+
+    this.aimAngle = Math.atan2(this.facingY, this.facingX);
+
+    // Move if walking
+    if (this.walking) {
+      let newX = this.playerX + this.facingX * PLAYER_SPEED * dt;
+      let newY = this.playerY + this.facingY * PLAYER_SPEED * dt;
+
+      let stopped = false;
+
+      // Arena edge — stop on hit
+      if (newX - PLAYER_HW < this.arenaX || newX + PLAYER_HW > this.arenaX + this.arenaW) {
+        newX = Phaser.Math.Clamp(newX, this.arenaX + PLAYER_HW, this.arenaX + this.arenaW - PLAYER_HW);
+        stopped = true;
       }
-      if (this.circleOverlapsRect(this.playerX, newY, PLAYER_HH, block)) {
-        this.playerDir.y = -this.playerDir.y;
-        newY = this.playerY;
+      if (newY - PLAYER_HH < this.arenaY || newY + PLAYER_HH > this.arenaY + this.arenaH) {
+        newY = Phaser.Math.Clamp(newY, this.arenaY + PLAYER_HH, this.arenaY + this.arenaH - PLAYER_HH);
+        stopped = true;
       }
+
+      // Code block collision — stop on hit
+      for (const block of this.codeBlocks) {
+        if (this.circleOverlapsRect(newX, newY, Math.max(PLAYER_HW, PLAYER_HH), block)) {
+          newX = this.playerX;
+          newY = this.playerY;
+          stopped = true;
+          break;
+        }
+      }
+
+      this.playerX = newX;
+      this.playerY = newY;
+      if (stopped) this.walking = false;
     }
 
-    this.playerX = newX;
-    this.playerY = newY;
-
-    // ── Aim from WASD/arrows (8 directions, Oregon Trail style) ──────────
-    let ax = 0;
-    let ay = 0;
-    if (this.keyLeft.isDown  || this.keyA.isDown) ax -= 1;
-    if (this.keyRight.isDown || this.keyD.isDown) ax += 1;
-    if (this.keyUp.isDown    || this.keyW.isDown) ay -= 1;
-    if (this.keyDown.isDown  || this.keyS.isDown) ay += 1;
-
-    // Only update aim direction when keys are held
-    if (ax !== 0 || ay !== 0) {
-      const len = Math.hypot(ax, ay);
-      this.aimDirX = ax / len;
-      this.aimDirY = ay / len;
-    }
-    this.aimAngle = Math.atan2(this.aimDirY, this.aimDirX);
-
-    // Fire on space (poll-based, not event-based)
-    if (Phaser.Input.Keyboard.JustDown(this.keySpace)) {
+    // Fire on space
+    if (keys.has(' ')) {
       this.fireBullet();
+      keys.delete(' '); // consume so it fires once per press
     }
 
     this.updateBullets(dt);

@@ -37,7 +37,7 @@ const MODE_OPTIONS: ModeOption[] = [
     key: 'oldschool',
     title: 'Old School',
     icon: '🏹',
-    subtitle: 'Hunt bugs the way God intended. Auto-walk + WASD/arrows aim.',
+    subtitle: 'Hunt bugs the way God intended. Turn + Enter to walk, Space to fire.',
     difficulty: '★★★',
     note: '1.5× earnings',
     targetScene: 'BugHunt',
