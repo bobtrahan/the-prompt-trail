@@ -20,6 +20,7 @@ export interface GameState {
   hardwareHp: number;
   reputation: number;
   timeUnitsRemaining: number;
+  timerBonusSeconds: number; // accumulated from events (agentSpeed/time effects)
 
   // Current day config
   strategy: Strategy | null;
@@ -80,6 +81,7 @@ export function createInitialState(): GameState {
     hardwareHp: 100,
     reputation: 0,
     timeUnitsRemaining: 10,
+    timerBonusSeconds: 0,
     strategy: null,
     model: 'free',
     activeAgents: [],

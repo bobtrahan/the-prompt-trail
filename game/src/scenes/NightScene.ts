@@ -342,6 +342,7 @@ export class NightScene extends Phaser.Scene {
     state.hasDuckProtection = false;
     state.modelCostDiscount = 0;
     state.consumablesUsedToday = [];
+    state.timerBonusSeconds = 0;
 
     if (this.ledTween) this.ledTween.stop();
     this.led.setAlpha(1);

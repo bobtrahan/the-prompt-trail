@@ -34,10 +34,11 @@ function formatEffectHint(effects: EventEffect[]): string {
         return typeof effect.value === 'number' ? `${formatSigned(effect.value)} HP` : [];
       case 'reputation':
         return typeof effect.value === 'number' ? `${formatSigned(effect.value)} rep` : [];
-      case 'agentSpeed':
-        return typeof effect.value === 'number'
-          ? `${effect.value >= 0 ? '+' : '−'}${Math.round(Math.abs(effect.value) * 100)}% speed`
-          : [];
+      case 'agentSpeed': {
+        if (typeof effect.value !== 'number') return [];
+        const secs = Math.round(45 * (effect.value / 100));
+        return `${secs >= 0 ? '+' : '−'}${Math.abs(secs)}s timer`;
+      }
       case 'flag':
       case 'modelSwitch':
         return [];
@@ -73,6 +74,7 @@ export class ExecutionScene extends Phaser.Scene {
   private progress = 0;
   private timeUnits = TIME_UNITS_PER_DAY;
   private timeSeconds = 45;
+  private maxTimeSeconds = 45;
   private timeBar!: Phaser.GameObjects.Rectangle;
   private timeBg!: Phaser.GameObjects.Rectangle;
   private timeText!: Phaser.GameObjects.Text;
@@ -630,8 +632,14 @@ export class ExecutionScene extends Phaser.Scene {
       onComplete: () => this.typeHint.destroy(),
     });
 
-    // NOW start the day timer — fixed 45 seconds, ticks every 1s
-    this.timeSeconds = 45;
+    // Calculate final timer: base 45s + agent speed mod + event bonuses
+    const state = getState();
+    const BASE_TIMER = 45;
+    const agentSpeedSeconds = Math.round(BASE_TIMER * this.speedMod);
+    const eventBonus = state.timerBonusSeconds;
+    this.timeSeconds = Math.max(10, BASE_TIMER + agentSpeedSeconds + eventBonus);
+    this.maxTimeSeconds = this.timeSeconds;
+
     this.dayTimer = this.time.addEvent({
       delay: 1000,
       repeat: this.timeSeconds - 1,
@@ -691,7 +699,7 @@ export class ExecutionScene extends Phaser.Scene {
     const state = getState();
     state.timeUnitsRemaining = this.timeUnits;
 
-    const frac = this.timeSeconds / 45;
+    const frac = this.timeSeconds / this.maxTimeSeconds;
     this.timeBar.width = this.timeBg.width * frac;
     this.timeText.setText(`⏱️ Time: ${this.timeSeconds}s`);
     if (frac <= 0.3) this.timeBar.setFillStyle(COLORS.error);
@@ -1030,7 +1038,7 @@ export class ExecutionScene extends Phaser.Scene {
         const label = m ? `${m[1]} ⏱️` : '⏱️';
         summaryParts.push(label);
         // Color pulse on time bar
-        const origColor = this.timeSeconds / 45 <= 0.3 ? COLORS.error : COLORS.warning;
+        const origColor = this.timeSeconds / this.maxTimeSeconds <= 0.3 ? COLORS.error : COLORS.warning;
         this.timeBar.setFillStyle(0xffffff);
         this.time.delayedCall(200, () => this.timeBar.setFillStyle(origColor));
       } else if (log.startsWith('> HARDWARE')) {

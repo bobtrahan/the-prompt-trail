@@ -156,11 +156,11 @@ export class EventEngine {
         }
 
         case 'agentSpeed': {
-          // agentSpeed is a transient modifier — store in eventFlags as numeric string for now
-          const amount = effect.value as number;
-          const key = `agentSpeedMod_${Date.now()}`;
-          state.eventFlags[key] = true;
-          logs.push(`> AGENT SPEED ${amount >= 0 ? '+' : ''}${amount}%`);
+          // Convert speed % to timer seconds: +10% speed ≈ +4.5s on 45s base → round to nearest
+          const pct = effect.value as number;
+          const seconds = Math.round(45 * (pct / 100));
+          state.timerBonusSeconds += seconds;
+          logs.push(`> SPEED ${pct >= 0 ? '+' : ''}${pct}% → ${seconds >= 0 ? '+' : ''}${seconds}s on timer`);
           break;
         }
 
