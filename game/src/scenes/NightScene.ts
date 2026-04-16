@@ -178,8 +178,8 @@ export class NightScene extends Phaser.Scene {
       disabled: bountyAlreadyPlayed,
       disabledText: 'Already played tonight',
       drawThumb: (tx, ty, tw, th) => drawBugBountyThumb(this, tx, ty, tw, th, theme.accent),
+      voiceId: 'night-bugbounty',
       onClick: () => {
-        AudioManager.getInstance().playVoice('night-bugbounty');
         state.bugHuntReturnScene = 'Night';
         this.scene.start('BugBountySelect');
       },
@@ -198,8 +198,8 @@ export class NightScene extends Phaser.Scene {
       subtitle: 'Upgrade your setup',
       disabled: false,
       drawThumb: (tx, ty, tw, th) => drawTokenMarketThumb(this, tx, ty, tw, th, theme.accent),
+      voiceId: 'night-tokenmarket',
       onClick: () => {
-        AudioManager.getInstance().playVoice('night-tokenmarket');
         this.scene.start('TokenMarket');
       },
     });
@@ -231,6 +231,7 @@ export class NightScene extends Phaser.Scene {
       accent: number; accentHex: string;
       emoji: string; title: string; subtitle: string;
       disabled: boolean; disabledText?: string;
+      voiceId?: string;
       drawThumb: (x: number, y: number, w: number, h: number) => Phaser.GameObjects.Container;
       onClick: () => void;
     },
@@ -310,6 +311,26 @@ export class NightScene extends Phaser.Scene {
       cta.setColor('#484f58');
     });
     hitZone.on('pointerdown', () => opts.onClick());
+
+    // Info button — plays narrator clip without navigating
+    if (opts.voiceId) {
+      const infoBtn = this.add.text(x + w - 24, y + 6, '?', {
+        fontFamily: 'monospace',
+        fontSize: '14px',
+        color: '#0d1117',
+        backgroundColor: '#9da5b0',
+        padding: { x: 5, y: 1 },
+      }).setInteractive({ useHandCursor: true }).setDepth(10);
+
+      const voiceId = opts.voiceId;
+      infoBtn.on('pointerover', () => infoBtn.setBackgroundColor(accentHex));
+      infoBtn.on('pointerout', () => infoBtn.setBackgroundColor('#9da5b0'));
+      infoBtn.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+        pointer.event.stopPropagation();
+        AudioManager.getInstance().playVoice(voiceId);
+      });
+      win.add(infoBtn);
+    }
   }
 
   private advance(): void {

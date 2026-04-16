@@ -181,9 +181,26 @@ export class BugBountySelectScene extends Phaser.Scene {
       const state = getState();
       state.bugHuntMode = option.key;
       state.bugHuntReturnScene = returnScene;
-      const voiceId = option.key === 'oldschool' ? 'mode-oldschool' : 'mode-useai';
-      AudioManager.getInstance().playVoice(voiceId);
       this.scene.start(option.targetScene);
     });
+
+    // Info button — plays narrator description without navigating
+    const voiceId = option.key === 'oldschool' ? 'mode-oldschool' : 'mode-useai';
+    const accentHex = `#${accent.toString(16).padStart(6, '0')}`;
+    const infoBtn = this.add.text(x + CARD_W - 36, y + 8, '?', {
+      fontFamily: 'monospace',
+      fontSize: '14px',
+      color: '#0d1117',
+      backgroundColor: '#9da5b0',
+      padding: { x: 5, y: 1 },
+    }).setInteractive({ useHandCursor: true }).setDepth(10);
+
+    infoBtn.on('pointerover', () => infoBtn.setBackgroundColor(accentHex));
+    infoBtn.on('pointerout', () => infoBtn.setBackgroundColor('#9da5b0'));
+    infoBtn.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+      pointer.event.stopPropagation();
+      AudioManager.getInstance().playVoice(voiceId);
+    });
+    win.add(infoBtn);
   }
 }
