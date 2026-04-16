@@ -39,6 +39,7 @@ export interface GameState {
   activeConsumables: string[];
   purchasedJokes: string[];
   bountyPlayedTonight: boolean;
+  bugHuntMode: 'ai' | 'oldschool';
 
   // Class restrictions & hardware
   lockedStrategies: Strategy[];
@@ -63,6 +64,7 @@ export interface GameState {
     hardwareDelta: number;
   };
   overtimeBonus: number;
+  bugHuntMode: 'ai' | 'oldschool';
   bugHuntReturnScene: string;
   dayStartBudget: number;
   dayStartHardware: number;
@@ -89,6 +91,7 @@ export function createInitialState(): GameState {
     activeConsumables: [],
     purchasedJokes: [],
     bountyPlayedTonight: false,
+    bugHuntMode: 'ai',
     lockedStrategies: [],
     lockedModels: [],
     localSlots: 0,
@@ -98,6 +101,7 @@ export function createInitialState(): GameState {
     modelCostDiscount: 0,
     consumablesUsedToday: [],
     overtimeBonus: 0,
+    bugHuntMode: 'ai',
     bugHuntReturnScene: 'Night',
     dayStartBudget: 0,
     dayStartHardware: 100,

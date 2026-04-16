@@ -18,6 +18,7 @@ export interface DaySnapshot {
   playerClass: string;
   strategy: string;
   model: string;
+  bugHuntMode: 'ai' | 'oldschool';
   agents: string[];
   progress: number; // 0-100
   accuracy: number; // 0-1
@@ -36,6 +37,8 @@ export interface DaySnapshot {
   overtimePromptsCompleted: number;
   bugBountyEarnings: number;
   bugsSquashed: number;
+  shotsFired: number;
+  shotsHit: number;
   musicTrack: string | null;
   audioMuted: boolean;
   sfxVolume: number;
@@ -63,6 +66,50 @@ let currentDayEvents: EventLog[] = [];
 let dayStartBudget = 0;
 let dayStartHardware = 0;
 let runStartTime = 0;
+
+function createBlankSnapshot(
+  state: GameState,
+  dayScore: DayScore,
+  earlyFinishPath: 'bugHunt' | 'overtime' | 'none',
+  overtimeBonus: number,
+  overtimePromptsCompleted: number
+): DaySnapshot {
+  const audio = AudioManager.getInstance();
+
+  return {
+    timestamp: new Date().toISOString(),
+    day: state.day,
+    playerClass: state.playerClass ?? 'unknown',
+    strategy: state.strategy ?? 'unknown',
+    model: state.model,
+    bugHuntMode: 'ai',
+    agents: [...state.activeAgents],
+    progress: state.lastDayResult?.progress ?? 0,
+    accuracy: state.lastDayResult?.accuracy ?? 0,
+    timeUnitsRemaining: state.timeUnitsRemaining,
+    baseRep: dayScore.baseRep,
+    accuracyBonus: dayScore.accuracyBonus,
+    strategyBonus: dayScore.strategyBonus,
+    overtimeBonus,
+    overtimePromptsCompleted,
+    totalRep: dayScore.total,
+    budgetStart: dayStartBudget,
+    budgetEnd: state.budget,
+    hardwareStart: dayStartHardware,
+    hardwareEnd: state.hardwareHp,
+    events: [...currentDayEvents],
+    earlyFinishPath,
+    bugBountyEarnings: 0,
+    bugsSquashed: 0,
+    shotsFired: 0,
+    shotsHit: 0,
+    musicTrack: audio.currentTrack,
+    audioMuted: audio.isMuted,
+    sfxVolume: audio.sfxVolume,
+    musicVolume: audio.musicVolume,
+    consumablesUsed: [...state.consumablesUsedToday],
+  };
+}
 
 // ─── Telemetry Class ──────────────────────────────────────────────────────────
 
@@ -110,36 +157,13 @@ export class Telemetry {
   ): void {
     if (!DEV_CONFIG.telemetry) return;
 
-    const snapshot: DaySnapshot = {
-      timestamp: new Date().toISOString(),
-      day: state.day,
-      playerClass: state.playerClass ?? 'unknown',
-      strategy: state.strategy ?? 'unknown',
-      model: state.model,
-      agents: [...state.activeAgents],
-      progress: state.lastDayResult?.progress ?? 0,
-      accuracy: state.lastDayResult?.accuracy ?? 0,
-      timeUnitsRemaining: state.timeUnitsRemaining,
-      baseRep: dayScore.baseRep,
-      accuracyBonus: dayScore.accuracyBonus,
-      strategyBonus: dayScore.strategyBonus,
-      overtimeBonus,
-      overtimePromptsCompleted,
-      totalRep: dayScore.total,
-      budgetStart: dayStartBudget,
-      budgetEnd: state.budget,
-      hardwareStart: dayStartHardware,
-      hardwareEnd: state.hardwareHp,
-      events: [...currentDayEvents],
+    const snapshot = createBlankSnapshot(
+      state,
+      dayScore,
       earlyFinishPath,
-      bugBountyEarnings: 0,
-      bugsSquashed: 0,
-      musicTrack: AudioManager.getInstance().currentTrack,
-      audioMuted: AudioManager.getInstance().isMuted,
-      sfxVolume: AudioManager.getInstance().sfxVolume,
-      musicVolume: AudioManager.getInstance().musicVolume,
-      consumablesUsed: [...state.consumablesUsedToday],
-    };
+      overtimeBonus,
+      overtimePromptsCompleted
+    );
 
     (currentRun.days ??= []).push(snapshot);
     (currentRun.budgetTrajectory ??= []).push(state.budget);
@@ -152,7 +176,13 @@ export class Telemetry {
   }
 
   /** Update the most recent day snapshot with bug bounty results and re-POST. */
-  static patchBugBounty(earnings: number, bugsSquashed: number): void {
+  static patchBugBounty(
+    earnings: number,
+    bugsSquashed: number,
+    mode?: 'ai' | 'oldschool',
+    shotsFired?: number,
+    shotsHit?: number
+  ): void {
     if (!DEV_CONFIG.telemetry) return;
 
     const days = currentRun.days;
@@ -161,6 +191,9 @@ export class Telemetry {
     const last = days[days.length - 1];
     last.bugBountyEarnings = earnings;
     last.bugsSquashed = bugsSquashed;
+    if (mode !== undefined) last.bugHuntMode = mode;
+    if (shotsFired !== undefined) last.shotsFired = shotsFired;
+    if (shotsHit !== undefined) last.shotsHit = shotsHit;
 
     fetch('/__telemetry/day', {
       method: 'POST',
