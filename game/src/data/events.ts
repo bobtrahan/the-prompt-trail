@@ -130,7 +130,7 @@ export const EVENTS: EventDef[] = [
           },
           {
             text: 'Expense it (company card absorbs it)',
-            effects: [{ type: 'flag', value: 'finance-meeting-pending' }],
+            effects: [{ type: 'flag', value: 'finance-meeting-pending' }, { type: 'time', value: -1 }],
           },
         ],
       },
@@ -442,7 +442,7 @@ export const EVENTS: EventDef[] = [
       },
       {
         text: 'Blame the intern',
-        effects: [{ type: 'flag', value: 'intern-blamed' }],
+        effects: [{ type: 'flag', value: 'intern-blamed' }, { type: 'reputation', value: -10 }],
       },
     ],
     classVariants: {
@@ -459,7 +459,7 @@ export const EVENTS: EventDef[] = [
           },
           {
             text: 'Blame the intern',
-            effects: [{ type: 'flag', value: 'intern-blamed' }],
+            effects: [{ type: 'flag', value: 'intern-blamed' }, { type: 'reputation', value: -10 }],
           },
         ],
       },
@@ -476,7 +476,7 @@ export const EVENTS: EventDef[] = [
           },
           {
             text: 'Blame the intern (HR takes 2 time units anyway)',
-            effects: [{ type: 'flag', value: 'intern-blamed' }, { type: 'time', value: -2 }],
+            effects: [{ type: 'flag', value: 'intern-blamed' }, { type: 'time', value: -2 }, { type: 'reputation', value: -10 }],
           },
         ],
       },
@@ -654,7 +654,7 @@ export const EVENTS: EventDef[] = [
           },
           {
             text: 'Run uncensored local model',
-            effects: [],
+            effects: [{ type: 'flag', value: 'local-model' }, { type: 'agentSpeed', value: -15 }],
           },
         ],
       },
