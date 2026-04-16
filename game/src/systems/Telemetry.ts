@@ -46,6 +46,40 @@ export interface DaySnapshot {
   consumablesUsed: string[];
 }
 
+// ─── Bug Hunt Telemetry ───────────────────────────────────────────────────────
+
+export interface ShotLog {
+  frame: number;
+  bulletSpawn: { x: number; y: number; dx: number; dy: number };
+  result: 'hit-bug' | 'hit-block' | 'out-of-bounds';
+  hitBugType?: string;
+  hitBugPos?: { x: number; y: number };
+  nearestBugAtDeath?: { type: string; dist: number; pos: { x: number; y: number } };
+  deltaSec: number;
+}
+
+export interface BugLog {
+  type: string;
+  spawnPos: { x: number; y: number };
+  hitRadius: number;
+  death: 'shot' | 'despawn' | 'survived';
+  closestBulletDist?: number; // min distance any bullet ever got
+}
+
+export interface BugHuntLog {
+  day: number;
+  mode: 'oldschool';
+  duration: number;
+  shots: ShotLog[];
+  bugs: BugLog[];
+  fps: { min: number; max: number; avg: number };
+  earnings: number;
+  bugsKilled: number;
+  shotsFired: number;
+  shotsHit: number;
+  accuracy: number;
+}
+
 export interface RunLog {
   startedAt: string;
   endedAt: string;
@@ -239,6 +273,27 @@ export class Telemetry {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(runLog),
+    }).catch(() => {});
+  }
+
+  /** Log a complete Bug Hunt session with per-shot and per-bug data. */
+  static logBugHunt(log: BugHuntLog): void {
+    if (!DEV_CONFIG.telemetry) return;
+
+    console.log('[Telemetry] Bug Hunt:', {
+      shots: log.shotsFired,
+      hits: log.shotsHit,
+      accuracy: `${(log.accuracy * 100).toFixed(1)}%`,
+      fps: log.fps,
+      nearMisses: log.shots.filter(s =>
+        s.result !== 'hit-bug' && s.nearestBugAtDeath && s.nearestBugAtDeath.dist < 50
+      ).length,
+    });
+
+    fetch('/__telemetry/bughunt', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(log),
     }).catch(() => {});
   }
 

@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT, COLORS } from '../utils/constants';
 import { getState } from '../systems/GameState';
-import { Telemetry } from '../systems/Telemetry';
+import { Telemetry, type ShotLog, type BugLog } from '../systems/Telemetry';
 import { getTheme } from '../utils/themes';
 import { Window } from '../ui/Window';
 import { Taskbar } from '../ui/Taskbar';
@@ -194,6 +194,14 @@ export class BugHuntScene extends Phaser.Scene {
 
   // Scoring + combo
   private shotsHit = 0;
+
+  // Telemetry
+  private shotLogs: ShotLog[] = [];
+  private bugLogs: Map<HuntBug, BugLog> = new Map();
+  private frameCount = 0;
+  private fpsMin = Infinity;
+  private fpsMax = 0;
+  private fpsSum = 0;
   private lastCatchTime = 0;
   private comboCount = 0;
   private maxCombo = 0;
@@ -226,6 +234,12 @@ export class BugHuntScene extends Phaser.Scene {
     this.lastCatchTime = 0;
     this.comboCount = 0;
     this.maxCombo = 0;
+    this.shotLogs = [];
+    this.bugLogs = new Map();
+    this.frameCount = 0;
+    this.fpsMin = Infinity;
+    this.fpsMax = 0;
+    this.fpsSum = 0;
 
     AudioManager.getInstance().playMusic('bugbounty');
 
@@ -552,6 +566,14 @@ export class BugHuntScene extends Phaser.Scene {
     this.shotsFired++;
     this.updateAmmoDisplay();
     this.redrawBullet(bullet);
+
+    // Telemetry: start tracking this shot
+    (bullet as any)._shotLog = {
+      frame: this.frameCount,
+      bulletSpawn: { x: bullet.x, y: bullet.y, dx: bullet.dx, dy: bullet.dy },
+      result: 'out-of-bounds', // default, overwritten on hit
+      deltaSec: 0,
+    } as ShotLog;
   }
 
   private redrawBullet(bullet: Bullet): void {
@@ -583,18 +605,30 @@ export class BugHuntScene extends Phaser.Scene {
       bullet.x += bullet.dx * BULLET_SPEED * deltaSec;
       bullet.y += bullet.dy * BULLET_SPEED * deltaSec;
 
+      const shotLog = (bullet as any)._shotLog as ShotLog | undefined;
+      if (shotLog) shotLog.deltaSec = deltaSec;
+
       if (!this.isPointInArena(bullet.x, bullet.y)) {
+        if (shotLog) {
+          shotLog.result = 'out-of-bounds';
+          this.finalizeShotLog(shotLog, bullet);
+        }
         this.destroyBullet(bullet);
         continue;
       }
 
       if (this.hitCodeBlock(bullet)) {
         this.spawnSpark(bullet.x, bullet.y);
+        if (shotLog) {
+          shotLog.result = 'hit-block';
+          this.finalizeShotLog(shotLog, bullet);
+        }
         this.destroyBullet(bullet);
         continue;
       }
 
       if (this.checkBulletHitBug(bullet, deltaSec)) {
+        // shotLog finalized inside checkBulletHitBug
         this.destroyBullet(bullet);
         continue;
       }
@@ -604,6 +638,34 @@ export class BugHuntScene extends Phaser.Scene {
     }
 
     this.bullets = activeBullets;
+  }
+
+  private logShotHit(bullet: Bullet, bug: HuntBug): void {
+    const shotLog = (bullet as any)._shotLog as ShotLog | undefined;
+    if (shotLog) {
+      shotLog.result = 'hit-bug';
+      shotLog.hitBugType = bug.type;
+      shotLog.hitBugPos = { x: Math.round(bug.x), y: Math.round(bug.y) };
+      this.shotLogs.push(shotLog);
+    }
+  }
+
+  private finalizeShotLog(shotLog: ShotLog, bullet: Bullet): void {
+    // Find nearest alive bug at bullet death
+    let minDist = Infinity;
+    let nearest: { type: string; dist: number; pos: { x: number; y: number } } | undefined;
+    for (const bug of this.bugs) {
+      if (!bug.alive) continue;
+      const dist = Math.hypot(bullet.x - bug.x, bullet.y - bug.y);
+      if (dist < minDist) {
+        minDist = dist;
+        nearest = { type: bug.type, dist: Math.round(dist), pos: { x: Math.round(bug.x), y: Math.round(bug.y) } };
+      }
+    }
+    if (nearest && shotLog.result !== 'hit-bug') {
+      shotLog.nearestBugAtDeath = nearest;
+    }
+    this.shotLogs.push(shotLog);
   }
 
   private hitCodeBlock(bullet: Bullet): boolean {
@@ -781,6 +843,14 @@ export class BugHuntScene extends Phaser.Scene {
     };
 
     this.bugs.push(bug);
+
+    // Telemetry: track this bug
+    this.bugLogs.set(bug, {
+      type: bug.type,
+      spawnPos: { x: Math.round(pos.x), y: Math.round(pos.y) },
+      hitRadius,
+      death: 'survived', // default, overwritten on kill/despawn
+    });
   }
 
   // ── Despawn warning ───────────────────────────────────────────────────────
@@ -803,6 +873,10 @@ export class BugHuntScene extends Phaser.Scene {
 
   removeHuntBug(bug: HuntBug, caught: boolean): void {
     bug.alive = false;
+    if (!caught) {
+      const bl = this.bugLogs.get(bug);
+      if (bl) bl.death = 'despawn';
+    }
     if (bug.despawnFlashTimer) {
       bug.despawnFlashTimer.destroy();
       bug.despawnFlashTimer = null;
@@ -1017,6 +1091,13 @@ export class BugHuntScene extends Phaser.Scene {
       this.spawnHuntBug('syntax', time);
     }
 
+    // FPS telemetry
+    const fps = delta > 0 ? 1000 / delta : 60;
+    this.frameCount++;
+    this.fpsSum += fps;
+    if (fps < this.fpsMin) this.fpsMin = fps;
+    if (fps > this.fpsMax) this.fpsMax = fps;
+
     const elapsed   = time - this.startTime;
     const remaining = Math.max(0, GAME_DURATION - elapsed);
 
@@ -1134,6 +1215,7 @@ export class BugHuntScene extends Phaser.Scene {
       // Point distance check at current position
       const dist = Math.hypot(bullet.x - bug.x, bullet.y - bug.y);
       if (dist < combinedR) {
+        this.logShotHit(bullet, bug);
         this.hitBug(bug);
         return true;
       }
@@ -1145,6 +1227,7 @@ export class BugHuntScene extends Phaser.Scene {
         const sx = bullet.x - bullet.dx * travel * t;
         const sy = bullet.y - bullet.dy * travel * t;
         if (Math.hypot(sx - bug.x, sy - bug.y) < combinedR) {
+          this.logShotHit(bullet, bug);
           this.hitBug(bug);
           return true;
         }
@@ -1175,6 +1258,8 @@ export class BugHuntScene extends Phaser.Scene {
 
   private killBug(bug: HuntBug): void {
     bug.alive = false;
+    const bl = this.bugLogs.get(bug);
+    if (bl) bl.death = 'shot';
     if (bug.despawnFlashTimer) {
       bug.despawnFlashTimer.destroy();
       bug.despawnFlashTimer = null;
@@ -1292,6 +1377,26 @@ export class BugHuntScene extends Phaser.Scene {
     }
 
     Telemetry.patchBugBounty(this.totalEarned, this.bugCount, 'oldschool', this.shotsFired, this.shotsHit);
+
+    // Detailed bug hunt telemetry
+    const state2 = getState();
+    Telemetry.logBugHunt({
+      day: state2.day,
+      mode: 'oldschool',
+      duration: GAME_DURATION,
+      shots: this.shotLogs,
+      bugs: [...this.bugLogs.values()],
+      fps: {
+        min: Math.round(this.fpsMin === Infinity ? 0 : this.fpsMin),
+        max: Math.round(this.fpsMax),
+        avg: this.frameCount > 0 ? Math.round(this.fpsSum / this.frameCount) : 0,
+      },
+      earnings: this.totalEarned,
+      bugsKilled: this.bugCount,
+      shotsFired: this.shotsFired,
+      shotsHit: this.shotsHit,
+      accuracy: this.shotsFired > 0 ? this.shotsHit / this.shotsFired : 0,
+    });
 
     const accuracy = this.shotsFired > 0
       ? Math.round((this.shotsHit / this.shotsFired) * 100)
