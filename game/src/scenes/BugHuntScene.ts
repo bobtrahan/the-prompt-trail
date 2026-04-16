@@ -20,7 +20,7 @@ const AMMO_CELL_W = 18;
 const AMMO_CELL_H = 14;
 const AMMO_CELL_GAP = 3;
 const GAME_DURATION = 30_000;
-const PLAYER_SPEED = 300;
+const PLAYER_SPEED = 150;
 const AMMO_MAX = 10;
 const AMMO_REGEN_MS = 3000;
 const CROSSHAIR_DIST = 90;
@@ -172,7 +172,10 @@ export class BugHuntScene extends Phaser.Scene {
   private crosshairY = 0;
 
   // Input
-  private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
+  private keyUp!: Phaser.Input.Keyboard.Key;
+  private keyDown!: Phaser.Input.Keyboard.Key;
+  private keyLeft!: Phaser.Input.Keyboard.Key;
+  private keyRight!: Phaser.Input.Keyboard.Key;
   private keyW!: Phaser.Input.Keyboard.Key;
   private keyA!: Phaser.Input.Keyboard.Key;
   private keyS!: Phaser.Input.Keyboard.Key;
@@ -323,12 +326,14 @@ export class BugHuntScene extends Phaser.Scene {
 
     // ── Input (WASD/arrows aim, space fires — Oregon Trail style) ─────────
     const kb = this.input.keyboard!;
-    this.cursors = kb.createCursorKeys();
-    const wasdKeys = kb.addKeys('W,A,S,D') as Record<string, Phaser.Input.Keyboard.Key>;
-    this.keyW = wasdKeys['W'];
-    this.keyA = wasdKeys['A'];
-    this.keyS = wasdKeys['S'];
-    this.keyD = wasdKeys['D'];
+    this.keyUp    = kb.addKey(Phaser.Input.Keyboard.KeyCodes.UP);
+    this.keyDown  = kb.addKey(Phaser.Input.Keyboard.KeyCodes.DOWN);
+    this.keyLeft  = kb.addKey(Phaser.Input.Keyboard.KeyCodes.LEFT);
+    this.keyRight = kb.addKey(Phaser.Input.Keyboard.KeyCodes.RIGHT);
+    this.keyW = kb.addKey(Phaser.Input.Keyboard.KeyCodes.W);
+    this.keyA = kb.addKey(Phaser.Input.Keyboard.KeyCodes.A);
+    this.keyS = kb.addKey(Phaser.Input.Keyboard.KeyCodes.S);
+    this.keyD = kb.addKey(Phaser.Input.Keyboard.KeyCodes.D);
     this.keySpace = kb.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
 
     this.keySpace.on('down', this.fireBullet, this);
@@ -1064,10 +1069,10 @@ export class BugHuntScene extends Phaser.Scene {
     // ── Aim from WASD/arrows (8 directions, Oregon Trail style) ──────────
     let ax = 0;
     let ay = 0;
-    if (this.cursors.left.isDown  || this.keyA.isDown) ax -= 1;
-    if (this.cursors.right.isDown || this.keyD.isDown) ax += 1;
-    if (this.cursors.up.isDown    || this.keyW.isDown) ay -= 1;
-    if (this.cursors.down.isDown  || this.keyS.isDown) ay += 1;
+    if (this.keyLeft.isDown  || this.keyA.isDown) ax -= 1;
+    if (this.keyRight.isDown || this.keyD.isDown) ax += 1;
+    if (this.keyUp.isDown    || this.keyW.isDown) ay -= 1;
+    if (this.keyDown.isDown  || this.keyS.isDown) ay += 1;
 
     // Only update aim direction when keys are held
     if (ax !== 0 || ay !== 0) {
