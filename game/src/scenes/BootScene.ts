@@ -1,5 +1,85 @@
 import Phaser from 'phaser';
 import AudioManager from '../systems/AudioManager';
+import { getState } from '../systems/GameState';
+import { getTheme } from '../utils/themes';
+import type { PlayerClass } from '../utils/playerClass';
+
+type PostLine = { text: string; suffix?: string; suffixColor?: string };
+
+const OK = '#3fb950';
+const WARN = '#d29922';
+const UNSTABLE = '#f0883e';
+const DIM = '#9da5b0';
+
+function getPostLines(playerClass: PlayerClass | null): PostLine[] {
+  switch (playerClass) {
+    case 'techBro':
+      return [
+        { text: 'PromptOS BIOS v4.2.0' },
+        { text: 'Copyright (c) 2026 PromptOS Foundation' },
+        { text: '' },
+        { text: 'CPU: Neural Processing Unit ×8 (overclocked) ... ', suffix: 'OK', suffixColor: OK },
+        { text: 'RAM: 512GB Tensor Memory ........................ ', suffix: 'OK', suffixColor: OK },
+        { text: 'GPU: RTX 9090 ×4 (SLI) ......................... ', suffix: 'OK', suffixColor: OK },
+        { text: 'VRAM: Yes. ...................................... ', suffix: 'OK', suffixColor: OK },
+        { text: 'TURBO_MODE: ENGAGED ............................. ', suffix: 'OK', suffixColor: OK },
+        { text: '' },
+        { text: 'Loading kernel modules...' },
+      ];
+    case 'indieHacker':
+      return [
+        { text: 'PromptOS BIOS v4.2.0' },
+        { text: 'Copyright (c) 2026 PromptOS Foundation' },
+        { text: '' },
+        { text: 'CPU: Whatever Was On Sale ....................... ', suffix: 'OK', suffixColor: OK },
+        { text: 'RAM: 16GB (8GB usable, Chrome has the rest) ..... ', suffix: 'OK', suffixColor: OK },
+        { text: "GPU: Integrated (it's fine) ..................... ", suffix: 'OK', suffixColor: OK },
+        { text: 'Disk: 256GB (12GB free) ......................... ', suffix: 'WARN', suffixColor: WARN },
+        { text: "Budget: Don't ask ............................... ", suffix: 'OK', suffixColor: OK },
+        { text: '' },
+        { text: 'Loading kernel modules...' },
+      ];
+    case 'collegeStudent':
+      return [
+        { text: 'PromptOS BIOS v4.2.0' },
+        { text: 'Copyright (c) 2026 PromptOS Foundation' },
+        { text: '' },
+        { text: 'WiFi: Campus Network (Borrowed) ................. ', suffix: 'UNSTABLE', suffixColor: UNSTABLE },
+        { text: 'CPU: Hand-me-down i5 ............................ ', suffix: 'OK', suffixColor: OK },
+        { text: 'RAM: 8GB (shared with 47 browser tabs) .......... ', suffix: 'WARN', suffixColor: WARN },
+        { text: 'GPU: None. Prayers loaded instead ............... ', suffix: 'OK', suffixColor: OK },
+        { text: 'Power: Campus outlet ............................. ', suffix: 'PRAY', suffixColor: DIM },
+        { text: '' },
+        { text: 'Loading kernel modules...' },
+      ];
+    case 'corporateDev':
+      return [
+        { text: 'PromptOS BIOS v4.2.0' },
+        { text: 'Copyright (c) 2026 PromptOS Foundation' },
+        { text: '' },
+        { text: 'Connecting to VPN ................................ ', suffix: 'TIMEOUT', suffixColor: UNSTABLE },
+        { text: 'Connecting to VPN ................................ ', suffix: 'TIMEOUT', suffixColor: UNSTABLE },
+        { text: 'Connecting to VPN ................................ ', suffix: 'OK', suffixColor: OK },
+        { text: 'Installing mandatory updates (3 of 847) ......... ', suffix: 'OK', suffixColor: OK },
+        { text: 'Compliance scan .................................. ', suffix: 'PENDING', suffixColor: DIM },
+        { text: '' },
+        { text: 'Loading kernel modules...' },
+      ];
+    default:
+      return [
+        { text: 'PromptOS BIOS v4.2.0' },
+        { text: 'Copyright (c) 2026 PromptOS Foundation' },
+        { text: '' },
+        { text: 'CPU: Neural Processing Unit (8 cores) .......... ', suffix: 'OK', suffixColor: OK },
+        { text: 'RAM: 64GB Tensor Memory ........................ ', suffix: 'OK', suffixColor: OK },
+        { text: 'GPU: RTX 9090 Vision Accelerator ............... ', suffix: 'OK', suffixColor: OK },
+        { text: 'DISK: 2TB Model Weight Storage ................. ', suffix: 'OK', suffixColor: OK },
+        { text: 'NET: API Gateway ............................... ', suffix: 'CONNECTED', suffixColor: OK },
+        { text: '' },
+        { text: 'Loading kernel modules...' },
+      ];
+  }
+}
 
 export class BootScene extends Phaser.Scene {
   constructor() {
@@ -32,6 +112,10 @@ export class BootScene extends Phaser.Scene {
     const barBg = this.data.get('progressBarBg') as Phaser.GameObjects.Rectangle;
     const barWidth = this.data.get('barWidth') as number;
 
+    const playerClass = getState().playerClass;
+    const theme = getTheme(playerClass ?? undefined);
+    const termColor = theme.terminalTextColor;
+
     // Show bar and start from 0
     barBg.setAlpha(1);
     bar.setAlpha(1);
@@ -54,18 +138,7 @@ export class BootScene extends Phaser.Scene {
     const postY = 80;
     const lineHeight = 20;
 
-    const postLines = [
-      { text: 'PromptOS BIOS v4.2.0', color: '#39d353' },
-      { text: 'Copyright (c) 2026 PromptOS Foundation', color: '#39d353' },
-      { text: '', color: '#39d353' },
-      { text: 'CPU: Neural Processing Unit (8 cores) .......... ', color: '#39d353', suffix: 'OK', suffixColor: '#3fb950' },
-      { text: 'RAM: 64GB Tensor Memory ........................ ', color: '#39d353', suffix: 'OK', suffixColor: '#3fb950' },
-      { text: 'GPU: RTX 9090 Vision Accelerator ............... ', color: '#39d353', suffix: 'OK', suffixColor: '#3fb950' },
-      { text: 'DISK: 2TB Model Weight Storage ................. ', color: '#39d353', suffix: 'OK', suffixColor: '#3fb950' },
-      { text: 'NET: API Gateway ............................... ', color: '#39d353', suffix: 'CONNECTED', suffixColor: '#3fb950' },
-      { text: '', color: '#39d353' },
-      { text: 'Loading kernel modules...', color: '#39d353' },
-    ];
+    const postLines = getPostLines(playerClass);
 
     const allTextObjects: Phaser.GameObjects.GameObject[] = [];
 
@@ -75,7 +148,7 @@ export class BootScene extends Phaser.Scene {
         const textObj = this.add.text(postX, postY + index * lineHeight, line.text, {
           fontFamily: 'monospace',
           fontSize: '13px',
-          color: line.color,
+          color: termColor,
         });
         allTextObjects.push(textObj);
 
@@ -109,7 +182,7 @@ export class BootScene extends Phaser.Scene {
           const prefixObj = this.add.text(postX, y, line.prefix, {
             fontFamily: 'monospace',
             fontSize: '13px',
-            color: '#3fb950',
+            color: OK,
           });
           const textObj = this.add.text(postX + prefixObj.width, y, line.text, {
             fontFamily: 'monospace',
@@ -156,10 +229,10 @@ export class BootScene extends Phaser.Scene {
         fontSize: '14px',
         color: '#9da5b0',
       }).setOrigin(0.5);
-      
+
       splashContainer.add([title, version]);
       splashContainer.setAlpha(0);
-      
+
       this.tweens.add({
         targets: splashContainer,
         alpha: 1,
