@@ -1077,7 +1077,8 @@ export class ExecutionScene extends Phaser.Scene {
     this.input.keyboard!.once('keydown-THREE', () => choices.length > 2 && this.resolveEvent(2, choices[2]));
 
     // ── Countdown overlay (top-right corner of modal) ──
-    const COUNTDOWN_SEC = TUNING.EVENT_READ_WINDOW_SEC;
+    const state = getState();
+    const COUNTDOWN_SEC = (TUNING.EVENT_READ_WINDOW_BY_DAY as any)[state.day] || TUNING.EVENT_READ_WINDOW_SEC;
     let remaining = COUNTDOWN_SEC;
     this.eventCountdownText = this.add.text(
       dx + dw - 12, dy + 8,

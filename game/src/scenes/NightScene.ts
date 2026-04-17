@@ -342,7 +342,14 @@ export class NightScene extends Phaser.Scene {
     state.hasDuckProtection = false;
     state.modelCostDiscount = 0;
     state.consumablesUsedToday = [];
-    state.timerBonusSeconds = 0;
+    // Carry tomorrow-timer bonus into the new day, then reset
+    state.timerBonusSeconds = state.tomorrowTimerBonus;
+    state.tomorrowTimerBonus = 0;
+    // Apply any night-phase budget bonus earned from events
+    if (state.nightBonusBudget > 0) {
+      state.budget += state.nightBonusBudget;
+      state.nightBonusBudget = 0;
+    }
 
     if (this.ledTween) this.ledTween.stop();
     this.led.setAlpha(1);

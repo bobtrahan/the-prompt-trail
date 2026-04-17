@@ -1,7 +1,7 @@
 import type { PlayerClass } from '../utils/playerClass';
 
 export interface EventEffect {
-  type: 'budget' | 'time' | 'hardware' | 'reputation' | 'flag' | 'agentSpeed' | 'modelSwitch';
+  type: 'budget' | 'time' | 'hardware' | 'reputation' | 'flag' | 'agentSpeed' | 'modelSwitch' | 'tomorrowTimer' | 'nightBonus';
   value: number | string;
 }
 
@@ -169,7 +169,8 @@ export const EVENTS: EventDef[] = [
     choices: [
       {
         text: 'Wait for recovery',
-        effects: [{ type: 'time', value: -2 }],
+        // BUCKET: tactical — lose time now and provider still throttled tomorrow
+        effects: [{ type: 'time', value: -2 }, { type: 'tomorrowTimer', value: -3 }],
       },
       {
         text: 'Switch providers ($100)',
@@ -216,11 +217,13 @@ export const EVENTS: EventDef[] = [
       },
       {
         text: 'Stay the course',
-        effects: [{ type: 'flag', value: 'fomo-sad' }, { type: 'agentSpeed', value: -3 }],
+        // BUCKET: flavor nudge — small speed hit + FOMO distraction bleeds into tomorrow
+        effects: [{ type: 'flag', value: 'fomo-sad' }, { type: 'agentSpeed', value: -5 }, { type: 'tomorrowTimer', value: -3 }],
       },
       {
         text: 'Read the benchmarks first',
-        effects: [{ type: 'time', value: -2 }, { type: 'flag', value: 'informed-model-choice' }, { type: 'reputation', value: 5 }],
+        // BUCKET: tactical — costs time now but informed choice pays off tomorrow
+        effects: [{ type: 'time', value: -2 }, { type: 'flag', value: 'informed-model-choice' }, { type: 'reputation', value: 5 }, { type: 'tomorrowTimer', value: 6 }],
       },
     ],
     classVariants: {
@@ -232,11 +235,11 @@ export const EVENTS: EventDef[] = [
           },
           {
             text: 'Stay the course',
-            effects: [{ type: 'flag', value: 'fomo-sad' }, { type: 'agentSpeed', value: -3 }],
+            effects: [{ type: 'flag', value: 'fomo-sad' }, { type: 'agentSpeed', value: -5 }, { type: 'tomorrowTimer', value: -3 }],
           },
           {
             text: 'Read the benchmarks first',
-            effects: [{ type: 'time', value: -2 }, { type: 'flag', value: 'informed-model-choice' }, { type: 'reputation', value: 5 }],
+            effects: [{ type: 'time', value: -2 }, { type: 'flag', value: 'informed-model-choice' }, { type: 'reputation', value: 5 }, { type: 'tomorrowTimer', value: 6 }],
           },
         ],
       },
@@ -248,11 +251,11 @@ export const EVENTS: EventDef[] = [
           },
           {
             text: 'Stay the course',
-            effects: [{ type: 'flag', value: 'fomo-sad' }, { type: 'agentSpeed', value: -3 }],
+            effects: [{ type: 'flag', value: 'fomo-sad' }, { type: 'agentSpeed', value: -5 }, { type: 'tomorrowTimer', value: -3 }],
           },
           {
             text: 'Read the benchmarks first',
-            effects: [{ type: 'time', value: -2 }, { type: 'flag', value: 'informed-model-choice' }, { type: 'reputation', value: 5 }],
+            effects: [{ type: 'time', value: -2 }, { type: 'flag', value: 'informed-model-choice' }, { type: 'reputation', value: 5 }, { type: 'tomorrowTimer', value: 6 }],
           },
         ],
       },
@@ -271,10 +274,12 @@ export const EVENTS: EventDef[] = [
     choices: [
       {
         text: 'Accept and continue',
-        effects: [{ type: 'reputation', value: -20 }],
+        // BUCKET: run-shaping — reputational hit + persistent overhead tomorrow
+        effects: [{ type: 'reputation', value: -25 }, { type: 'tomorrowTimer', value: -6 }],
       },
       {
         text: 'Switch providers ($100, -1 time)',
+        // BUCKET: tactical
         effects: [{ type: 'budget', value: -100 }, { type: 'time', value: -1 }],
       },
       {
@@ -376,7 +381,8 @@ export const EVENTS: EventDef[] = [
       },
       {
         text: 'Leave it in',
-        effects: [{ type: 'reputation', value: -15 }],
+        // BUCKET: run-shaping — reputation damage + clients notice the errors tomorrow
+        effects: [{ type: 'reputation', value: -20 }, { type: 'tomorrowTimer', value: -3 }],
       },
       {
         text: 'Ask the AI to fix it',
@@ -408,7 +414,7 @@ export const EVENTS: EventDef[] = [
           },
           {
             text: 'Leave it in',
-            effects: [{ type: 'reputation', value: -15 }],
+            effects: [{ type: 'reputation', value: -20 }, { type: 'tomorrowTimer', value: -3 }],
           },
           {
             text: 'Ask the AI to fix it',
@@ -438,7 +444,8 @@ export const EVENTS: EventDef[] = [
       },
       {
         text: "Let it ride",
-        effects: [{ type: 'reputation', value: -25 }, { type: 'flag', value: 'email-nuke-let-ride' }],
+        // BUCKET: run-shaping — rep hit today + dealing with email fallout tomorrow
+        effects: [{ type: 'reputation', value: -25 }, { type: 'tomorrowTimer', value: -6 }, { type: 'flag', value: 'email-nuke-let-ride' }],
       },
       {
         text: 'Blame the intern',
@@ -720,7 +727,8 @@ export const EVENTS: EventDef[] = [
     choices: [
       {
         text: 'Feed it a summary',
-        effects: [{ type: 'time', value: -1 }, { type: 'flag', value: 'context-80pct' }],
+        // BUCKET: tactical — costs time now but well-organized context helps tomorrow
+        effects: [{ type: 'time', value: -1 }, { type: 'flag', value: 'context-80pct' }, { type: 'tomorrowTimer', value: 6 }],
       },
       {
         text: 'Let it re-derive everything',
@@ -936,7 +944,8 @@ export const EVENTS: EventDef[] = [
       },
       {
         text: 'Push through',
-        effects: [{ type: 'flag', value: 'hardware-failure-roll' }, { type: 'hardware', value: -25 }],
+        // BUCKET: run-shaping — hardware risk today + component still stressed tomorrow
+        effects: [{ type: 'flag', value: 'hardware-failure-roll' }, { type: 'hardware', value: -25 }, { type: 'tomorrowTimer', value: -6 }],
       },
     ],
     classVariants: {
@@ -952,7 +961,7 @@ export const EVENTS: EventDef[] = [
           },
           {
             text: 'Push through',
-            effects: [{ type: 'flag', value: 'hardware-failure-roll' }, { type: 'hardware', value: -25 }],
+            effects: [{ type: 'flag', value: 'hardware-failure-roll' }, { type: 'hardware', value: -25 }, { type: 'tomorrowTimer', value: -6 }],
           },
           {
             text: 'Liquid nitrogen ($100, permanent fix, +10% speed, safety goggles)',
@@ -1209,7 +1218,8 @@ export const EVENTS: EventDef[] = [
         choices: [
           {
             text: 'Attend (+15 rep, -2 time)',
-            effects: [{ type: 'reputation', value: 15 }, { type: 'time', value: -2 }],
+            // BUCKET: tactical — community engagement lifts tomorrow's momentum
+            effects: [{ type: 'reputation', value: 15 }, { type: 'time', value: -2 }, { type: 'tomorrowTimer', value: 6 }],
           },
           {
             text: "Skip (-5 rep, they're used to it)",
@@ -1827,7 +1837,8 @@ export const EVENTS: EventDef[] = [
     choices: [
       {
         text: 'Ride the wave (+50 rep, -3 time for support)',
-        effects: [{ type: 'reputation', value: 50 }, { type: 'time', value: -3 }],
+        // BUCKET: run-shaping — huge rep + product revenue flows in overnight
+        effects: [{ type: 'reputation', value: 50 }, { type: 'time', value: -3 }, { type: 'nightBonus', value: 100 }],
       },
       {
         text: 'Focus on building (+15 rep, no time lost)',
@@ -2103,7 +2114,8 @@ export const EVENTS: EventDef[] = [
       },
       {
         text: 'Volunteer to lead the AI initiative (-1 time, +20 rep, double events tomorrow)',
-        effects: [{ type: 'time', value: -1 }, { type: 'reputation', value: 20 }, { type: 'flag', value: 'double-events-tomorrow' }],
+        // BUCKET: run-shaping — leadership mandate means clearer runway tomorrow
+        effects: [{ type: 'time', value: -1 }, { type: 'reputation', value: 20 }, { type: 'flag', value: 'double-events-tomorrow' }, { type: 'tomorrowTimer', value: 6 }],
       },
     ],
   },
@@ -2119,7 +2131,8 @@ export const EVENTS: EventDef[] = [
     choices: [
       {
         text: 'Celebrate and refocus (+$29, +15 rep, +10% speed rest of day)',
-        effects: [{ type: 'budget', value: 29 }, { type: 'reputation', value: 15 }, { type: 'agentSpeed', value: 10 }],
+        // BUCKET: run-shaping — momentum pays off, more revenue arrives overnight
+        effects: [{ type: 'budget', value: 29 }, { type: 'reputation', value: 15 }, { type: 'agentSpeed', value: 10 }, { type: 'nightBonus', value: 50 }],
       },
       {
         text: 'Immediately add 20 features they requested (-3 time, scope creep: -10% quality)',
@@ -2290,7 +2303,8 @@ export const EVENTS: EventDef[] = [
     choices: [
       {
         text: 'Have the conversation (-3 time, agent +15% afterward)',
-        effects: [{ type: 'time', value: -3 }, { type: 'agentSpeed', value: 15 }],
+        // BUCKET: run-shaping — heavy investment but agent fully aligned for tomorrow too
+        effects: [{ type: 'time', value: -3 }, { type: 'agentSpeed', value: 15 }, { type: 'tomorrowTimer', value: 9 }],
       },
       {
         text: "Override it (agent -10% rest of run 'just following orders')",

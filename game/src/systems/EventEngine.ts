@@ -186,6 +186,20 @@ export class EventEngine {
           break;
         }
 
+        case 'tomorrowTimer': {
+          const seconds = effect.value as number;
+          state.tomorrowTimerBonus += seconds;
+          logs.push(`> TOMORROW TIMER ${seconds >= 0 ? '+' : ''}${seconds}s`);
+          break;
+        }
+
+        case 'nightBonus': {
+          const amount = effect.value as number;
+          state.nightBonusBudget += amount;
+          logs.push(`> NIGHT BONUS +$${amount}`);
+          break;
+        }
+
         case 'modelSwitch': {
           const raw = effect.value as string;
           // Map descriptive names to actual ModelTier values

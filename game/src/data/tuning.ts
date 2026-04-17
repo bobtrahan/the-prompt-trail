@@ -13,6 +13,13 @@ export const TUNING = {
   
   // Event read window (seconds) — how long players have to choose before auto-dismiss
   EVENT_READ_WINDOW_SEC: 10,
+
+  // Day-scaled event countdowns
+  EVENT_READ_WINDOW_BY_DAY: {
+    1: 18, 2: 17, 3: 16, // generous
+    4: 13, 5: 12, 6: 11, 7: 10, 8: 10, // moderate
+    9: 8, 10: 7, 11: 7, 12: 6, 13: 6 // sharp
+  },
   
   // How often random events can trigger (ms) — though mostly prompt-triggered now
   EVENT_INTERVAL_MS: 9000,

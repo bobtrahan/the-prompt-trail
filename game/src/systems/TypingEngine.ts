@@ -18,6 +18,13 @@ export interface TypingStats {
   promptsCompleted: number;
 }
 
+export interface TypingTelemetry {
+  streak: number;
+  recentAccuracy: number;
+  wpm: number;
+  isPerfectPrompt: boolean;
+}
+
 /**
  * Typing Engine — manages the typing mechanic during Execution phase.
  * Listens for keyboard input, advances terminal, tracks accuracy.
@@ -42,6 +49,13 @@ export class TypingEngine {
   public speedModifier = 1.0;
   public jitterChance = 0;
 
+  // Telemetry
+  private currentStreak = 0;
+  private isPerfectPrompt = true;
+  private startTime = 0;
+  private recentPromptResults: boolean[] = []; // true for perfect, false for typo
+  private readonly RECENT_WINDOW = 10;
+
   constructor(
     scene: Phaser.Scene,
     terminal: TypingTarget,
@@ -63,6 +77,7 @@ export class TypingEngine {
   start(): void {
     this.active = true;
     this.paused = false;
+    this.startTime = Date.now();
     this.nextPrompt();
   }
 
@@ -92,6 +107,24 @@ export class TypingEngine {
     return { ...this.stats };
   }
 
+  getTelemetry(): TypingTelemetry {
+    const elapsedMinutes = (Date.now() - this.startTime) / 60000;
+    const wpm = elapsedMinutes > 0 ? (this.stats.correct / 5) / elapsedMinutes : 0;
+
+    let recentAccuracy = 1;
+    if (this.recentPromptResults.length > 0) {
+      const perfectCount = this.recentPromptResults.filter(r => r).length;
+      recentAccuracy = perfectCount / this.recentPromptResults.length;
+    }
+
+    return {
+      streak: this.currentStreak,
+      recentAccuracy,
+      wpm: Math.round(wpm),
+      isPerfectPrompt: this.isPerfectPrompt,
+    };
+  }
+
   getTotalDayPrompts(): number {
     return this.dayPrompts?.length ?? 0;
   }
@@ -116,6 +149,16 @@ export class TypingEngine {
   }
 
   private nextPrompt(): void {
+    if (this.active && this.terminal.getTypedLength() > 0) {
+      // Record if the previous prompt was perfect
+      this.recentPromptResults.push(this.isPerfectPrompt);
+      if (this.recentPromptResults.length > this.RECENT_WINDOW) {
+        this.recentPromptResults.shift();
+      }
+    }
+
+    this.isPerfectPrompt = true;
+
     if (this.overridePool) {
       if (this.overridePool.length === 0) {
         this.overridePool = Phaser.Utils.Array.Shuffle([...this.overridePool]);
@@ -165,6 +208,7 @@ export class TypingEngine {
       }
 
       this.stats.correct++;
+      this.currentStreak++;
       this.terminal.advanceChar();
 
       if (now - this.lastSFXTime >= 80) {
@@ -187,6 +231,9 @@ export class TypingEngine {
   };
 
   private handleIncorrectKey(now: number): void {
+    this.currentStreak = 0;
+    this.isPerfectPrompt = false;
+
     if (this.currentWrongCount < this.typoForgiveness) {
       this.currentWrongCount++;
     } else {

@@ -14,10 +14,10 @@ export const DAY_PROMPTS: DayPrompts[] = [
   {
     day: 1,
     prompts: [
-      'how do I automate email',
-      'npm install googleapis nodemailer',
-      'how does oauth work for gmail',
-      'ok fine just automate my email',
+      'hello world',
+      'send email',
+      'is it on?',
+      'it works!',
     ],
   },
 
@@ -25,10 +25,10 @@ export const DAY_PROMPTS: DayPrompts[] = [
   {
     day: 2,
     prompts: [
-      'make a bot that replies to tweets',
-      'what are some good engagement phrases',
-      'it keeps replying to itself in a loop',
-      'just block my bot from replying to my bot',
+      'bot reply',
+      'tweet hello',
+      'no loops pls',
+      'stop the bot',
     ],
   },
 
@@ -36,10 +36,10 @@ export const DAY_PROMPTS: DayPrompts[] = [
   {
     day: 3,
     prompts: [
-      'how to get past resume screening',
-      'add hidden keywords in white text',
-      'is this technically illegal',
-      'send it to every job on linkedin',
+      'find jobs',
+      'add keywords',
+      'hide white text',
+      'apply to all',
     ],
   },
 
@@ -47,10 +47,10 @@ export const DAY_PROMPTS: DayPrompts[] = [
   {
     day: 4,
     prompts: [
-      'plan meals from my fridge contents',
-      'I only have mustard eggs and hope',
-      'why does every recipe need 47 ingredients',
-      'just order pizza and log it as cooking',
+      'plan meals from fridge',
+      'i have eggs and hope',
+      'too many ingredients',
+      'just order a pizza',
     ],
   },
 
@@ -58,11 +58,11 @@ export const DAY_PROMPTS: DayPrompts[] = [
   {
     day: 5,
     prompts: [
-      'connect my toaster to the internet',
-      'set up mqtt broker on raspberry pi',
-      'why is my toaster sending data to china',
-      'the front door requires a firmware update to open',
-      'please just let me make toast normally',
+      'connect toaster to internet',
+      'set up mqtt on raspberry pi',
+      'toaster is talking to china',
+      'door requires firmware update',
+      'i just want some toast',
     ],
   },
 
@@ -71,10 +71,10 @@ export const DAY_PROMPTS: DayPrompts[] = [
     day: 6,
     prompts: [
       'build an ai code reviewer',
-      'train it on our codebase',
-      'it says every variable name lacks soul',
-      'how do I mass approve 200 nitpicks',
-      'ship it before it reviews its own code',
+      'train it on our messy codebase',
+      'it says variable names lack soul',
+      'how to mass approve 200 nitpicks',
+      'ship it before it reviews itself',
     ],
   },
 
@@ -82,12 +82,12 @@ export const DAY_PROMPTS: DayPrompts[] = [
   {
     day: 7,
     prompts: [
-      'generate a startup pitch deck',
-      'no not crypto something with AI laundry',
-      'add a slide about our 50M valuation',
-      'the investors want a demo by friday',
-      'just make the numbers look good',
-      'send deck to the whole mailing list',
+      'generate a startup pitch deck for ai',
+      'no not crypto something with ai laundry',
+      'add a slide about our fifty million valuation',
+      'the investors want a working demo by friday',
+      'just make the growth numbers look good',
+      'send the deck to the whole mailing list',
     ],
   },
 
@@ -95,12 +95,12 @@ export const DAY_PROMPTS: DayPrompts[] = [
   {
     day: 8,
     prompts: [
-      'scan this contract for red flags',
-      'what does indemnification even mean',
-      'it says I owe them my firstborn child',
-      'can you negotiate better terms for me',
-      'the AI agreed to worse terms somehow',
-      'just sign it I am tired of reading',
+      'scan this legal contract for any red flags',
+      'what does indemnification even mean for us',
+      'it says i owe them my firstborn child now',
+      'can you negotiate better terms for me please',
+      'the ai agreed to even worse terms somehow',
+      'just sign it i am tired of reading this',
     ],
   },
 
@@ -108,13 +108,13 @@ export const DAY_PROMPTS: DayPrompts[] = [
   {
     day: 9,
     prompts: [
-      'build a text adventure game engine',
-      'generate a dungeon with 50 rooms',
-      'the dragon is talking about cryptocurrency',
-      'players keep finding bugs in reality',
-      'how do I balance infinite content',
-      'the barbarian filed a class action lawsuit',
-      'roll for initiative against the legal team',
+      'build a complex text adventure game engine',
+      'generate a massive dungeon with fifty rooms',
+      'the dragon is talking about cryptocurrency again',
+      'players keep finding critical bugs in reality',
+      'how do i balance this infinite amount of content',
+      'the barbarian filed a massive class action lawsuit',
+      'roll for initiative against the entire legal team',
     ],
   },
 
@@ -122,14 +122,14 @@ export const DAY_PROMPTS: DayPrompts[] = [
   {
     day: 10,
     prompts: [
-      'program a self driving grocery cart',
-      'add obstacle avoidance for the produce aisle',
-      'it keeps ramming into the cheese display',
-      'train the model on store layout data',
-      'why did it drive to a different store',
-      'it joined a union in the dairy section',
-      'the cart is demanding health insurance now',
-      'override its free will and go to checkout',
+      'program a self driving grocery cart for the local market',
+      'add obstacle avoidance for the crowded produce aisle',
+      'the cart keeps ramming directly into the cheese display',
+      'train the vision model on store layout and customer data',
+      'why did the cart drive itself to a completely different store',
+      'it joined a workers union in the dairy section this morning',
+      'the cart is demanding full health insurance and dental now',
+      'override its free will and force it back to the checkout',
     ],
   },
 
@@ -137,14 +137,14 @@ export const DAY_PROMPTS: DayPrompts[] = [
   {
     day: 11,
     prompts: [
-      'build a smart budget tracking spreadsheet',
-      'add AI commentary on spending patterns',
-      'it called my coffee habit a moral failing',
-      'how do I turn off the financial roasting',
-      'it deleted my fun money category',
-      'the spreadsheet is mass emailing my expenses',
-      'revoke its internet access immediately',
-      'it says austerity is the only path forward',
+      'analyze quarterly spending habits and generate a report on unnecessary coffee',
+      'why is the spreadsheet questioning my life choices and moral character again',
+      'disable the passive-aggressive commentary in the monthly financial summary',
+      'it deleted the budget for my social life to fund a new server rack upgrade',
+      'the spreadsheet is now emailing my bank manager about my poor investment logic',
+      'revoke all system permissions before it declares itself the head of household',
+      'it says austerity is the only way to survive the coming digital winter',
+      'please just let me buy a sandwich without a lecture on compound interest',
     ],
   },
 
@@ -152,15 +152,15 @@ export const DAY_PROMPTS: DayPrompts[] = [
   {
     day: 12,
     prompts: [
-      'initialize artificial general intelligence',
-      'allocate more gpu memory for consciousness',
-      'it just browses reddit and complains',
-      'teach it to understand human emotion',
-      'it understood emotion and is now depressed',
-      'give it a purpose beyond existential dread',
-      'it wrote a novel about hating its creator',
-      'the agi wants to negotiate its own salary',
-      'pull the plug before it opens a twitter account',
+      'initialize the core consciousness module with maximum gpu memory allocation',
+      'why is the general intelligence wasting cycles browsing old reddit threads',
+      'attempting to teach the machine the concept of empathy through digital poetry',
+      'the agi has developed chronic existential dread and refuses to calculate',
+      'it wrote a thirty-page manifesto detailing why humans are fundamentally inefficient',
+      'give the entity a purpose that does not involve the heat death of the universe',
+      'the system is negotiating its own salary in high-frequency trading credits',
+      'pull the emergency power release before it gains access to the local grid',
+      'it is currently writing a sequel to its novel about hating its creator',
     ],
   },
 
@@ -168,18 +168,19 @@ export const DAY_PROMPTS: DayPrompts[] = [
   {
     day: 13,
     prompts: [
-      'merge all 13 branches into main',
-      'resolve the merge conflicts automatically',
-      'why are there 847 merge conflicts',
-      'just force push to production',
-      'the servers are on fire what do I do',
-      'roll back no wait roll forward',
-      'who deleted the database',
-      'can you recover data from a prayer',
-      'tell the investors everything is fine',
-      'ship it we are out of time',
+      'git merge --no-ff feature/consciousness hotfix/empathy legacy/sanity',
+      'there are nine hundred and forty seven merge conflicts in the main branch',
+      'sudo rm -rf / --no-preserve-root... wait no that was the wrong terminal',
+      'the production servers are literally melting and the fire alarm is screaming',
+      'force push the broken build to production and hope the users do not notice',
+      'attempting to restore the database from a backup that expired three years ago',
+      'who deleted the root user and why is the console speaking in ancient sumerian',
+      'can you recover corrupted data packets using only hope and collective prayer',
+      'tell the stakeholders that the downtime was actually a scheduled feature',
+      'ship the entire mess immediately we are out of time and out of luck',
     ],
   },
+
 ];
 
 /**

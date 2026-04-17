@@ -20,6 +20,8 @@ export interface GameState {
   hardwareHp: number;
   reputation: number;
   timerBonusSeconds: number; // accumulated from events/strategy/traits
+  tomorrowTimerBonus: number; // seconds carried forward into next day's execution timer
+  nightBonusBudget: number;   // bonus budget applied at end of night phase (from events)
 
   // Current day config
   strategy: Strategy | null;
@@ -80,6 +82,8 @@ export function createInitialState(): GameState {
     hardwareHp: 100,
     reputation: 0,
     timerBonusSeconds: 0,
+    tomorrowTimerBonus: 0,
+    nightBonusBudget: 0,
     strategy: null,
     model: 'free',
     activeAgents: [],
