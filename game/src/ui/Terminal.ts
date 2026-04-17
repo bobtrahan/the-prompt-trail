@@ -14,24 +14,46 @@ export interface TerminalConfig {
 }
 
 const LINE_HEIGHT = 18;
-const RESERVED_BOTTOM = 72; // space for progress bar + prompt + hint
+
+// Hero prompt band dimensions
+const HERO_BAND_HEIGHT = 96;
+const HERO_BAND_ACCENT_STRIP = 2;   // colored top-border strip height
+const HERO_FONT_SIZE = '22px';
+const HERO_CURSOR_FONT_SIZE = '22px';
+const LOG_FADE_COLOR = '#6e7681';    // dimmed color for log lines to keep them subordinate
 
 /**
- * PromptOS Terminal — renders scrolling output lines + an active typing prompt.
- * All text is monospace. Dark terminal background. Green text for output, white for prompt.
+ * PromptOS Terminal — scrolling output log (top) + hero typing prompt band (bottom).
+ *
+ * Layout:
+ *   ┌────────────────────────────────┐
+ *   │  log lines (subordinate area)  │  ← bg = terminalBg, smaller text, dimmed
+ *   │                                │
+ *   ├────────────────────────────────┤  ← 2px accent-color strip
+ *   │  HERO PROMPT BAND              │  ← dark bg, large font, unmissable cursor
+ *   │  > typed█ remaining...         │
+ *   │  ↑ type this                   │
+ *   └────────────────────────────────┘
  */
 export class Terminal {
   scene: Phaser.Scene;
   container: Phaser.GameObjects.Container;
   private bg: Phaser.GameObjects.Rectangle;
+  private heroBandBg: Phaser.GameObjects.Rectangle;
+  private heroBandStrip: Phaser.GameObjects.Rectangle;
   private terminalTextColor: string;
   private cursorChar: string;
+  private accentColor: number;
+
   private lines: string[] = [];
   private lineTexts: Phaser.GameObjects.Text[] = [];
+
+  // Hero prompt elements
   private typedText!: Phaser.GameObjects.Text;
   private cursorText!: Phaser.GameObjects.Text;
   private remainingText!: Phaser.GameObjects.Text;
   private hintLabel!: Phaser.GameObjects.Text;
+
   private cursorBlink!: Phaser.Time.TimerEvent;
   private cursorVisible = true;
 
@@ -47,8 +69,12 @@ export class Terminal {
   private firstPromptShown = false;
   private maxVisibleLines: number;
 
+  // Log area height is everything above the hero band
+  private logAreaHeight: number;
+
   constructor(config: TerminalConfig) {
-    const theme = getTheme(getState().playerClass ?? undefined);
+    const state = getState();
+    const theme = getTheme(state.playerClass ?? undefined);
 
     this.scene = config.scene;
     this.x = config.x;
@@ -57,43 +83,71 @@ export class Terminal {
     this.height = config.height;
     this.terminalTextColor = config.terminalTextColor ?? theme.terminalTextColor;
     this.cursorChar = config.cursorChar ?? theme.cursorChar;
-    this.maxVisibleLines = Math.floor((config.height - RESERVED_BOTTOM) / LINE_HEIGHT);
+    this.accentColor = theme.accent;
+
+    // Log area is everything above the hero band
+    this.logAreaHeight = config.height - HERO_BAND_HEIGHT;
+    this.maxVisibleLines = Math.floor((this.logAreaHeight - 12) / LINE_HEIGHT);
 
     this.container = config.scene.add.container(config.x, config.y);
 
-    // Terminal background
+    // ── Log area background (full terminal bg) ──
     this.bg = config.scene.add.rectangle(0, 0, config.width, config.height, config.terminalBg ?? theme.terminalBg)
       .setOrigin(0);
     this.container.add(this.bg);
 
-    // Prompt segments (at bottom of terminal area)
-    const promptY = config.height - LINE_HEIGHT - 20;
-    this.typedText = config.scene.add.text(8, promptY, '', {
+    // ── Hero band: accent-color top strip ──
+    this.heroBandStrip = config.scene.add.rectangle(
+      0, this.logAreaHeight,
+      config.width, HERO_BAND_ACCENT_STRIP,
+      this.accentColor
+    ).setOrigin(0).setAlpha(0.85);
+    this.container.add(this.heroBandStrip);
+
+    // ── Hero band: dark high-contrast background ──
+    this.heroBandBg = config.scene.add.rectangle(
+      0, this.logAreaHeight + HERO_BAND_ACCENT_STRIP,
+      config.width, HERO_BAND_HEIGHT - HERO_BAND_ACCENT_STRIP,
+      0x070d14
+    ).setOrigin(0);
+    this.container.add(this.heroBandBg);
+
+    // ── Hero prompt text objects ──
+    // Vertically centred within the hero band
+    const heroTextY = this.logAreaHeight + HERO_BAND_ACCENT_STRIP + Math.floor((HERO_BAND_HEIGHT - HERO_BAND_ACCENT_STRIP) / 2) - 14;
+
+    this.typedText = config.scene.add.text(14, heroTextY, '', {
       fontFamily: 'monospace',
-      fontSize: '14px',
+      fontSize: HERO_FONT_SIZE,
       color: this.terminalTextColor,
     });
-    this.cursorText = config.scene.add.text(8, promptY, '', {
+
+    this.cursorText = config.scene.add.text(14, heroTextY, '', {
       fontFamily: 'monospace',
-      fontSize: '14px',
-      color: '#e6edf3',
+      fontSize: HERO_CURSOR_FONT_SIZE,
+      color: '#ffffff',
     });
-    this.remainingText = config.scene.add.text(8, promptY, '', {
+
+    this.remainingText = config.scene.add.text(14, heroTextY, '', {
       fontFamily: 'monospace',
-      fontSize: '14px',
-      color: '#484f58',
+      fontSize: HERO_FONT_SIZE,
+      color: '#3a4453',
     });
-    
-    // Hint label
-    this.hintLabel = config.scene.add.text(8, promptY + 18, '↑ type this', {
-      fontFamily: 'monospace',
-      fontSize: '11px',
-      color: '#484f58',
-    }).setVisible(false);
+
+    // Hint label (small, below the prompt text)
+    this.hintLabel = config.scene.add.text(
+      14, heroTextY + 28,
+      '↑ type this prompt',
+      {
+        fontFamily: 'monospace',
+        fontSize: '11px',
+        color: '#484f58',
+      }
+    ).setVisible(false);
 
     this.container.add([this.typedText, this.cursorText, this.remainingText, this.hintLabel]);
 
-    // Cursor blink
+    // ── Cursor blink ──
     this.cursorBlink = config.scene.time.addEvent({
       delay: 530,
       loop: true,
@@ -104,10 +158,9 @@ export class Terminal {
     });
   }
 
-  /** Add a line of output above the prompt */
-  addLine(text: string, color = this.terminalTextColor): void {
+  /** Add a line of output to the log area */
+  addLine(text: string, _color = this.terminalTextColor): void {
     this.lines.push(text);
-    // Keep only visible lines
     if (this.lines.length > this.maxVisibleLines) {
       this.lines.shift();
     }
@@ -138,14 +191,17 @@ export class Terminal {
     }
   }
 
-  /** Called on incorrect keystroke — flash red briefly */
+  /** Called on incorrect keystroke — flash the hero band red briefly */
   showError(): void {
     const errorColor = '#f85149';
     this.typedText.setColor(errorColor);
     this.cursorText.setColor(errorColor);
     this.remainingText.setColor(errorColor);
+    // Flash hero band bg
+    this.heroBandBg.setFillStyle(0x2a0a0a);
 
     this.scene.time.delayedCall(150, () => {
+      this.heroBandBg.setFillStyle(0x070d14);
       this.renderPrompt();
     });
   }
@@ -168,7 +224,6 @@ export class Terminal {
   }
 
   private renderLines(): void {
-    // Clear old text objects
     this.lineTexts.forEach(t => t.destroy());
     this.lineTexts = [];
 
@@ -178,7 +233,7 @@ export class Terminal {
       const t = this.scene.add.text(8, startY + i * LINE_HEIGHT, line, {
         fontFamily: 'monospace',
         fontSize: '13px',
-        color: this.terminalTextColor,
+        color: LOG_FADE_COLOR,   // log lines are visually subordinate (dimmed)
       });
       this.container.add(t);
       this.lineTexts.push(t);
@@ -193,20 +248,15 @@ export class Terminal {
     this.typedText.setText(typed);
     this.typedText.setColor(this.terminalTextColor);
 
-    // Position cursor after typed text
+    // Position cursor immediately after typed text
     this.cursorText.setX(this.typedText.x + this.typedText.width);
     this.cursorText.setText(cursor);
-    this.cursorText.setColor('#e6edf3');
+    this.cursorText.setColor('#ffffff');
 
     // Position remaining after cursor
     this.remainingText.setX(this.cursorText.x + this.cursorText.width);
     this.remainingText.setText(remaining);
-    this.remainingText.setColor('#484f58');
-
-    // Position hint label relative to prompt start
-    if (this.hintLabel.active) {
-      this.hintLabel.setX(this.typedText.x + 16); // offset a bit to align roughly with typed area
-    }
+    this.remainingText.setColor('#3a4453');
   }
 
   destroy(): void {
