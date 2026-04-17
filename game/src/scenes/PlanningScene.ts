@@ -43,8 +43,14 @@ export class PlanningScene extends Phaser.Scene {
   private selectedStrategy: Strategy | null = null;
   private launchBtn!: Phaser.GameObjects.Text;
   private cards: Phaser.GameObjects.Rectangle[] = [];
-  private strategyPreviewText!: Phaser.GameObjects.Text;
-  private agentSummaryText!: Phaser.GameObjects.Text;
+
+  // Effects panel refs
+  private effectTimerText!: Phaser.GameObjects.Text;
+  private effectTimerBar!: Phaser.GameObjects.Rectangle;
+  private effectTimerBarBg!: Phaser.GameObjects.Rectangle;
+  private effectCostText!: Phaser.GameObjects.Text;
+  private effectRepText!: Phaser.GameObjects.Text;
+  private effectAgentText!: Phaser.GameObjects.Text;
 
   // Agent picker state
   private selectedAgentIds: string[] = [];
@@ -81,8 +87,8 @@ export class PlanningScene extends Phaser.Scene {
 
     // ── Strategy picker window ──────────────────────────────────────────
     const stratWin = new Window({
-      scene: this, x: 40, y: 50,
-      width: 700, height: 460,
+      scene: this, x: 40, y: 28,
+      width: 700, height: 340,
       title: 'Strategy Picker',
       titleIcon: '⚙️',
       accentColor: theme.accent,
@@ -95,30 +101,32 @@ export class PlanningScene extends Phaser.Scene {
 
     this.modelRowBgs = new Map();
     this.cards = [];
+    const CARD_H = 64;
+    const CARD_STEP = 74;
     STRATEGIES.forEach((s, i) => {
-      const cardY = 50 + sArea.y + 24 + i * 100;
+      const cardY = 28 + sArea.y + 22 + i * CARD_STEP;
       const cardX = 40 + sArea.x;
       const isLocked = state.lockedStrategies.includes(s.id);
 
-      const card = this.add.rectangle(cardX, cardY, sArea.width, 80, isLocked ? 0x1a1a1a : COLORS.titleBar).setOrigin(0);
+      const card = this.add.rectangle(cardX, cardY, sArea.width, CARD_H, isLocked ? 0x1a1a1a : COLORS.titleBar).setOrigin(0);
       if (!isLocked) {
         card.setInteractive({ useHandCursor: true });
         this.cards.push(card);
       }
 
-      this.add.text(cardX + 16, cardY + 10, `${s.icon}  ${s.name}`, {
+      this.add.text(cardX + 16, cardY + 12, `${s.icon}  ${s.name}`, {
         fontFamily: 'monospace', fontSize: '16px', color: isLocked ? '#484f58' : '#e6edf3',
       });
       if (isLocked) {
-        this.add.text(cardX + 16, cardY + 32, '🔒 Against company policy', {
+        this.add.text(cardX + 16, cardY + 36, '🔒 Against company policy', {
           fontFamily: 'monospace', fontSize: '11px', color: '#484f58',
         });
       }
-      this.add.text(cardX + 50, cardY + 34, s.desc, {
+      this.add.text(cardX + 50, cardY + 36, s.desc, {
         fontFamily: 'monospace', fontSize: '12px', color: '#9da5b0',
         wordWrap: { width: sArea.width - 80 },
       });
-      this.add.text(cardX + sArea.width - 120, cardY + 10, s.riskLabel, {
+      this.add.text(cardX + sArea.width - 120, cardY + 12, s.riskLabel, {
         fontFamily: 'monospace', fontSize: '11px',
         color: s.riskLabel === 'Low Risk' ? '#3fb950' : s.riskLabel === 'High Risk' ? '#f85149' : '#d29922',
       });
@@ -302,17 +310,51 @@ export class PlanningScene extends Phaser.Scene {
       wordWrap: { width: aArea.width },
     });
 
+    // ── Effects Preview window ─────────────────────────────────────────
+    const EFFECTS_Y = 378;
+    const EFFECTS_H = 268;
+    const effectsWin = new Window({
+      scene: this, x: 40, y: EFFECTS_Y,
+      width: 700, height: EFFECTS_H,
+      title: 'Effects Preview',
+      titleIcon: '📊',
+      accentColor: theme.accent,
+    });
+    const eArea = effectsWin.contentArea;
+    const ex = 40 + eArea.x;
+    const ey = EFFECTS_Y + eArea.y;
+    const eW = eArea.width;
+    const EROW = 52;
+    const labelStyle = { fontFamily: 'monospace', fontSize: '12px', color: '#9da5b0' as string };
+    const valStyle   = { fontFamily: 'monospace', fontSize: '13px', color: '#e6edf3' as string };
+
+    // Row 0 — Timer
+    this.add.text(ex + 8, ey + 6, '⏱️  Timer', labelStyle);
+    this.effectTimerBarBg = this.add.rectangle(ex + 8, ey + 28, eW - 210, 6, COLORS.titleBar).setOrigin(0);
+    this.effectTimerBar   = this.add.rectangle(ex + 8, ey + 28, 1, 6, 0x3fb950).setOrigin(0);
+    this.effectTimerText  = this.add.text(ex + eW - 4, ey + 8, '—', valStyle).setOrigin(1, 0);
+    this.add.rectangle(ex, ey + EROW - 2, eW, 1, COLORS.textDim).setAlpha(0.15).setOrigin(0);
+
+    // Row 1 — Daily cost
+    this.add.text(ex + 8, ey + EROW + 8, '💰  Daily Cost', labelStyle);
+    this.effectCostText = this.add.text(ex + eW - 4, ey + EROW + 8, '—', valStyle).setOrigin(1, 0);
+    this.add.rectangle(ex, ey + EROW * 2 - 2, eW, 1, COLORS.textDim).setAlpha(0.15).setOrigin(0);
+
+    // Row 2 — Rep modifier
+    this.add.text(ex + 8, ey + EROW * 2 + 8, '⭐  Rep Modifier', labelStyle);
+    this.effectRepText = this.add.text(ex + eW - 4, ey + EROW * 2 + 8, '—', valStyle).setOrigin(1, 0);
+    this.add.rectangle(ex, ey + EROW * 3 - 2, eW, 1, COLORS.textDim).setAlpha(0.15).setOrigin(0);
+
+    // Row 3 — Agents
+    this.add.text(ex + 8, ey + EROW * 3 + 8, '🤖  Agents', labelStyle);
+    this.effectAgentText = this.add.text(ex + eW - 4, ey + EROW * 3 + 8, '—', {
+      fontFamily: 'monospace', fontSize: '13px', color: '#e6edf3',
+      wordWrap: { width: eW - 120 }, align: 'right',
+    }).setOrigin(1, 0);
+
     // ── Launch button ───────────────────────────────────────────────────
-    this.launchBtn = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 75, '[ Select a strategy to continue ]', {
+    this.launchBtn = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 22, '[ Select a strategy to continue ]', {
       fontFamily: 'monospace', fontSize: '16px', color: '#30363d',
-    }).setOrigin(0.5);
-
-    this.strategyPreviewText = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 52, '', {
-      fontFamily: 'monospace', fontSize: '12px', color: '#9da5b0',
-    }).setOrigin(0.5);
-
-    this.agentSummaryText = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 36, '', {
-      fontFamily: 'monospace', fontSize: '11px', color: '#9da5b0',
     }).setOrigin(0.5);
   }
 
@@ -362,14 +404,13 @@ export class PlanningScene extends Phaser.Scene {
 
     // Re-evaluate launch readiness
     this.updateLaunchState();
-    this.refreshAgentSummary();
+    this.refreshEffectsPanel();
   }
 
-  private refreshAgentSummary(): void {
+  private refreshEffectsPanel(): void {
     const state = getState();
-    const parts: string[] = [];
 
-    // Timer: base + strategy + agent speed + GPU
+    // ─ Timer row ─
     const baseTimer = state.playerClass === 'corporateDev' ? TUNING.CORP_TIMER_SECONDS : BASE_TIMER_SECONDS;
     const agentSpeedMod = AgentSystem.getSpeedModifier(this.selectedAgentIds);
     const agentSpeedSec = Math.round(baseTimer * agentSpeedMod);
@@ -383,39 +424,87 @@ export class PlanningScene extends Phaser.Scene {
       monitorBonus = Math.round(baseTimer * 0.05);
     }
     const totalTimer = Math.max(10, baseTimer + agentSpeedSec + strategyBonus + gpuBonus + monitorBonus);
-    parts.push(`⏱️ ${totalTimer}s timer`);
+    const maxTimer = baseTimer + 10; // rough ceiling for bar
+    const timerFrac = Math.min(1, totalTimer / maxTimer);
+    const timerColor = totalTimer >= baseTimer ? 0x3fb950 : totalTimer >= baseTimer * 0.7 ? 0xd29922 : 0xf85149;
+    const barW = Math.max(2, Math.round(timerFrac * this.effectTimerBarBg.width));
+    this.effectTimerBar.width = barW;
+    this.effectTimerBar.setFillStyle(timerColor);
+    const timerParts = [`${totalTimer}s`];
+    if (strategyBonus !== 0) timerParts.push(`strategy ${strategyBonus > 0 ? '+' : ''}${strategyBonus}s`);
+    if (agentSpeedSec !== 0) timerParts.push(`agents ${agentSpeedSec > 0 ? '+' : ''}${agentSpeedSec}s`);
+    if (gpuBonus) timerParts.push(`gpu +${gpuBonus}s`);
+    if (monitorBonus) timerParts.push(`monitor +${monitorBonus}s`);
+    this.effectTimerText.setText(timerParts.join('  ·  ')).setColor(
+      totalTimer >= baseTimer ? '#3fb950' : totalTimer >= baseTimer * 0.7 ? '#d29922' : '#f85149'
+    );
 
-    // Model rep modifier
+    // ─ Daily cost row ─
+    const modelCost = EconomySystem.getModelDayCost(state.model);
+    const stratCost = this.selectedStrategy ? EconomySystem.getStrategyModifier(this.selectedStrategy).strategyCost : 0;
+    const totalCost = modelCost + stratCost;
+    const isCorp = state.playerClass === 'corporateDev';
+    if (isCorp) {
+      this.effectCostText.setText('💳 Company Card').setColor('#3fb950');
+    } else {
+      const affordable = state.budget >= totalCost;
+      this.effectCostText
+        .setText(`$${totalCost}/day  (model $${modelCost}${stratCost ? ` + strategy $${stratCost}` : ''})`)
+        .setColor(affordable ? '#e6edf3' : '#f85149');
+    }
+
+    // ─ Rep modifier row ─
     const modelMod = EconomySystem.getModelQualityMod(state.model);
-    if (modelMod !== 0) {
-      const pct = Math.round(modelMod * 100);
-      parts.push(`${pct >= 0 ? '+' : ''}${pct}% rep (model)`);
-    }
-
-    // Strategy rep modifier
+    const modelPct = Math.round(modelMod * 100);
+    const repParts: string[] = [];
+    if (modelPct !== 0) repParts.push(`${modelPct >= 0 ? '+' : ''}${modelPct}% model`);
     if (this.selectedStrategy) {
-      const option = STRATEGIES.find(s => s.id === this.selectedStrategy);
-      if (option) {
-        const stratMod = option.id === 'planThenBuild' ? '+15%' : option.id === 'oneShot' ? '-10%' : option.id === 'vibeCode' ? '-20%~+40%' : '';
-        if (stratMod) parts.push(`${stratMod} rep (strategy)`);
+      const stratRepMap: Record<string, string> = {
+        planThenBuild: '+15% strategy',
+        oneShot: '-10% strategy',
+        vibeCode: '-20%~+40% strategy',
+      };
+      if (stratRepMap[this.selectedStrategy]) repParts.push(stratRepMap[this.selectedStrategy]);
+    }
+    if (repParts.length === 0) repParts.push('no modifier');
+    const repColor = repParts.some(p => p.startsWith('-')) ? '#d29922' : '#3fb950';
+    this.effectRepText.setText(repParts.join('  ·  ')).setColor(repColor);
+
+    // ─ Agents row ─
+    if (this.selectedAgentIds.length === 0) {
+      this.effectAgentText.setText('none selected').setColor('#6e7681');
+    } else {
+      const traitNotes: string[] = [];
+      for (const id of this.selectedAgentIds) {
+        const agent = AGENT_ROSTER.find(a => a.id === id);
+        if (!agent) continue;
+        const emoji = AGENT_EMOJI[id] ?? '🤖';
+        if (agent.trait === 'low_hallucination') traitNotes.push(`${emoji} +5 rep/day`);
+        else if (agent.trait === 'agreeable') traitNotes.push(`${emoji} +3s`);
+        else if (agent.trait === 'deploy_unapproved') traitNotes.push(`${emoji} 20% +10 progress`);
+        else if (agent.trait === 'architecture_debates') traitNotes.push(`${emoji} -3s/day`);
+        else if (agent.trait === 'feature_creep') traitNotes.push(`${emoji} 25% -6s`);
+        else if (agent.trait === 'wildcard_shortcut') traitNotes.push(`${emoji} 50/50 ±6s`);
+        else traitNotes.push(`${emoji} ${agent.name}`);
       }
+      // Check synergy / clash
+      let synergyNote = '';
+      for (const pair of SYNERGY_PAIRS) {
+        if (pair.agents.every(id => this.selectedAgentIds.includes(id))) {
+          const names = pair.agents.map(id => AGENT_ROSTER.find(a => a.id === id)?.name ?? id).join('+');
+          synergyNote = `  │  🟢 ${names} synergy`;
+          break;
+        }
+      }
+      for (const pair of CLASH_PAIRS) {
+        if (pair.agents.every(id => this.selectedAgentIds.includes(id))) {
+          const names = pair.agents.map(id => AGENT_ROSTER.find(a => a.id === id)?.name ?? id).join('+');
+          synergyNote = `  │  🔴 ${names} clash`;
+          break;
+        }
+      }
+      this.effectAgentText.setText(traitNotes.join('  ·  ') + synergyNote).setColor('#e6edf3');
     }
-
-    // Agent traits
-    const traitNotes: string[] = [];
-    for (const id of this.selectedAgentIds) {
-      const agent = AGENT_ROSTER.find(a => a.id === id);
-      if (!agent) continue;
-      if (agent.trait === 'low_hallucination') traitNotes.push('Oracle: +5 rep/day');
-      if (agent.trait === 'agreeable') traitNotes.push('Parrot: +3s');
-      if (agent.trait === 'deploy_unapproved') traitNotes.push('Turbo: 20% chance for +10 progress');
-      if (agent.trait === 'architecture_debates') traitNotes.push('Linter: -3s/day');
-      if (agent.trait === 'feature_creep') traitNotes.push('Scope: 25% chance for -6s');
-      if (agent.trait === 'wildcard_shortcut') traitNotes.push('Gremlin: 50/50 for +6s or -3s');
-    }
-    if (traitNotes.length > 0) parts.push(traitNotes.join(' · '));
-
-    this.agentSummaryText.setText(parts.join('  │  '));
   }
 
   private updateSynergyIndicator(): void {
@@ -467,19 +556,7 @@ export class PlanningScene extends Phaser.Scene {
       else bg.setStrokeStyle(0, 0);
     });
 
-    // Refresh the strategy cost preview if a strategy is selected
-    if (this.selectedStrategy) {
-      const option = STRATEGIES.find(s => s.id === this.selectedStrategy)!;
-      const mod = EconomySystem.getStrategyModifier(option.id);
-      const totalDayCost = EconomySystem.getModelDayCost(state.model) + mod.strategyCost;
-      const qualityLabel = option.id === 'vibeCode' ? '???' : `${mod.qualityMult.toFixed(1)}x`;
-      if (state.playerClass === 'corporateDev') {
-        this.strategyPreviewText.setText(`Daily cost: 💳 Company Card · Quality: ${qualityLabel}`);
-      } else {
-        this.strategyPreviewText.setText(`Daily cost: $${totalDayCost} (model $${EconomySystem.getModelDayCost(state.model)} + strategy $${mod.strategyCost}) · Quality: ${qualityLabel}`);
-      }
-    }
-    this.refreshAgentSummary();
+    this.refreshEffectsPanel();
   }
 
   private lastStrategyTimeBonus = 0;
@@ -500,16 +577,7 @@ export class PlanningScene extends Phaser.Scene {
     });
 
     this.updateLaunchState();
-
-    const mod = EconomySystem.getStrategyModifier(option.id);
-    const totalDayCost = EconomySystem.getModelDayCost(state.model) + mod.strategyCost;
-    const qualityLabel = option.id === 'vibeCode' ? '???' : `${mod.qualityMult.toFixed(1)}x`;
-    if (state.playerClass === 'corporateDev') {
-      this.strategyPreviewText.setText(`Daily cost: 💳 Company Card · Quality: ${qualityLabel}`);
-    } else {
-      this.strategyPreviewText.setText(`Daily cost: $${totalDayCost} (model $${EconomySystem.getModelDayCost(state.model)} + strategy $${mod.strategyCost}) · Quality: ${qualityLabel}`);
-    }
-    this.refreshAgentSummary();
+    this.refreshEffectsPanel();
   }
 
   private updateLaunchState(): void {
