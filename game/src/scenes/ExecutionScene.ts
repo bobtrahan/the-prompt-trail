@@ -350,6 +350,10 @@ export class ExecutionScene extends Phaser.Scene {
     this.progress = 0;
     this.startedTyping = false;
     this.agentPanelStates = [];
+    this.completionShown = false;
+    this.inOvertime = false;
+    this.overtimeBonus = 0;
+    this.overtimePromptsCompleted = 0;
 
     // Initialise systems
     this.eventEngine = new EventEngine(state);

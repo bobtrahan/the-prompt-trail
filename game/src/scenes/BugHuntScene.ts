@@ -550,6 +550,7 @@ export class BugHuntScene extends Phaser.Scene {
 
   private fireBullet(): void {
     if (this.ended || this.ammo <= 0) return;
+    AudioManager.getInstance().playSFX('ui-click');
 
     // Fire in facing direction
     const dx = this.facingX;

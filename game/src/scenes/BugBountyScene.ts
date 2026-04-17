@@ -140,6 +140,7 @@ export class BugBountyScene extends Phaser.Scene {
     this.comboCount = 0;
     this.maxCombo = 0;
     this.ended = false;
+    this.startTime = 0;
 
     AudioManager.getInstance().playMusic('bugbounty');
 
@@ -613,6 +614,7 @@ export class BugBountyScene extends Phaser.Scene {
 
   private catchBug(bug: ActiveBug): void {
     if (!this.bugs.includes(bug)) return;
+    AudioManager.getInstance().playSFX('key-correct');
 
     const now = this.time.now;
     if (now - this.lastCatchTime < 2000) {
