@@ -86,16 +86,17 @@ export class PlanningScene extends Phaser.Scene {
     });
 
     // ── Strategy picker window ──────────────────────────────────────────
+    const STRAT_Y = 28;
     const stratWin = new Window({
-      scene: this, x: 40, y: 28,
-      width: 700, height: 340,
+      scene: this, x: 40, y: STRAT_Y,
+      width: 700, height: 366,
       title: 'Strategy Picker',
       titleIcon: '⚙️',
       accentColor: theme.accent,
     });
 
     const sArea = stratWin.contentArea;
-    this.add.text(40 + sArea.x, 50 + sArea.y, 'Choose your approach:', {
+    this.add.text(40 + sArea.x, STRAT_Y + sArea.y + 4, 'Choose your approach:', {
       fontFamily: 'monospace', fontSize: '14px', color: '#9da5b0',
     });
 
@@ -104,7 +105,7 @@ export class PlanningScene extends Phaser.Scene {
     const CARD_H = 64;
     const CARD_STEP = 74;
     STRATEGIES.forEach((s, i) => {
-      const cardY = 28 + sArea.y + 22 + i * CARD_STEP;
+      const cardY = STRAT_Y + sArea.y + 22 + i * CARD_STEP;
       const cardX = 40 + sArea.x;
       const isLocked = state.lockedStrategies.includes(s.id);
 
@@ -118,17 +119,21 @@ export class PlanningScene extends Phaser.Scene {
         fontFamily: 'monospace', fontSize: '16px', color: isLocked ? '#484f58' : '#e6edf3',
       });
       if (isLocked) {
-        this.add.text(cardX + 16, cardY + 36, '🔒 Against company policy', {
+        const lockMsg = state.playerClass === 'corporateDev'
+          ? '🔒 Not compatible with corporate policy'
+          : '🔒 Against company policy';
+        this.add.text(cardX + 16, cardY + 36, lockMsg, {
           fontFamily: 'monospace', fontSize: '11px', color: '#484f58',
         });
+      } else {
+        this.add.text(cardX + 50, cardY + 36, s.desc, {
+          fontFamily: 'monospace', fontSize: '12px', color: '#9da5b0',
+          wordWrap: { width: sArea.width - 80 },
+        });
       }
-      this.add.text(cardX + 50, cardY + 36, s.desc, {
-        fontFamily: 'monospace', fontSize: '12px', color: '#9da5b0',
-        wordWrap: { width: sArea.width - 80 },
-      });
       this.add.text(cardX + sArea.width - 120, cardY + 12, s.riskLabel, {
         fontFamily: 'monospace', fontSize: '11px',
-        color: s.riskLabel === 'Low Risk' ? '#3fb950' : s.riskLabel === 'High Risk' ? '#f85149' : '#d29922',
+        color: isLocked ? '#484f58' : s.riskLabel === 'Low Risk' ? '#3fb950' : s.riskLabel === 'High Risk' ? '#f85149' : '#d29922',
       });
 
       if (!isLocked) {
@@ -161,7 +166,7 @@ export class PlanningScene extends Phaser.Scene {
       : ALL_MODELS;
 
     const MODEL_ROW_H = 28;
-    const MODEL_WIN_H = 42 + visibleModels.length * MODEL_ROW_H + 8;
+    const MODEL_WIN_H = 71 + visibleModels.length * MODEL_ROW_H;
 
     const modelWin = new Window({
       scene: this, x: 760, y: 28,
@@ -234,7 +239,7 @@ export class PlanningScene extends Phaser.Scene {
     const agentWinY = 28 + MODEL_WIN_H + 8;
     const agentWin = new Window({
       scene: this, x: 760, y: agentWinY,
-      width: 480, height: 340,
+      width: 480, height: 350,
       title: 'Agent Dashboard',
       titleIcon: '🤖',
       accentColor: theme.accent,
@@ -250,7 +255,7 @@ export class PlanningScene extends Phaser.Scene {
     });
 
     // Agent rows
-    const ROW_H = 38;
+    const ROW_H = 44;
     AGENT_ROSTER.forEach((agent, i) => {
       const rowY = ay + 20 + i * ROW_H;
       const rowW = aArea.width;
@@ -311,8 +316,8 @@ export class PlanningScene extends Phaser.Scene {
     });
 
     // ── Effects Preview window ─────────────────────────────────────────
-    const EFFECTS_Y = 378;
-    const EFFECTS_H = 268;
+    const EFFECTS_Y = 402;
+    const EFFECTS_H = 210;
     const effectsWin = new Window({
       scene: this, x: 40, y: EFFECTS_Y,
       width: 700, height: EFFECTS_H,
@@ -324,7 +329,7 @@ export class PlanningScene extends Phaser.Scene {
     const ex = 40 + eArea.x;
     const ey = EFFECTS_Y + eArea.y;
     const eW = eArea.width;
-    const EROW = 52;
+    const EROW = 42;
     const labelStyle = { fontFamily: 'monospace', fontSize: '12px', color: '#9da5b0' as string };
     const valStyle   = { fontFamily: 'monospace', fontSize: '13px', color: '#e6edf3' as string };
 
@@ -353,7 +358,7 @@ export class PlanningScene extends Phaser.Scene {
     }).setOrigin(1, 0);
 
     // ── Launch button ───────────────────────────────────────────────────
-    this.launchBtn = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 22, '[ Select a strategy to continue ]', {
+    this.launchBtn = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 50, '[ Select a strategy to continue ]', {
       fontFamily: 'monospace', fontSize: '16px', color: '#30363d',
     }).setOrigin(0.5);
   }
