@@ -17,17 +17,22 @@ export interface DayEventSchedule {
 }
 
 export const EVENT_SCHEDULE: DayEventSchedule[] = [
-  { day: 1,  afterPrompts: [2] },             // 1 event  / 4 prompts (Intro training)
-  { day: 2,  afterPrompts: [] },              // 0 events / 4 prompts (Let player breathe)
-  { day: 3,  afterPrompts: [2] },             // 1 event  / 4 prompts (Reduced interruption)
-  { day: 4,  afterPrompts: [2, 3] },          // 2 events / 4 prompts
-  { day: 5,  afterPrompts: [2, 3] },          // 2 events / 5 prompts
-  { day: 6,  afterPrompts: [2, 3, 4] },       // 3 events / 5 prompts
-  { day: 7,  afterPrompts: [2, 3, 4] },       // 3 events / 6 prompts
-  { day: 8,  afterPrompts: [2, 4, 6] },       // 3 events / 6 prompts (Meaningful pressure)
-  { day: 9,  afterPrompts: [2, 4, 6] },       // 3 events / 7 prompts
-  { day: 10, afterPrompts: [2, 4, 6, 8] },    // 4 events / 8 prompts (Increased pressure)
-  { day: 11, afterPrompts: [2, 4, 6, 7, 8] }, // 5 events / 8 prompts
-  { day: 12, afterPrompts: [2, 4, 6, 7, 8, 9] }, // 6 events / 9 prompts
-  { day: 13, afterPrompts: [2, 3, 5, 6, 7, 8, 9, 10] }, // 8 events / 10 prompts (Max pressure)
+  // ── Forgiving (Days 1–3): learn the loop, minimal interruption ──────────────
+  { day: 1,  afterPrompts: [2] },              // 1 event  / 4 prompts — teaches event mechanic
+  { day: 2,  afterPrompts: [] },               // 0 events / 4 prompts — breathing room
+  { day: 3,  afterPrompts: [3] },              // 1 event  / 4 prompts — late, after player settles
+
+  // ── Teaching Pressure (Days 4–7): ramp up cadence and consequence ───────────
+  { day: 4,  afterPrompts: [3] },              // 1 event  / 4 prompts — gentle intro to pressure
+  { day: 5,  afterPrompts: [2, 4] },           // 2 events / 5 prompts — multi-event rhythm
+  { day: 6,  afterPrompts: [2, 3, 5] },        // 3 events / 5 prompts — every other prompt
+  { day: 7,  afterPrompts: [2, 4, 5] },        // 3 events / 6 prompts — clustered at end
+
+  // ── Competent Typing Required (Days 8–13): survive or fail ──────────────────
+  { day: 8,  afterPrompts: [2, 3, 5] },        // 3 events / 6 prompts — early burst
+  { day: 9,  afterPrompts: [2, 4, 5, 7] },     // 4 events / 7 prompts — relentless
+  { day: 10, afterPrompts: [2, 3, 5, 7, 8] },  // 5 events / 8 prompts — clustered + spread
+  { day: 11, afterPrompts: [2, 4, 5, 6, 8] },  // 5 events / 8 prompts — grind
+  { day: 12, afterPrompts: [2, 3, 5, 6, 7, 8, 9] }, // 7 events / 9 prompts — relentless
+  { day: 13, afterPrompts: [2, 3, 4, 5, 6, 7, 8, 9, 10] }, // 9 events / 10 prompts — maximum pressure
 ];

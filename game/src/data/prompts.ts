@@ -43,51 +43,51 @@ export const DAY_PROMPTS: DayPrompts[] = [
     ],
   },
 
-  // ── Day 4: AI Meal Planner (easy) ──
+  // ── Day 4: AI Meal Planner (easy→teaching) ──
   {
     day: 4,
     prompts: [
-      'plan meals from fridge',
-      'i have eggs and hope',
-      'too many ingredients',
-      'just order a pizza',
+      'plan meals from the fridge',
+      'i have three eggs and pure hope',
+      'too many ingredients, not enough skill',
+      'just order a pizza again',
     ],
   },
 
-  // ── Day 5: Smart Home Dashboard (medium) ──
+  // ── Day 5: Smart Home Dashboard (moderate) ──
   {
     day: 5,
     prompts: [
-      'connect toaster to internet',
-      'set up mqtt on raspberry pi',
-      'toaster is talking to china',
-      'door requires firmware update',
-      'i just want some toast',
+      'connect the toaster to the internet',
+      'set up mqtt broker on raspberry pi',
+      'the toaster is phoning home to somewhere',
+      'the front door needs a firmware update',
+      'i just want to make some toast',
     ],
   },
 
-  // ── Day 6: Code Review Agent (medium) ──
+  // ── Day 6: Code Review Agent (moderate) ──
   {
     day: 6,
     prompts: [
-      'build an ai code reviewer',
-      'train it on our messy codebase',
-      'it says variable names lack soul',
-      'how to mass approve 200 nitpicks',
-      'ship it before it reviews itself',
+      'build an automated ai code review tool',
+      'train it on our three-year-old codebase',
+      'it says all our variable names lack soul',
+      'how do i mass-approve two hundred nitpicks',
+      'ship the tool before it reviews its own code',
     ],
   },
 
-  // ── Day 7: Startup Pitch Generator (medium) ──
+  // ── Day 7: Startup Pitch Generator (moderate) ──
   {
     day: 7,
     prompts: [
-      'generate a startup pitch deck for ai',
-      'no not crypto something with ai laundry',
-      'add a slide about our fifty million valuation',
-      'the investors want a working demo by friday',
-      'just make the growth numbers look good',
-      'send the deck to the whole mailing list',
+      'generate a startup pitch deck using ai',
+      'not crypto, something more like ai-powered laundry',
+      'add a slide projecting fifty million in valuation',
+      'investors are demanding a live demo by friday noon',
+      'just make the growth curve look more impressive',
+      'send the deck out to the entire mailing list now',
     ],
   },
 

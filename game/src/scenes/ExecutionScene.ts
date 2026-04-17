@@ -37,7 +37,7 @@ function formatEffectHint(effects: EventEffect[]): string {
         return typeof effect.value === 'number' ? `${formatSigned(effect.value)} rep` : [];
       case 'agentSpeed': {
         if (typeof effect.value !== 'number') return [];
-        const secs = Math.round(TUNING.BASE_TIMER_SECONDS * (effect.value / 100));
+        const secs = Math.round(TUNING.BASE_TIMER_SECONDS * (effect.value / 100)); // preview hint, approximate
         return `${secs >= 0 ? '+' : '−'}${Math.abs(secs)}s efficiency`;
       }
       case 'flag':
@@ -363,8 +363,10 @@ export class ExecutionScene extends Phaser.Scene {
     if (state.ownedUpgrades.includes('hw-gpu') && ['local', 'openSource'].includes(state.model)) {
       this.speedMod += 0.1; // GPU upgrade boosts local/open-source models
     }
+    // Base typo forgiveness from day difficulty curve
+    this.typoForgiveness = (TUNING.TYPO_FORGIVENESS_BY_DAY as Record<number, number>)[state.day] ?? 0;
     if (state.ownedUpgrades.includes('hw-keyboard')) {
-      this.typoForgiveness = 1;
+      this.typoForgiveness = Math.max(1, this.typoForgiveness);
     }
 
     this.traitResults = AgentSystem.checkTraits(state.activeAgents, state.day);
@@ -1391,7 +1393,8 @@ export class ExecutionScene extends Phaser.Scene {
         this.timeBar.setFillStyle(isGain ? 0x3fb950 : 0xf85149);
         this.tweens.add({ targets: this.timeText, scaleX: 1.05, scaleY: 1.05, duration: 100, yoyo: true });
       } else if (effect.type === 'agentSpeed' && typeof effect.value === 'number') {
-        const baseTimer = state.playerClass === 'corporateDev' ? TUNING.CORP_TIMER_SECONDS : TUNING.BASE_TIMER_SECONDS;
+        const dayBaseMid = (TUNING.TIMER_BY_DAY as Record<number, number>)[state.day] ?? TUNING.BASE_TIMER_SECONDS;
+      const baseTimer = state.playerClass === 'corporateDev' ? Math.round(dayBaseMid * TUNING.CORP_TIMER_RATIO) : dayBaseMid;
         const deltaSecs = Math.round(baseTimer * (effect.value / 100));
         const projected = Math.max(0, this.timeSeconds + deltaSecs);
         const isGain = deltaSecs > 0;

@@ -7,19 +7,43 @@ export const TUNING = {
   // ─── Day & Execution Tuning ───────────────────────────────────────────
   TOTAL_DAYS: 13,
   
-  // Base execution timer (seconds)
+  // Base execution timer (seconds) — used as fallback
   BASE_TIMER_SECONDS: 45,
   CORP_TIMER_SECONDS: 22,
-  
+
+  // Per-day base timer (seconds). Difficulty curve:
+  //   Days 1-3  → generous (players learn the loop)
+  //   Days 4-7  → moderate (teaching pressure)
+  //   Days 8-13 → tight   (competent typing required)
+  // Corporate Dev always gets ~49% of these values (see CORP_TIMER_RATIO).
+  TIMER_BY_DAY: {
+    1: 75, 2: 72, 3: 70,          // generous
+    4: 58, 5: 55, 6: 52, 7: 50,   // moderate
+    8: 44, 9: 42, 10: 40,         // pressure
+    11: 38, 12: 36, 13: 34,       // brutal
+  } as Record<number, number>,
+
+  // Corporate Dev timer ratio (relative to base-day timer)
+  CORP_TIMER_RATIO: 0.49,
+
+  // Typo forgiveness granted by day (0 = no forgiveness).
+  // Note: hw-keyboard consumable always grants 1 regardless.
+  TYPO_FORGIVENESS_BY_DAY: {
+    1: 2, 2: 2, 3: 1,   // forgiving early days
+    4: 1, 5: 1, 6: 0, 7: 0,
+    8: 0, 9: 0, 10: 0, 11: 0, 12: 0, 13: 0,
+  } as Record<number, number>,
+
   // Event read window (seconds) — how long players have to choose before auto-dismiss
   EVENT_READ_WINDOW_SEC: 10,
 
-  // Day-scaled event countdowns
+  // Day-scaled event countdowns (more generous early to teach the system)
   EVENT_READ_WINDOW_BY_DAY: {
-    1: 18, 2: 17, 3: 16, // generous
-    4: 13, 5: 12, 6: 11, 7: 10, 8: 10, // moderate
-    9: 8, 10: 7, 11: 7, 12: 6, 13: 6 // sharp
-  },
+    1: 22, 2: 20, 3: 20,           // generous
+    4: 15, 5: 14, 6: 13, 7: 12,   // moderate
+    8: 10, 9: 9, 10: 8,            // pressure
+    11: 7, 12: 6, 13: 6,           // sharp
+  } as Record<number, number>,
   
   // How often random events can trigger (ms) — though mostly prompt-triggered now
   EVENT_INTERVAL_MS: 9000,
