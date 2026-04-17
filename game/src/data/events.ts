@@ -549,7 +549,8 @@ export const EVENTS: EventDef[] = [
     choices: [
       {
         text: 'Force-push a fix',
-        effects: [{ type: 'time', value: -1 }],
+        // BUCKET: flavor nudge — costs time, small rep gain for doing the right thing
+        effects: [{ type: 'time', value: -1 }, { type: 'reputation', value: 5 }],
       },
       {
         text: "Pretend you didn't see it",
@@ -582,7 +583,7 @@ export const EVENTS: EventDef[] = [
         choices: [
           {
             text: 'Force-push a fix',
-            effects: [{ type: 'time', value: -1 }],
+            effects: [{ type: 'time', value: -1 }, { type: 'reputation', value: 5 }],
           },
           {
             text: "Pretend you didn't see it",
@@ -684,7 +685,8 @@ export const EVENTS: EventDef[] = [
       },
       {
         text: 'Publish it as a blog post',
-        effects: [{ type: 'reputation', value: 5 }],
+        // BUCKET: tactical — unexpected content pivot, meaningful rep bump
+        effects: [{ type: 'reputation', value: 15 }],
       },
       {
         text: "Let it finish its thought",
@@ -700,7 +702,7 @@ export const EVENTS: EventDef[] = [
           },
           {
             text: 'Publish it as a blog post',
-            effects: [{ type: 'reputation', value: 5 }],
+            effects: [{ type: 'reputation', value: 15 }],
           },
           {
             text: "Let it finish its thought",
@@ -1314,7 +1316,8 @@ export const EVENTS: EventDef[] = [
       },
       {
         text: 'Take the call (-2 time, learn about unlocked model)',
-        effects: [{ type: 'time', value: -2 }, { type: 'flag', value: 'model-intel' }],
+        // BUCKET: tactical — networking has real value: model intel + career rep
+        effects: [{ type: 'time', value: -2 }, { type: 'flag', value: 'model-intel' }, { type: 'reputation', value: 15 }],
       },
       {
         text: 'Ask them to invest (20% +$500, 80% ghosted)',
@@ -1912,7 +1915,8 @@ export const EVENTS: EventDef[] = [
     choices: [
       {
         text: 'Do it properly (-2 time, compliance badge: +10 rep)',
-        effects: [{ type: 'time', value: -2 }, { type: 'reputation', value: 10 }, { type: 'flag', value: 'compliance-badge' }],
+        // BUCKET: tactical — compliance done right earns a bonus from company
+        effects: [{ type: 'time', value: -2 }, { type: 'reputation', value: 10 }, { type: 'flag', value: 'compliance-badge' }, { type: 'nightBonus', value: 50 }],
       },
       {
         text: 'Click through without reading (-1 time, 20% fail quiz: redo = -2 more time)',
@@ -1937,7 +1941,8 @@ export const EVENTS: EventDef[] = [
     choices: [
       {
         text: 'Engage thoughtfully (-2 time, +20 rep, +5% quality)',
-        effects: [{ type: 'time', value: -2 }, { type: 'reputation', value: 20 }, { type: 'flag', value: 'quality-boost-5pct' }, { type: 'reputation', value: 3 }],
+        // BUCKET: run-shaping — HN engagement drives real traffic and revenue overnight
+        effects: [{ type: 'time', value: -2 }, { type: 'reputation', value: 20 }, { type: 'flag', value: 'quality-boost-5pct' }, { type: 'reputation', value: 3 }, { type: 'nightBonus', value: 75 }],
       },
       {
         text: 'Post and ghost (+5 rep, comments become unhinged)',
@@ -2210,7 +2215,8 @@ export const EVENTS: EventDef[] = [
       },
       {
         text: 'Keep it as a mascot (bird on desk rest of run)',
-        effects: [{ type: 'flag', value: 'bird-mascot' }, { type: 'reputation', value: 3 }],
+        // BUCKET: flavor nudge — small morale lift that carries into tomorrow
+        effects: [{ type: 'flag', value: 'bird-mascot' }, { type: 'reputation', value: 5 }, { type: 'tomorrowTimer', value: 3 }],
       },
       {
         text: "'asdfjkl;' actually fixed a bug (10% chance +progress)",
@@ -2238,8 +2244,9 @@ export const EVENTS: EventDef[] = [
         effects: [{ type: 'time', value: -1 }],
       },
       {
-        text: 'File a bug report (-2 time, +$50 bug bounty)',
-        effects: [{ type: 'time', value: -2 }, { type: 'budget', value: 50 }],
+        text: 'File a bug report (-2 time, +$100 bug bounty)',
+        // BUCKET: tactical — responsible disclosure earns a real reward
+        effects: [{ type: 'time', value: -2 }, { type: 'budget', value: 100 }],
       },
     ],
   },
