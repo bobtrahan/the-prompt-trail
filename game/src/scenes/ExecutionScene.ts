@@ -68,6 +68,12 @@ export class ExecutionScene extends Phaser.Scene {
   private typoForgiveness = 0;
   private agentPanelStates: AgentPanelState[] = [];
 
+  // Layout state for focus-on-typing hero mode
+  private typeHintSubtitle?: Phaser.GameObjects.Text;
+  private typeHintGlow?: Phaser.GameObjects.Rectangle;
+  private typeHintGlowTween?: Phaser.Tweens.Tween;
+  private terminalFocusBorder?: Phaser.GameObjects.Rectangle;
+
   // Progress
   private progressBar!: Phaser.GameObjects.Rectangle;
   private progressBg!: Phaser.GameObjects.Rectangle;
@@ -509,6 +515,12 @@ export class ExecutionScene extends Phaser.Scene {
     this.timeBg = this.add.rectangle(rX, rY + 124, rArea.width - 16, 14, 0x21262d).setOrigin(0);
     this.timeBar = this.add.rectangle(rX, rY + 124, rArea.width - 16, 14, COLORS.warning).setOrigin(0);
 
+    // ── Dim side panels on load — typing area is dominant visual focus until player starts ──
+    this.agentWindow.container.setAlpha(0.3);
+    this.resourceWindow.container.setAlpha(0.3);
+    [this.budgetText, this.hardwareText, this.repText, this.hwBarBg, this.hwBar,
+      this.timeText, this.timeBg, this.timeBar].forEach(obj => obj.setAlpha(0.3));
+
     // ── Terminal boot text ──
     this.terminal.addLine('PromptOS Terminal v1.3.7');
     this.terminal.addLine(`Loading project: ${projectName}...`);
@@ -608,20 +620,62 @@ export class ExecutionScene extends Phaser.Scene {
         consumableDelay += 500;
       }
 
-      // After notifications complete, show the "START TYPING" hint
+      // After notifications complete, show the dominant "START TYPING" hero affordance
+      const hintCenterX = 16 + tArea.x + tArea.width / 2;
+      const hintCenterY = 72 + tArea.y + tArea.height / 2 - 30;
+
+      // Pulsing background glow slab — makes the area unmissable
+      this.typeHintGlow = this.add.rectangle(
+        hintCenterX, hintCenterY,
+        tArea.width - 32, 110,
+        0x1c2a3a
+      ).setOrigin(0.5).setDepth(48);
+      this.typeHintGlowTween = this.tweens.add({
+        targets: this.typeHintGlow,
+        alpha: { from: 0.55, to: 1 },
+        duration: 900,
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.easeInOut',
+      });
+
+      // Animated focus border around the terminal window (draws the eye)
+      this.terminalFocusBorder = this.add.rectangle(
+        14, 70, 824, 444, 0x000000, 0
+      ).setOrigin(0).setDepth(47).setStrokeStyle(2, 0x58a6ff);
+      this.tweens.add({
+        targets: this.terminalFocusBorder,
+        alpha: { from: 1, to: 0.3 },
+        duration: 1100,
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.easeInOut',
+      });
+
+      // Main hint — large, bold, impossible to miss
       this.typeHint = this.add.text(
-        16 + tArea.x + tArea.width / 2,
-        72 + tArea.y + tArea.height / 2 - 20,
+        hintCenterX,
+        hintCenterY - 16,
         TUNING.COPY.START_TYPING_PROMPT,
-        { fontFamily: 'monospace', fontSize: '20px', color: '#58a6ff', fontStyle: 'bold' }
+        { fontFamily: 'monospace', fontSize: '30px', color: '#58a6ff', fontStyle: 'bold',
+          stroke: '#000000', strokeThickness: 3 }
+      ).setOrigin(0.5).setDepth(50);
+
+      // Subtitle line
+      this.typeHintSubtitle = this.add.text(
+        hintCenterX,
+        hintCenterY + 26,
+        '▶  press any key to begin  ◀',
+        { fontFamily: 'monospace', fontSize: '14px', color: '#9da5b0' }
       ).setOrigin(0.5).setDepth(50);
 
       this.typeHintTween = this.tweens.add({
-        targets: this.typeHint,
-        alpha: { from: 1, to: 0.3 },
-        duration: 800,
+        targets: [this.typeHint, this.typeHintSubtitle],
+        alpha: { from: 1, to: 0.4 },
+        duration: 750,
         yoyo: true,
         repeat: -1,
+        ease: 'Sine.easeInOut',
       });
 
       this.typingEngine.start();
@@ -633,13 +687,44 @@ export class ExecutionScene extends Phaser.Scene {
     if (this.startedTyping) return;
     this.startedTyping = true;
 
-    // Kill the hint
+    // Kill all hint tweens
     this.typeHintTween?.destroy();
+    this.typeHintGlowTween?.destroy();
+
+    // Dismiss all hero-affordance elements
+    const hintTargets: (Phaser.GameObjects.Text | Phaser.GameObjects.Rectangle)[] = [this.typeHint];
+    if (this.typeHintSubtitle) hintTargets.push(this.typeHintSubtitle);
+    if (this.typeHintGlow) hintTargets.push(this.typeHintGlow);
+    if (this.terminalFocusBorder) hintTargets.push(this.terminalFocusBorder);
+
     this.tweens.add({
-      targets: this.typeHint,
-      alpha: 0, y: this.typeHint.y - 30,
-      duration: 400, ease: 'Power2',
-      onComplete: () => this.typeHint.destroy(),
+      targets: hintTargets,
+      alpha: 0,
+      duration: 300,
+      ease: 'Power2',
+      onComplete: () => {
+        this.typeHint?.destroy();
+        this.typeHintSubtitle?.destroy();
+        this.typeHintSubtitle = undefined;
+        this.typeHintGlow?.destroy();
+        this.typeHintGlow = undefined;
+        this.terminalFocusBorder?.destroy();
+        this.terminalFocusBorder = undefined;
+      },
+    });
+
+    // Restore side panels — fade them in as typing begins
+    this.tweens.add({
+      targets: [
+        this.agentWindow.container,
+        this.resourceWindow.container,
+        this.budgetText, this.hardwareText, this.repText,
+        this.hwBarBg, this.hwBar,
+        this.timeText, this.timeBg, this.timeBar,
+      ],
+      alpha: 1,
+      duration: 500,
+      ease: 'Power2.Out',
     });
 
     // Calculate final timer: base (45s, or 22s for Corporate Dev) + modifiers
