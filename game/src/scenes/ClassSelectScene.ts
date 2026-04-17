@@ -228,21 +228,32 @@ export class ClassSelectScene extends Phaser.Scene {
       }
     }
 
-    // Show continue button
-    if (this.continueBtn && !this.continueBtn.visible) {
-      this.continueBtn.setVisible(true).setAlpha(0);
-      this.tweens.add({
-        targets: this.continueBtn,
-        alpha: 1,
-        duration: 300,
-        ease: 'Power2.easeOut',
+    // Enable continue button
+    this.enableContinueButton();
+  }
+
+  private enableContinueButton(): void {
+    if (this.continueBtn) {
+      this.continueBtn.setColor('#e6edf3').setBackgroundColor('#238636').setInteractive({ useHandCursor: true });
+      this.continueBtn.off('pointerover');
+      this.continueBtn.off('pointerout');
+      this.continueBtn.on('pointerover', () => this.continueBtn?.setBackgroundColor('#2ea043'));
+      this.continueBtn.on('pointerout', () => this.continueBtn?.setBackgroundColor('#238636'));
+      this.continueBtn.off('pointerdown');
+      this.continueBtn.on('pointerdown', () => {
+        if (this.selectedClass) {
+          this.launchGame(this.selectedClass);
+        }
       });
     }
   }
 
   private disableContinueButton(): void {
     if (this.continueBtn) {
-      this.continueBtn.setColor('#484f58').disableInteractive();
+      this.continueBtn.setColor('#6e7681').setBackgroundColor('#1c2128').disableInteractive();
+      this.continueBtn.off('pointerover');
+      this.continueBtn.off('pointerout');
+      this.continueBtn.off('pointerdown');
     }
   }
 
