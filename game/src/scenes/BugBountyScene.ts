@@ -538,7 +538,7 @@ export class BugBountyScene extends Phaser.Scene {
           loop: true,
           callback: () => {
             if (!container.active) return;
-            const hue = (time + Math.random() * 1000) % 360;
+            const hue = (this.time.now + Math.random() * 1000) % 360;
             const c = Phaser.Display.Color.HSLToColor(hue / 360, 0.8, 0.6).color;
             dotGfx.clear();
             dotGfx.fillStyle(c, 1);
@@ -568,6 +568,11 @@ export class BugBountyScene extends Phaser.Scene {
             container.y += (Math.random() - 0.5) * 4;
           }
         });
+        // Urgent alert sound
+        AudioManager.getInstance().playSFX('event-alert');
+        // Initial flash
+        const alertFlash = this.add.rectangle(x, y, CHIP_W + 20, CHIP_H + 20, 0xff0000, 0.4).setDepth(19);
+        this.tweens.add({ targets: alertFlash, scaleX: 1.5, scaleY: 1.5, alpha: 0, duration: 300, onComplete: () => alertFlash.destroy() });
         break;
     }
 
@@ -621,7 +626,7 @@ export class BugBountyScene extends Phaser.Scene {
     this.lastCatchTime = now;
     if (this.comboCount > this.maxCombo) this.maxCombo = this.comboCount;
 
-    const comboMultiplier = 1 + (this.comboCount - 1) * (TUNING.BUG_BOUNTY.COMBO_STEP * 1.5);
+    const comboMultiplier = 1 + (this.comboCount - 1) * TUNING.BUG_BOUNTY.COMBO_STEP;
 
     if (bug.type === 'heisen') {
       this.cameras.main.shake(120, 0.008);

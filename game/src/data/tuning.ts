@@ -37,7 +37,7 @@ export const TUNING = {
     MAX_BUGS: 5,
     DESPAWN_WARN_MS: 1500,
     ESCAPED_PENALTY_USD: 5,
-    COMBO_STEP: 0.25,
+    COMBO_STEP: 0.4,
   },
   
   BUG_HUNT: {
