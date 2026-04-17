@@ -15,6 +15,7 @@ interface ModeOption {
   subtitle: string;
   difficulty: string;
   note?: string;
+  howItPlays: string;
   targetScene: string;
 }
 
@@ -31,6 +32,7 @@ const MODE_OPTIONS: ModeOption[] = [
     icon: '🤖',
     subtitle: 'Easier — point-and-click, lower earnings ceiling.',
     difficulty: '★☆☆',
+    howItPlays: 'Click bugs as they appear in a code grid.\nEach bug type has unique behavior.\nMax out your score before time runs out.',
     targetScene: 'BugBounty',
   },
   {
@@ -40,6 +42,7 @@ const MODE_OPTIONS: ModeOption[] = [
     subtitle: 'Harder — precision controls, 1.5× earnings bonus.',
     difficulty: '★★★',
     note: '1.5× earnings',
+    howItPlays: 'Move with WASD or Arrows.\nAiming follows your movement.\nLand precise shots for the bonus.',
     targetScene: 'BugHunt',
   },
 ];
@@ -157,6 +160,15 @@ export class BugBountySelectScene extends Phaser.Scene {
       });
       win.add(note);
     }
+
+    const howItPlays = this.add.text(x + 24, y + 205, option.howItPlays, {
+      fontFamily: 'monospace',
+      fontSize: '12px',
+      color: '#8b949e',
+      wordWrap: { width: CARD_W - 48 },
+      lineSpacing: 2,
+    });
+    win.add(howItPlays);
 
     const cta = this.add.text(x + 24, y + CARD_H - 34, '[ Click to launch ]', {
       fontFamily: 'monospace',

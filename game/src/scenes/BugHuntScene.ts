@@ -56,10 +56,10 @@ const HEISEN_SPEED      = TUNING.BUG_HUNT.SPEEDS.heisen;
 
 // Bug hit radii
 const HIT_RADIUS: Record<BugType, number> = {
-  syntax: 30, logic: 22, race: 15, memleak: 25, heisen: 20,
+  syntax: 30, logic: 22, race: 15, memleak: 25, heisen: 20, jackpot: 35, fleeing: 25,
 };
 const HIT_HALF_W: Record<BugType, number> = {
-  syntax: 55, logic: 45, race: 40, memleak: 50, heisen: 38,
+  syntax: 55, logic: 45, race: 40, memleak: 50, heisen: 38, jackpot: 65, fleeing: 45,
 };
 const HIT_HALF_H = 16;
 
@@ -1146,70 +1146,55 @@ export class BugHuntScene extends Phaser.Scene {
       this.lastSpawn = time;
     }
 
-    // ── Oregon Trail controls: WASD/arrows turn, Enter walks, Space fires ──
+    // ── Movement & Aiming ──
     const dt = delta / 1000;
     const keys = this.keysDown;
 
-    // Direction input
-    let dx = 0;
-    let dy = 0;
-    if (keys.has('a') || keys.has('arrowleft'))  dx -= 1;
-    if (keys.has('d') || keys.has('arrowright')) dx += 1;
-    if (keys.has('w') || keys.has('arrowup'))    dy -= 1;
-    if (keys.has('s') || keys.has('arrowdown'))  dy += 1;
+    // Movement input
+    let mx = 0;
+    let my = 0;
+    if (keys.has('a') || keys.has('arrowleft'))  mx -= 1;
+    if (keys.has('d') || keys.has('arrowright')) mx += 1;
+    if (keys.has('w') || keys.has('arrowup'))    my -= 1;
+    if (keys.has('s') || keys.has('arrowdown'))  my += 1;
 
-    // Turn to face that direction (and start walking on new direction)
-    if (dx !== 0 || dy !== 0) {
-      const len = Math.hypot(dx, dy);
-      const newFX = dx / len;
-      const newFY = dy / len;
-      // Only restart walking if direction changed
-      if (newFX !== this.facingX || newFY !== this.facingY) {
-        this.facingX = newFX;
-        this.facingY = newFY;
-        this.walking = true;
-      }
-    }
+    // If moving, update facing and apply velocity
+    if (mx !== 0 || my !== 0) {
+      const len = Math.hypot(mx, my);
+      this.facingX = mx / len;
+      this.facingY = my / len;
+      this.walking = true;
 
-    // Enter toggles walk
-    if (keys.has('enter')) {
-      this.walking = !this.walking;
-      keys.delete('enter'); // consume so it doesn't toggle every frame
-    }
-
-    this.aimAngle = Math.atan2(this.facingY, this.facingX);
-
-    // Move if walking
-    if (this.walking) {
       let newX = this.playerX + this.facingX * PLAYER_SPEED * dt;
       let newY = this.playerY + this.facingY * PLAYER_SPEED * dt;
 
-      let stopped = false;
+      // Arena edge collision
+      newX = Phaser.Math.Clamp(newX, this.arenaX + PLAYER_HW, this.arenaX + this.arenaW - PLAYER_HW);
+      newY = Phaser.Math.Clamp(newY, this.arenaY + PLAYER_HH, this.arenaY + this.arenaH - PLAYER_HH);
 
-      // Arena edge — stop on hit
-      if (newX - PLAYER_HW < this.arenaX || newX + PLAYER_HW > this.arenaX + this.arenaW) {
-        newX = Phaser.Math.Clamp(newX, this.arenaX + PLAYER_HW, this.arenaX + this.arenaW - PLAYER_HW);
-        stopped = true;
-      }
-      if (newY - PLAYER_HH < this.arenaY || newY + PLAYER_HH > this.arenaY + this.arenaH) {
-        newY = Phaser.Math.Clamp(newY, this.arenaY + PLAYER_HH, this.arenaY + this.arenaH - PLAYER_HH);
-        stopped = true;
-      }
-
-      // Code block collision — stop on hit
+      // Code block collision
       for (const block of this.codeBlocks) {
         if (this.circleOverlapsRect(newX, newY, Math.max(PLAYER_HW, PLAYER_HH), block)) {
-          newX = this.playerX;
-          newY = this.playerY;
-          stopped = true;
+          // Slide along axes if possible
+          if (!this.circleOverlapsRect(newX, this.playerY, Math.max(PLAYER_HW, PLAYER_HH), block)) {
+            newY = this.playerY;
+          } else if (!this.circleOverlapsRect(this.playerX, newY, Math.max(PLAYER_HW, PLAYER_HH), block)) {
+            newX = this.playerX;
+          } else {
+            newX = this.playerX;
+            newY = this.playerY;
+          }
           break;
         }
       }
 
       this.playerX = newX;
       this.playerY = newY;
-      if (stopped) this.walking = false;
+    } else {
+      this.walking = false;
     }
+
+    this.aimAngle = Math.atan2(this.facingY, this.facingX);
 
     // Fire on space
     if (keys.has(' ')) {
