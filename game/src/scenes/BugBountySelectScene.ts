@@ -20,9 +20,9 @@ interface ModeOption {
 }
 
 const WIN_W = 980;
-const WIN_H = 470;
+const WIN_H = 540;
 const CARD_W = 350;
-const CARD_H = 250;
+const CARD_H = 340;
 const CARD_GAP = 36;
 
 const MODE_OPTIONS: ModeOption[] = [
@@ -32,7 +32,7 @@ const MODE_OPTIONS: ModeOption[] = [
     icon: '🤖',
     subtitle: 'Point-and-click bug triage for the modern dev.',
     difficulty: 'Low Effort',
-    howItPlays: 'Click bugs as they appear in the terminal.\nAI-assisted targeting makes it nearly impossible to miss.\nGreat for developers with heavy management schedules.',
+    howItPlays: 'Click bugs as they appear.\nAI-assisted targeting — nearly\nimpossible to miss.',
     targetScene: 'BugBounty',
   },
   {
@@ -42,7 +42,7 @@ const MODE_OPTIONS: ModeOption[] = [
     subtitle: 'Harder — pure muscle memory. 1.5× bounty bonus.',
     difficulty: 'Senior Engineer',
     note: '1.5× earnings (Legacy Skill Bonus)',
-    howItPlays: 'Pilot your cursor with WASD/Arrows.\nShoot raw code at bugs like it\'s 1999.\nHigh risk, high reward, zero hallucination.',
+    howItPlays: 'WASD/Arrows to move, space to shoot.\nBlast bugs like it\'s 1999.\nHigh risk, high reward.',
     targetScene: 'BugHunt',
   },
 ];
@@ -145,15 +145,17 @@ export class BugBountySelectScene extends Phaser.Scene {
     });
     win.add(subtitle);
 
-    const difficulty = this.add.text(x + 24, y + 152, `Difficulty: ${option.difficulty}`, {
+    const difficulty = this.add.text(x + 24, y + 160, `Difficulty: ${option.difficulty}`, {
       fontFamily: 'monospace',
       fontSize: '16px',
       color: `#${accent.toString(16).padStart(6, '0')}`,
     });
     win.add(difficulty);
 
+    const howItPlaysY = option.note ? 224 : 204;
+
     if (option.note) {
-      const note = this.add.text(x + 24, y + 182, option.note, {
+      const note = this.add.text(x + 24, y + 192, option.note, {
         fontFamily: 'monospace',
         fontSize: '14px',
         color: '#3fb950',
@@ -161,12 +163,12 @@ export class BugBountySelectScene extends Phaser.Scene {
       win.add(note);
     }
 
-    const howItPlays = this.add.text(x + 24, y + 205, option.howItPlays, {
+    const howItPlays = this.add.text(x + 24, y + howItPlaysY, option.howItPlays, {
       fontFamily: 'monospace',
       fontSize: '12px',
       color: '#8b949e',
       wordWrap: { width: CARD_W - 48 },
-      lineSpacing: 2,
+      lineSpacing: 4,
     });
     win.add(howItPlays);
 
