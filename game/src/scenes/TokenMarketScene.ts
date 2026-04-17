@@ -56,9 +56,9 @@ export class TokenMarketScene extends Phaser.Scene {
   private taskbar!: Taskbar;
   private marketWin!: Window;
   private activeTab: TabCategory = 'model';
-  private itemListObjects: Phaser.GameObjects.GameObject[] = [];
+  private itemListObjects: Phaser.GameObjects.GameObject[] = []; // audit-ok — set in buildItemList()
   private budgetLabel!: Phaser.GameObjects.Text;
-  private tabObjects: { category: TabCategory; text: Phaser.GameObjects.Text; underline: Phaser.GameObjects.Rectangle }[] = [];
+  private tabObjects: { category: TabCategory; text: Phaser.GameObjects.Text; underline: Phaser.GameObjects.Rectangle }[] = []; // audit-ok — set in buildTabs()
   private contentOrigin!: { x: number; y: number };
   private highlightRect!: Phaser.GameObjects.Rectangle;
   private detailBg!: Phaser.GameObjects.Rectangle;
@@ -69,16 +69,19 @@ export class TokenMarketScene extends Phaser.Scene {
   private detailAfford!: Phaser.GameObjects.Text;
   private detailPaneY!: number;
   private scrollOffset = 0;
-  private maxScroll = 0;
+  private maxScroll = 0; // audit-ok — set in buildItemList()
   private listMask!: Phaser.Display.Masks.GeometryMask;
-  private listClipY = 0;
-  private listClipH = 0;
+  private listClipY = 0; // audit-ok — set in buildItemList()
+  private listClipH = 0; // audit-ok — set in buildItemList()
 
   constructor() {
     super({ key: 'TokenMarket' });
   }
 
   create(): void {
+    this.activeTab = 'model';
+    this.scrollOffset = 0;
+
     const state = getState();
     const theme = getTheme(state.playerClass ?? undefined);
     this.cameras.main.setBackgroundColor(COLORS.bg);

@@ -33,7 +33,7 @@ export class FinalScene extends Phaser.Scene {
 
   // Animation state
   private animProgress = 0;
-  private animDuration = 1500;
+  private animDuration = 1500; // audit-ok — constant, never mutated
   private isAnimating = true;
 
   // Display objects to animate

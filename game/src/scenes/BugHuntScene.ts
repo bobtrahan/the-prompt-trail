@@ -178,7 +178,7 @@ export class BugHuntScene extends Phaser.Scene {
   private crosshairY = 0;
 
   // Input (raw DOM to avoid Phaser keyboard conflicts)
-  private keysDown = new Set<string>();
+  private keysDown = new Set<string>(); // audit-ok — .clear() in create()
   private keyDownHandler!: (e: KeyboardEvent) => void;
   private keyUpHandler!: (e: KeyboardEvent) => void;
 
@@ -235,6 +235,9 @@ export class BugHuntScene extends Phaser.Scene {
     this.facingY = -1;
     this.walking = false;
     this.keysDown.clear();
+    this.aimAngle = -Math.PI / 2;
+    this.crosshairX = 0;
+    this.crosshairY = 0;
     this.shotsHit = 0;
     this.lastCatchTime = 0;
     this.comboCount = 0;

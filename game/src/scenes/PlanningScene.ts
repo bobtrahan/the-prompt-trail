@@ -68,6 +68,7 @@ export class PlanningScene extends Phaser.Scene {
     drawWallpaper(this, state.playerClass);
     this.selectedStrategy = null;
     this.selectedAgentIds = [];
+    this.lastStrategyTimeBonus = 0;
     this.agentRowBgs = new Map();
     this.agentCheckmarks = new Map();
 

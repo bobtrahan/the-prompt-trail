@@ -79,8 +79,8 @@ export class ExecutionScene extends Phaser.Scene {
   private progressBg!: Phaser.GameObjects.Rectangle;
   private progressText!: Phaser.GameObjects.Text;
   private progress = 0;
-  private timeSeconds = 45;
-  private maxTimeSeconds = 45;
+  private timeSeconds = 45; // audit-ok — set from tuning in create()
+  private maxTimeSeconds = 45; // audit-ok — set from tuning in create()
   private timeBar!: Phaser.GameObjects.Rectangle;
   private timeBg!: Phaser.GameObjects.Rectangle;
   private timeText!: Phaser.GameObjects.Text;
@@ -354,6 +354,10 @@ export class ExecutionScene extends Phaser.Scene {
     this.inOvertime = false;
     this.overtimeBonus = 0;
     this.overtimePromptsCompleted = 0;
+    this.lastStreakMilestone = 0;
+    this.hwBarFlashing = false;
+    this.clashVoicedToday = false;
+    this.dayFirstEvent = true;
 
     // Initialise systems
     this.eventEngine = new EventEngine(state);

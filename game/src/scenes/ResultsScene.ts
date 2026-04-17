@@ -16,12 +16,12 @@ export class ResultsScene extends Phaser.Scene {
   
   // Animation state
   private animProgress = 0;
-  private animDuration = 1000; // 1 second
+  private animDuration = 1000; // 1 second // audit-ok — constant, never mutated
   private isAnimating = true;
 
   // Cached layout values needed in update()
-  private winWidth = 500;
-  private winHeight = 460;
+  private winWidth = 500; // audit-ok — constant, never mutated
+  private winHeight = 460; // audit-ok — constant, never mutated
   private themeAccent = 0x00ffcc;
   private yShift = 0;
 
