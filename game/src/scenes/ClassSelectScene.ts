@@ -15,10 +15,10 @@ const CLASS_EMOJI: Record<string, string> = {
 };
 
 const CLASS_BIO: Record<string, string> = {
-  techBro: 'Venture-backed delusion.\nSubsidized high-end hardware.\nMove fast and break things (mostly lives).',
-  corporateDev: 'Unlimited budget, zero agency.\nManaged by people who use iPads.\nVPN latency included for immersion.',
-  indieHacker: 'Coffee-driven development.\nBuilding in public (on a budget).\nOne minor hardware failure from ruin.',
-  collegeStudent: 'Operating on pure ramen and spite.\nFree tier API limits are just a challenge.\nWill code for degree (or rent).',
+  techBro: 'Best hardware.\nBig budget.\nMove fast, ship faster.',
+  corporateDev: 'Company card and laptop.\nMeetings buffer the soul.\nStability over chaos.',
+  indieHacker: 'Balanced. Resourceful.\nShips fast on a shoestring.\nBreaks things intentionally.',
+  collegeStudent: 'No money, no hardware.\nUnlimited ambition.\nGrading on a curve.',
 };
 
 const classVoiceMap: Record<PlayerClass, string> = {
@@ -66,7 +66,7 @@ export class ClassSelectScene extends Phaser.Scene {
       collegeStudent: '☆☆☆☆ Total Deprivation',
     };
     const cardWidth = 270;
-    const cardHeight = 360;
+    const cardHeight = 420;
     const cardGap = 18;
     const totalWidth = classIds.length * cardWidth + (classIds.length - 1) * cardGap;
     const startX = (GAME_WIDTH - totalWidth) / 2 + cardWidth / 2;
@@ -111,28 +111,28 @@ export class ClassSelectScene extends Phaser.Scene {
       }).setOrigin(0.5).setDepth(2);
 
       // Bio — 3 lines
-      this.add.text(x, y - halfH + 80 + nameGap + 28, CLASS_BIO[def.id] ?? '', {
+      this.add.text(x, y - halfH + 152, CLASS_BIO[def.id] ?? '', {
         fontFamily: 'monospace',
         fontSize: '12px',
         color: `#${COLORS.textDim.toString(16).padStart(6, '0')}`,
         align: 'center',
-        lineSpacing: 2,
+        lineSpacing: 6,
       }).setOrigin(0.5, 0).setDepth(2);
 
       // Divider line
-      this.add.rectangle(x, y - halfH + 190, cardWidth - 40, 1, COLORS.textDim)
+      this.add.rectangle(x, y - halfH + 234, cardWidth - 40, 1, COLORS.textDim)
         .setAlpha(0.2)
         .setDepth(2);
 
       // Difficulty badge
-      this.add.text(x, y - halfH + 210, DIFFICULTY[def.id], {
+      this.add.text(x, y - halfH + 252, DIFFICULTY[def.id], {
         fontFamily: 'monospace',
         fontSize: '14px',
         color: accentHex,
       }).setOrigin(0.5).setDepth(2);
 
       // Stats
-      const statsY = y - halfH + 240;
+      const statsY = y - halfH + 278;
       const stats = [
         `Budget: $${def.startingBudget.toLocaleString()}`,
         `Hardware: ${def.hardwareHp} HP`,
@@ -140,7 +140,7 @@ export class ClassSelectScene extends Phaser.Scene {
         `Score: ×${def.scoreMultiplier}`,
       ];
       stats.forEach((line, j) => {
-        this.add.text(x, statsY + j * 22, line, {
+        this.add.text(x, statsY + j * 26, line, {
           fontFamily: 'monospace',
           fontSize: '13px',
           color: '#e6edf3',
