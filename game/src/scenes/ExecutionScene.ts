@@ -399,7 +399,7 @@ export class ExecutionScene extends Phaser.Scene {
     // ── Terminal Window ──
     this.terminalWindow = new Window({
       scene: this, x: 16, y: 72,
-      width: 820, height: 440,
+      width: 820, height: 400,
       title: 'Terminal — ' + projectName,
       titleIcon: '⬛',
       accentColor: theme.accent,
@@ -429,7 +429,7 @@ export class ExecutionScene extends Phaser.Scene {
     // ── Agent Panel ──
     this.agentWindow = new Window({
       scene: this, x: 852, y: 72,
-      width: 412, height: 200,
+      width: 412, height: 180,
       title: 'Agent Manager',
       titleIcon: '🤖',
       accentColor: theme.accent,
@@ -447,19 +447,19 @@ export class ExecutionScene extends Phaser.Scene {
     const agentDefs = AgentSystem.getAgentDefs(activeAgentIds);
     const aArea = this.agentWindow.contentArea;
     agentDefs.forEach((agent, i) => {
-      const rowBaseY = aArea.y + i * 48;
+      const rowBaseY = aArea.y + i * 44;
 
       const label = this.add.text(
         aArea.x, rowBaseY,
         `🤖 ${agent.name}`,
-        { fontFamily: 'monospace', fontSize: '14px', color: '#e6edf3' }
+        { fontFamily: 'monospace', fontSize: '13px', color: '#e6edf3' }
       );
       this.agentWindow.add(label);
 
       const idleMessages = AGENT_MESSAGES[agent.id]?.idle ?? ['⚡ Working...'];
       const initialMsg = idleMessages[Math.floor(Math.random() * idleMessages.length)];
       const status = this.add.text(
-        aArea.x + 140, rowBaseY,
+        aArea.x + 130, rowBaseY,
         initialMsg,
         { fontFamily: 'monospace', fontSize: '12px', color: '#39d353' }
       );
@@ -467,7 +467,7 @@ export class ExecutionScene extends Phaser.Scene {
 
       const rowBg = this.add.rectangle(
         aArea.x, rowBaseY - 4,
-        aArea.width, 44,
+        aArea.width, 40,
         theme.accent
       ).setOrigin(0).setAlpha(0);
       this.agentWindow.add(rowBg);
@@ -479,13 +479,13 @@ export class ExecutionScene extends Phaser.Scene {
         rowBg,
       });
 
-      // Speed bar: 5 × 8×8 rectangles, 2px gap
+      // Speed bar: 5 × 7×7 rectangles, 2px gap
       for (let s = 0; s < 5; s++) {
         const filled = s < agent.speed;
         const speedRect = this.add.rectangle(
-          aArea.x + s * 10,
-          rowBaseY + 22,
-          8, 8,
+          aArea.x + s * 9,
+          rowBaseY + 20,
+          7, 7,
           filled ? theme.accent : 0x21262d
         ).setOrigin(0);
         this.agentWindow.add(speedRect);
@@ -493,8 +493,8 @@ export class ExecutionScene extends Phaser.Scene {
 
       // Trait label
       const traitLabel = this.add.text(
-        aArea.x + 58,
-        rowBaseY + 21,
+        aArea.x + 54,
+        rowBaseY + 19,
         agent.trait,
         { fontFamily: 'monospace', fontSize: '11px', color: '#9da5b0' }
       );
@@ -551,8 +551,8 @@ export class ExecutionScene extends Phaser.Scene {
 
     // ── Resource Panel ──
     this.resourceWindow = new Window({
-      scene: this, x: 852, y: 288,
-      width: 412, height: 224,
+      scene: this, x: 852, y: 260,
+      width: 412, height: 212,
       title: 'System Monitor',
       titleIcon: '📊',
       accentColor: theme.accent,
@@ -561,35 +561,35 @@ export class ExecutionScene extends Phaser.Scene {
     const rArea = this.resourceWindow.contentArea;
     const rStyle: Phaser.Types.GameObjects.Text.TextStyle = { fontFamily: 'monospace', fontSize: '14px', color: '#e6edf3' };
     const rX = 852 + rArea.x;
-    const rY = 288 + rArea.y;
+    const rY = 260 + rArea.y;
 
     this.budgetText = this.add.text(rX, rY, state.playerClass === 'corporateDev' ? '💳 Company Card' : `💰 Budget: $${state.budget.toLocaleString()}`, rStyle);
-    this.hardwareText = this.add.text(rX, rY + 28, `🖥️ Hardware: ${state.hardwareHp}%`, rStyle);
+    this.hardwareText = this.add.text(rX, rY + 26, `🖥️ Hardware: ${state.hardwareHp}%`, rStyle);
 
     // Hardware health bar
     const hwPct = state.hardwareHp / 100;
     const hwBarColor = state.hardwareHp >= 60 ? 0x3fb950 : state.hardwareHp >= 30 ? 0xd29922 : 0xf85149;
-    this.hwBarBg = this.add.rectangle(rX, rY + 46, 160, 6, 0x21262d).setOrigin(0);
-    this.hwBar = this.add.rectangle(rX, rY + 46, Math.round(hwPct * 160), 6, hwBarColor).setOrigin(0);
+    this.hwBarBg = this.add.rectangle(rX, rY + 44, 160, 6, 0x21262d).setOrigin(0);
+    this.hwBar = this.add.rectangle(rX, rY + 44, Math.round(hwPct * 160), 6, hwBarColor).setOrigin(0);
     this.lastHw = state.hardwareHp;
 
-    this.repText = this.add.text(rX, rY + 56, `⭐ Reputation: ${state.reputation}`, rStyle);
+    this.repText = this.add.text(rX, rY + 54, `⭐ Reputation: ${state.reputation}`, rStyle);
 
     // Model text + quality indicator tag
-    this.add.text(rX, rY + 84, `📡 Model: ${state.model}`, rStyle);
+    this.add.text(rX, rY + 80, `📡 Model: ${state.model}`, rStyle);
     const qualityMod = EconomySystem.getModelQualityMod(state.model);
     const qualityPct = Math.round(qualityMod * 100);
     const qualityTag = qualityPct > 0 ? `[+${qualityPct}%]` : qualityPct < 0 ? `[${qualityPct}%]` : '[+0%]';
     const qualityColor = qualityPct > 0 ? '#3fb950' : qualityPct < 0 ? '#f85149' : '#9da5b0';
-    this.add.text(rX + 170, rY + 84, qualityTag, {
+    this.add.text(rX + 170, rY + 80, qualityTag, {
       fontFamily: 'monospace', fontSize: '12px', color: qualityColor,
     });
 
-    this.timeText = this.add.text(rX, rY + 106, `⏱️ Time: ${this.timeSeconds}s`, {
+    this.timeText = this.add.text(rX, rY + 102, `⏱️ Time: ${this.timeSeconds}s`, {
       fontFamily: 'monospace', fontSize: '12px', color: '#9da5b0',
     });
-    this.timeBg = this.add.rectangle(rX, rY + 124, rArea.width - 16, 14, 0x21262d).setOrigin(0);
-    this.timeBar = this.add.rectangle(rX, rY + 124, rArea.width - 16, 14, COLORS.warning).setOrigin(0);
+    this.timeBg = this.add.rectangle(rX, rY + 118, rArea.width - 16, 14, 0x21262d).setOrigin(0);
+    this.timeBar = this.add.rectangle(rX, rY + 118, rArea.width - 16, 14, COLORS.warning).setOrigin(0);
 
     // ── Dim side panels on load — typing area is dominant visual focus until player starts ──
     this.agentWindow.container.setAlpha(0.3);

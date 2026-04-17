@@ -28,21 +28,21 @@ const CARD_GAP = 36;
 const MODE_OPTIONS: ModeOption[] = [
   {
     key: 'ai',
-    title: 'Use AI',
+    title: 'Automated Copilot',
     icon: '🤖',
-    subtitle: 'Easier — point-and-click, lower earnings ceiling.',
-    difficulty: '★☆☆',
-    howItPlays: 'Click bugs as they appear in a code grid.\nEach bug type has unique behavior.\nMax out your score before time runs out.',
+    subtitle: 'Point-and-click bug triage for the modern dev.',
+    difficulty: 'Low Effort',
+    howItPlays: 'Click bugs as they appear in the terminal.\nAI-assisted targeting makes it nearly impossible to miss.\nGreat for developers with heavy management schedules.',
     targetScene: 'BugBounty',
   },
   {
     key: 'oldschool',
-    title: 'Old School',
+    title: 'Manual Debugging',
     icon: '🏹',
-    subtitle: 'Harder — precision controls, 1.5× earnings bonus.',
-    difficulty: '★★★',
-    note: '1.5× earnings',
-    howItPlays: 'Move with WASD or Arrows.\nAiming follows your movement.\nLand precise shots for the bonus.',
+    subtitle: 'Harder — pure muscle memory. 1.5× bounty bonus.',
+    difficulty: 'Senior Engineer',
+    note: '1.5× earnings (Legacy Skill Bonus)',
+    howItPlays: 'Pilot your cursor with WASD/Arrows.\nShoot raw code at bugs like it\'s 1999.\nHigh risk, high reward, zero hallucination.',
     targetScene: 'BugHunt',
   },
 ];
@@ -72,7 +72,7 @@ export class BugBountySelectScene extends Phaser.Scene {
       y: winY,
       width: WIN_W,
       height: WIN_H,
-      title: 'Bug Bounty ── Mode Select',
+      title: 'Bug Bounty ── Protocol Selection',
       titleIcon: '🐛',
       accentColor: theme.accent,
     });
@@ -82,7 +82,7 @@ export class BugBountySelectScene extends Phaser.Scene {
     const groupWidth = CARD_W * 2 + CARD_GAP;
     const startX = cx + Math.floor((cw - groupWidth) / 2);
 
-    const prompt = this.add.text(cx + cw / 2, cy + 18, 'Select your preferred bug-squashing workflow.', {
+    const prompt = this.add.text(cx + cw / 2, cy + 18, 'Select your preferred bug-squashing paradigm.', {
       fontFamily: 'monospace',
       fontSize: '16px',
       color: '#e6edf3',

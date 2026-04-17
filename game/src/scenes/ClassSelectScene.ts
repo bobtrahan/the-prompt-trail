@@ -15,10 +15,10 @@ const CLASS_EMOJI: Record<string, string> = {
 };
 
 const CLASS_BIO: Record<string, string> = {
-  techBro: 'Best hardware.\nBig budget.\nZero self-awareness.',
-  corporateDev: 'Company card and laptop.\nMeetings and HR.\nZero freedom.',
-  indieHacker: 'Balanced. Resourceful.\nShips fast.\nBreak things.',
-  collegeStudent: 'No money.\nBad hardware.\nUnlimited ambition.',
+  techBro: 'Venture-backed delusion.\nSubsidized high-end hardware.\nMove fast and break things (mostly lives).',
+  corporateDev: 'Unlimited budget, zero agency.\nManaged by people who use iPads.\nVPN latency included for immersion.',
+  indieHacker: 'Coffee-driven development.\nBuilding in public (on a budget).\nOne minor hardware failure from ruin.',
+  collegeStudent: 'Operating on pure ramen and spite.\nFree tier API limits are just a challenge.\nWill code for degree (or rent).',
 };
 
 const classVoiceMap: Record<PlayerClass, string> = {
@@ -45,13 +45,13 @@ export class ClassSelectScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor(COLORS.bg);
 
     // Window chrome
-    this.add.text(GAME_WIDTH / 2, 50, 'PromptOS — User Setup', {
+    this.add.text(GAME_WIDTH / 2, 50, 'PromptOS — Developer Onboarding', {
       fontFamily: 'monospace',
       fontSize: '24px',
       color: '#e6edf3',
     }).setOrigin(0.5);
 
-    this.add.text(GAME_WIDTH / 2, 84, 'Select your developer profile:', {
+    this.add.text(GAME_WIDTH / 2, 84, 'Initialize developer profile:', {
       fontFamily: 'monospace',
       fontSize: '15px',
       color: `#${COLORS.textDim.toString(16).padStart(6, '0')}`,
@@ -60,20 +60,20 @@ export class ClassSelectScene extends Phaser.Scene {
     const classIds: PlayerClass[] = ['techBro', 'corporateDev', 'indieHacker', 'collegeStudent'];
     const classes = classIds.map(id => CLASS_DEFS[id]);
     const DIFFICULTY: Record<string, string> = {
-      techBro: '☆ Easy',
-      corporateDev: '☆☆ Medium',
-      indieHacker: '☆☆☆ Hard',
-      collegeStudent: '☆☆☆☆ Brutal',
+      techBro: '☆ Full Funding',
+      corporateDev: '☆☆ Mid-Level Management',
+      indieHacker: '☆☆☆ Ramen Profitable',
+      collegeStudent: '☆☆☆☆ Total Deprivation',
     };
     const cardWidth = 270;
-    const cardHeight = 420;
+    const cardHeight = 360;
     const cardGap = 18;
-    const totalWidth = classes.length * cardWidth + (classes.length - 1) * cardGap;
+    const totalWidth = classIds.length * cardWidth + (classIds.length - 1) * cardGap;
     const startX = (GAME_WIDTH - totalWidth) / 2 + cardWidth / 2;
 
     classes.forEach((def, i) => {
       const x = startX + i * (cardWidth + cardGap);
-      const y = GAME_HEIGHT / 2 + 10;
+      const y = GAME_HEIGHT / 2 - 30;
       const theme = CLASS_THEMES[def.id as keyof typeof CLASS_THEMES];
       const accent = theme.accent;
       const accentHex = `#${accent.toString(16).padStart(6, '0')}`;
@@ -111,28 +111,28 @@ export class ClassSelectScene extends Phaser.Scene {
       }).setOrigin(0.5).setDepth(2);
 
       // Bio — 3 lines
-      this.add.text(x, y - halfH + 80 + nameGap + 34, CLASS_BIO[def.id] ?? '', {
+      this.add.text(x, y - halfH + 80 + nameGap + 28, CLASS_BIO[def.id] ?? '', {
         fontFamily: 'monospace',
-        fontSize: '13px',
+        fontSize: '12px',
         color: `#${COLORS.textDim.toString(16).padStart(6, '0')}`,
         align: 'center',
-        lineSpacing: 4,
+        lineSpacing: 2,
       }).setOrigin(0.5, 0).setDepth(2);
 
       // Divider line
-      this.add.rectangle(x, y - halfH + 220, cardWidth - 40, 1, COLORS.textDim)
+      this.add.rectangle(x, y - halfH + 190, cardWidth - 40, 1, COLORS.textDim)
         .setAlpha(0.2)
         .setDepth(2);
 
       // Difficulty badge
-      this.add.text(x, y - halfH + 242, DIFFICULTY[def.id], {
+      this.add.text(x, y - halfH + 210, DIFFICULTY[def.id], {
         fontFamily: 'monospace',
-        fontSize: '16px',
+        fontSize: '14px',
         color: accentHex,
       }).setOrigin(0.5).setDepth(2);
 
       // Stats
-      const statsY = y - halfH + 276;
+      const statsY = y - halfH + 240;
       const stats = [
         `Budget: $${def.startingBudget.toLocaleString()}`,
         `Hardware: ${def.hardwareHp} HP`,
@@ -140,9 +140,9 @@ export class ClassSelectScene extends Phaser.Scene {
         `Score: ×${def.scoreMultiplier}`,
       ];
       stats.forEach((line, j) => {
-        this.add.text(x, statsY + j * 26, line, {
+        this.add.text(x, statsY + j * 22, line, {
           fontFamily: 'monospace',
-          fontSize: '14px',
+          fontSize: '13px',
           color: '#e6edf3',
         }).setOrigin(0.5).setDepth(2);
       });
@@ -183,8 +183,8 @@ export class ClassSelectScene extends Phaser.Scene {
     });
 
     // Continue button — always visible, disabled by default
-    // Center between bottom of cards (y=570) and bottom of game
-    const btnY = (570 + GAME_HEIGHT) / 2;
+    // Center between bottom of cards and bottom of game
+    const btnY = GAME_HEIGHT - 80;
     this.continueBtn = this.add.text(GAME_WIDTH / 2, btnY, '[ Continue → ]', {
       fontFamily: 'monospace',
       fontSize: '16px',
@@ -194,7 +194,7 @@ export class ClassSelectScene extends Phaser.Scene {
     }).setOrigin(0.5).setDepth(10);
 
     // Helper text below button
-    this.add.text(GAME_WIDTH / 2, btnY + 50, 'Select a profile to continue.', {
+    this.add.text(GAME_WIDTH / 2, btnY + 45, 'Select a profile to continue.', {
       fontFamily: 'monospace',
       fontSize: '13px',
       color: `#${COLORS.textDim.toString(16).padStart(6, '0')}`,

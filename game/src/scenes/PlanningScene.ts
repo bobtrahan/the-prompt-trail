@@ -81,7 +81,7 @@ export class PlanningScene extends Phaser.Scene {
     // ── Strategy picker window ──────────────────────────────────────────
     const stratWin = new Window({
       scene: this, x: 40, y: 50,
-      width: 700, height: 500,
+      width: 700, height: 460,
       title: 'Strategy Picker',
       titleIcon: '⚙️',
       accentColor: theme.accent,
@@ -95,29 +95,29 @@ export class PlanningScene extends Phaser.Scene {
     this.modelRowBgs = new Map();
     this.cards = [];
     STRATEGIES.forEach((s, i) => {
-      const cardY = 50 + sArea.y + 28 + i * 110;
+      const cardY = 50 + sArea.y + 24 + i * 100;
       const cardX = 40 + sArea.x;
       const isLocked = state.lockedStrategies.includes(s.id);
 
-      const card = this.add.rectangle(cardX, cardY, sArea.width, 90, isLocked ? 0x1a1a1a : COLORS.titleBar).setOrigin(0);
+      const card = this.add.rectangle(cardX, cardY, sArea.width, 80, isLocked ? 0x1a1a1a : COLORS.titleBar).setOrigin(0);
       if (!isLocked) {
         card.setInteractive({ useHandCursor: true });
         this.cards.push(card);
       }
 
-      this.add.text(cardX + 16, cardY + 12, `${s.icon}  ${s.name}`, {
+      this.add.text(cardX + 16, cardY + 10, `${s.icon}  ${s.name}`, {
         fontFamily: 'monospace', fontSize: '16px', color: isLocked ? '#484f58' : '#e6edf3',
       });
       if (isLocked) {
-        this.add.text(cardX + 16, cardY + 34, '🔒 Against company policy', {
+        this.add.text(cardX + 16, cardY + 32, '🔒 Against company policy', {
           fontFamily: 'monospace', fontSize: '11px', color: '#484f58',
         });
       }
-      this.add.text(cardX + 50, cardY + 38, s.desc, {
+      this.add.text(cardX + 50, cardY + 34, s.desc, {
         fontFamily: 'monospace', fontSize: '12px', color: '#9da5b0',
         wordWrap: { width: sArea.width - 80 },
       });
-      this.add.text(cardX + sArea.width - 120, cardY + 12, s.riskLabel, {
+      this.add.text(cardX + sArea.width - 120, cardY + 10, s.riskLabel, {
         fontFamily: 'monospace', fontSize: '11px',
         color: s.riskLabel === 'Low Risk' ? '#3fb950' : s.riskLabel === 'High Risk' ? '#f85149' : '#d29922',
       });
@@ -222,10 +222,10 @@ export class PlanningScene extends Phaser.Scene {
     });
 
     // ── Agent Dashboard (right side, interactive picker) ─────────────────
-    const agentWinY = 28 + MODEL_WIN_H + 10;
+    const agentWinY = 28 + MODEL_WIN_H + 8;
     const agentWin = new Window({
       scene: this, x: 760, y: agentWinY,
-      width: 480, height: 360,
+      width: 480, height: 340,
       title: 'Agent Dashboard',
       titleIcon: '🤖',
       accentColor: theme.accent,
@@ -241,9 +241,9 @@ export class PlanningScene extends Phaser.Scene {
     });
 
     // Agent rows
-    const ROW_H = 42;
+    const ROW_H = 38;
     AGENT_ROSTER.forEach((agent, i) => {
-      const rowY = ay + 22 + i * ROW_H;
+      const rowY = ay + 20 + i * ROW_H;
       const rowW = aArea.width;
 
       // Background rect (clickable)
@@ -257,17 +257,17 @@ export class PlanningScene extends Phaser.Scene {
 
       // Emoji avatar circle
       const circleX = ax + 18;
-      const circleY = rowY + 13;
-      this.add.circle(circleX, circleY, 10, theme.accent).setAlpha(0.3);
+      const circleY = rowY + 11;
+      this.add.circle(circleX, circleY, 9, theme.accent).setAlpha(0.3);
       const emoji = AGENT_EMOJI[agent.id] || '🤖';
       this.add.text(circleX, circleY, emoji, {
-        fontSize: '14px',
+        fontSize: '13px',
       }).setOrigin(0.5);
 
-      this.add.text(ax + 38, rowY + 4, `${agent.name}`, {
-        fontFamily: 'monospace', fontSize: '13px', color: '#e6edf3',
+      this.add.text(ax + 38, rowY + 3, `${agent.name}`, {
+        fontFamily: 'monospace', fontSize: '12px', color: '#e6edf3',
       });
-      this.add.text(ax + 38, rowY + 22, `${agent.personality}  ·  Spd:${speedStars}  Qual:${qualStars}`, {
+      this.add.text(ax + 38, rowY + 19, `${agent.personality}  ·  Spd:${speedStars}  Qual:${qualStars}`, {
         fontFamily: 'monospace', fontSize: '10px', color: '#6e7681',
       });
       this.add.text(ax + rowW - 8, rowY + 4, agent.traitEffect.split('.')[0], {
@@ -302,15 +302,15 @@ export class PlanningScene extends Phaser.Scene {
     });
 
     // ── Launch button ───────────────────────────────────────────────────
-    this.launchBtn = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 80, '[ Select a strategy to continue ]', {
+    this.launchBtn = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 75, '[ Select a strategy to continue ]', {
       fontFamily: 'monospace', fontSize: '16px', color: '#30363d',
     }).setOrigin(0.5);
 
-    this.strategyPreviewText = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 55, '', {
+    this.strategyPreviewText = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 52, '', {
       fontFamily: 'monospace', fontSize: '12px', color: '#9da5b0',
     }).setOrigin(0.5);
 
-    this.agentSummaryText = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 38, '', {
+    this.agentSummaryText = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 36, '', {
       fontFamily: 'monospace', fontSize: '11px', color: '#9da5b0',
     }).setOrigin(0.5);
   }
