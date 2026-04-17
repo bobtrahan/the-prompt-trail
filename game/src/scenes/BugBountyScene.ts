@@ -27,6 +27,11 @@ interface ActiveBug {
   glowRect: Phaser.GameObjects.Rectangle;
   borderRect: Phaser.GameObjects.Rectangle;
   labelText: Phaser.GameObjects.Text;
+  dotGfx: Phaser.GameObjects.Graphics;
+
+  // fleeing logic
+  fleeTargetX?: number;
+  fleeTargetY?: number;
 
   // despawn / heisen state
   despawnWarned: boolean;
@@ -295,6 +300,17 @@ export class BugBountyScene extends Phaser.Scene {
       }
 
       switch (bug.type) {
+        case 'fleeing': {
+          // Rapidly move toward a target, then pick a new one
+          if (bug.fleeTargetX === undefined || bug.fleeTargetY === undefined || Phaser.Math.Distance.Between(bug.obj.x, bug.obj.y, bug.fleeTargetX, bug.fleeTargetY) < 10) {
+            bug.fleeTargetX = this.gridX + CHIP_W / 2 + Math.random() * (this.gridW - CHIP_W);
+            bug.fleeTargetY = this.gridY + CHIP_H / 2 + Math.random() * (this.gridH - CHIP_H);
+          }
+          const angle = Phaser.Math.Angle.Between(bug.obj.x, bug.obj.y, bug.fleeTargetX ?? 0, bug.fleeTargetY ?? 0);
+          bug.obj.x += Math.cos(angle) * 4; // Fast!
+          bug.obj.y += Math.sin(angle) * 4;
+          break;
+        }
         case 'logic': {
           // Move up/down 1px per frame, bounce at grid bounds
           bug.obj.y += bug.direction;
@@ -375,6 +391,7 @@ export class BugBountyScene extends Phaser.Scene {
     glowRect: Phaser.GameObjects.Rectangle;
     borderRect: Phaser.GameObjects.Rectangle;
     labelText: Phaser.GameObjects.Text;
+    dotGfx: Phaser.GameObjects.Graphics;
   } {
     const def = BUG_DEFS[type];
     const hw = CHIP_W / 2;
@@ -405,6 +422,7 @@ export class BugBountyScene extends Phaser.Scene {
       fontFamily: 'monospace',
       fontSize: '11px',
       color: '#ffffff',
+      fontStyle: type === 'jackpot' || type === 'fleeing' ? 'bold' : 'normal'
     }).setOrigin(0, 0.5);
 
     const container = this.add.container(0, 0, [
@@ -423,7 +441,7 @@ export class BugBountyScene extends Phaser.Scene {
     );
     container.input!.cursor = 'pointer';
 
-    return { container, bgGraphics, glowRect, borderRect, labelText };
+    return { container, bgGraphics, glowRect, borderRect, labelText, dotGfx };
   }
 
   // ── Spawn ─────────────────────────────────────────────────────────────────────
@@ -435,7 +453,7 @@ export class BugBountyScene extends Phaser.Scene {
     const x = this.gridX + CHIP_W / 2 + Math.random() * (this.gridW - CHIP_W);
     const y = this.gridY + CHIP_H / 2 + Math.random() * (this.gridH - CHIP_H);
 
-    const { container, bgGraphics, glowRect, borderRect, labelText } = this.buildChip(type);
+    const { container, bgGraphics, glowRect, borderRect, labelText, dotGfx } = this.buildChip(type);
     container.setPosition(x, y).setDepth(20).setScale(0);
 
     const bug: ActiveBug = {
@@ -448,6 +466,7 @@ export class BugBountyScene extends Phaser.Scene {
       glowRect,
       borderRect,
       labelText,
+      dotGfx,
       despawnWarned: false,
       bangText: null,
       despawnFlashTimer: null,
@@ -512,7 +531,44 @@ export class BugBountyScene extends Phaser.Scene {
         });
         break;
 
-      // race, memleak: handled in update loop
+      case 'jackpot':
+        // Fast rainbow cycling for the dot
+        this.time.addEvent({
+          delay: 100,
+          loop: true,
+          callback: () => {
+            if (!container.active) return;
+            const hue = (time + Math.random() * 1000) % 360;
+            const c = Phaser.Display.Color.HSLToColor(hue / 360, 0.8, 0.6).color;
+            dotGfx.clear();
+            dotGfx.fillStyle(c, 1);
+            dotGfx.fillCircle(-CHIP_W / 2 + 14, 0, 5); // Slightly larger
+          }
+        });
+        // Intense scale pulse
+        this.tweens.add({
+          targets: container,
+          scaleX: 1.1,
+          scaleY: 1.1,
+          duration: 300,
+          yoyo: true,
+          repeat: -1,
+          ease: 'Cubic.easeInOut',
+        });
+        break;
+
+      case 'fleeing':
+        // Rapid jitter
+        this.time.addEvent({
+          delay: 50,
+          loop: true,
+          callback: () => {
+            if (!container.active) return;
+            container.x += (Math.random() - 0.5) * 4;
+            container.y += (Math.random() - 0.5) * 4;
+          }
+        });
+        break;
     }
 
     container.on('pointerdown', () => this.catchBug(bug));
@@ -565,7 +621,7 @@ export class BugBountyScene extends Phaser.Scene {
     this.lastCatchTime = now;
     if (this.comboCount > this.maxCombo) this.maxCombo = this.comboCount;
 
-    const comboMultiplier = 1 + (this.comboCount - 1) * TUNING.BUG_BOUNTY.COMBO_STEP;
+    const comboMultiplier = 1 + (this.comboCount - 1) * (TUNING.BUG_BOUNTY.COMBO_STEP * 1.5);
 
     if (bug.type === 'heisen') {
       this.cameras.main.shake(120, 0.008);
@@ -600,7 +656,14 @@ export class BugBountyScene extends Phaser.Scene {
 
     if (this.comboCount >= 2) {
       this.comboText.setText(`COMBO ×${this.comboCount}`).setAlpha(1);
-      this.tweens.add({ targets: this.comboText, scaleX: 1.2, scaleY: 1.2, duration: 100, yoyo: true });
+      this.tweens.add({ targets: this.comboText, scaleX: 1.4, scaleY: 1.4, duration: 80, yoyo: true });
+      
+      // Flash the whole grid slightly on big combos
+      if (this.comboCount >= 5) {
+        const comboFlash = this.add.rectangle(this.gridX, this.gridY, this.gridW, this.gridH, 0xffff00, 0.1)
+          .setOrigin(0).setDepth(24);
+        this.tweens.add({ targets: comboFlash, alpha: 0, duration: 150, onComplete: () => comboFlash.destroy() });
+      }
     }
 
     this.totalEarned += reward;

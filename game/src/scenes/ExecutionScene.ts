@@ -30,7 +30,7 @@ function formatEffectHint(effects: EventEffect[]): string {
       case 'budget':
         return typeof effect.value === 'number' ? `${effect.value >= 0 ? '+' : '−'}$${Math.abs(effect.value)}` : [];
       case 'time':
-        return typeof effect.value === 'number' ? `${formatSigned(effect.value * 3)}s timer` : [];
+        return typeof effect.value === 'number' ? `${formatSigned(effect.value * 3)}s time cost` : [];
       case 'hardware':
         return typeof effect.value === 'number' ? `${formatSigned(effect.value)} HP` : [];
       case 'reputation':
@@ -38,7 +38,7 @@ function formatEffectHint(effects: EventEffect[]): string {
       case 'agentSpeed': {
         if (typeof effect.value !== 'number') return [];
         const secs = Math.round(TUNING.BASE_TIMER_SECONDS * (effect.value / 100));
-        return `${secs >= 0 ? '+' : '−'}${Math.abs(secs)}s timer`;
+        return `${secs >= 0 ? '+' : '−'}${Math.abs(secs)}s efficiency`;
       }
       case 'flag':
       case 'modelSwitch':
@@ -995,12 +995,26 @@ export class ExecutionScene extends Phaser.Scene {
     // Pause day timer while event modal is open
     if (this.dayTimer) this.dayTimer.paused = true;
 
+    // Dramatic pause beat: zoom terminal slightly
+    this.tweens.add({
+      targets: [this.terminalWindow.container],
+      scaleX: 1.02,
+      scaleY: 1.02,
+      duration: 300,
+      ease: 'Back.Out'
+    });
+
     this.modalGroup = this.add.container(0, 0).setDepth(200);
 
     // Dim overlay
-    const overlay = this.add.rectangle(0, 0, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.6).setOrigin(0)
+    const overlay = this.add.rectangle(0, 0, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0).setOrigin(0)
       .setInteractive(); // blocks clicks through
     this.modalGroup.add(overlay);
+    this.tweens.add({
+      targets: overlay,
+      alpha: 0.7,
+      duration: 400
+    });
 
     // Dialog box
     const dw = 480;
@@ -1042,12 +1056,12 @@ export class ExecutionScene extends Phaser.Scene {
     let cumulativeY = choiceStartY;
     choices.forEach((choice, i) => {
       const hint = formatEffectHint(choice.effects);
-      const label = hint ? `[${i + 1}] ${choice.text}  (${hint})` : `[${i + 1}] ${choice.text}`;
+      const label = hint ? `[${i + 1}] ${choice.text}\n    (${hint})` : `[${i + 1}] ${choice.text}`;
       const btnTextObj = this.add.text(dx + 32, cumulativeY + 7, label, {
         fontFamily: 'monospace', fontSize: '13px', color: '#58a6ff',
         wordWrap: { width: dw - 72 },
       });
-      const btnH = Math.max(32, btnTextObj.height + 14);
+      const btnH = Math.max(48, btnTextObj.height + 14);
       btnTextObj.setY(cumulativeY + (btnH - btnTextObj.height) / 2);
 
       const btnBg = this.add.rectangle(dx + 20, cumulativeY, dw - 40, btnH, COLORS.titleBar).setOrigin(0)
@@ -1057,10 +1071,12 @@ export class ExecutionScene extends Phaser.Scene {
 
       btnBg.on('pointerover', () => {
         btnBg.setFillStyle(COLORS.windowBorder);
+        btnTextObj.setColor('#ffffff');
         this.applyResourcePreview(choice.effects);
       });
       btnBg.on('pointerout', () => {
         btnBg.setFillStyle(COLORS.titleBar);
+        btnTextObj.setColor('#58a6ff');
         this.restoreResourcePreview();
       });
       btnBg.on('pointerdown', () => {
@@ -1230,13 +1246,22 @@ export class ExecutionScene extends Phaser.Scene {
       this.tweens.add({
         targets: this.modalGroup,
         alpha: 0,
-        duration: 150,
+        duration: 200,
         onComplete: () => {
           this.modalGroup?.destroy();
           this.modalGroup = undefined;
           if (this.dayTimer) this.dayTimer.paused = false;
           this.typingEngine.resume();
           this.taskbar.refresh();
+
+          // Resume dramatic beat: zoom terminal back
+          this.tweens.add({
+            targets: [this.terminalWindow.container],
+            scaleX: 1.0,
+            scaleY: 1.0,
+            duration: 250,
+            ease: 'Back.In'
+          });
         },
       });
     } else {
@@ -1329,23 +1354,56 @@ export class ExecutionScene extends Phaser.Scene {
       if (effect.type === 'budget' && typeof effect.value === 'number' && state.playerClass !== 'corporateDev') {
         const projected = budget + effect.value;
         const isGain = effect.value > 0;
+        const sign = effect.value >= 0 ? '+' : '-';
         this.budgetText
-          .setText(`💰 Budget: $${projected.toLocaleString()} ${isGain ? '↑' : '↓'}`)
+          .setText(`💰 Budget: $${projected.toLocaleString()} (${sign}$${Math.abs(effect.value)})`)
           .setColor(isGain ? '#3fb950' : '#f85149');
+        this.tweens.add({ targets: this.budgetText, scaleX: 1.05, scaleY: 1.05, duration: 100, yoyo: true });
       } else if (effect.type === 'hardware' && typeof effect.value === 'number') {
         const projected = Math.max(0, Math.min(100, hardwareHp + effect.value));
         const isGain = effect.value > 0;
+        const sign = effect.value >= 0 ? '+' : '-';
         this.hardwareText
-          .setText(`🖥️ Hardware: ${projected}% ${isGain ? '↑' : '↓'}`)
+          .setText(`🖥️ Hardware: ${projected}% (${sign}${Math.abs(effect.value)}%)`)
           .setColor(isGain ? '#3fb950' : '#f85149');
         this.hwBar.width = Math.round((projected / 100) * 160);
         this.hwBar.setFillStyle(isGain ? 0x3fb950 : 0xf85149);
+        this.tweens.add({ targets: this.hardwareText, scaleX: 1.05, scaleY: 1.05, duration: 100, yoyo: true });
       } else if (effect.type === 'reputation' && typeof effect.value === 'number') {
         const projected = reputation + effect.value;
         const isGain = effect.value > 0;
+        const sign = effect.value >= 0 ? '+' : '-';
         this.repText
-          .setText(`⭐ Reputation: ${projected} ${isGain ? '↑' : '↓'}`)
+          .setText(`⭐ Reputation: ${projected} (${sign}${Math.abs(effect.value)})`)
           .setColor(isGain ? '#3fb950' : '#f85149');
+        this.tweens.add({ targets: this.repText, scaleX: 1.05, scaleY: 1.05, duration: 100, yoyo: true });
+      } else if (effect.type === 'time' && typeof effect.value === 'number') {
+        const deltaSecs = effect.value * 3;
+        const projected = Math.max(0, this.timeSeconds + deltaSecs);
+        const isGain = deltaSecs > 0;
+        const sign = deltaSecs >= 0 ? '+' : '-';
+        this.timeText
+          .setText(`⏱️ Time: ${projected}s (${sign}${Math.abs(deltaSecs)}s)`)
+          .setColor(isGain ? '#3fb950' : '#f85149');
+
+        const frac = projected / this.maxTimeSeconds;
+        this.timeBar.width = this.timeBg.width * frac;
+        this.timeBar.setFillStyle(isGain ? 0x3fb950 : 0xf85149);
+        this.tweens.add({ targets: this.timeText, scaleX: 1.05, scaleY: 1.05, duration: 100, yoyo: true });
+      } else if (effect.type === 'agentSpeed' && typeof effect.value === 'number') {
+        const baseTimer = state.playerClass === 'corporateDev' ? TUNING.CORP_TIMER_SECONDS : TUNING.BASE_TIMER_SECONDS;
+        const deltaSecs = Math.round(baseTimer * (effect.value / 100));
+        const projected = Math.max(0, this.timeSeconds + deltaSecs);
+        const isGain = deltaSecs > 0;
+        const sign = deltaSecs >= 0 ? '+' : '-';
+        this.timeText
+          .setText(`⏱️ Time: ${projected}s (${sign}${Math.abs(deltaSecs)}s efficiency)`)
+          .setColor(isGain ? '#3fb950' : '#f85149');
+
+        const frac = projected / this.maxTimeSeconds;
+        this.timeBar.width = this.timeBg.width * frac;
+        this.timeBar.setFillStyle(isGain ? 0x3fb950 : 0xf85149);
+        this.tweens.add({ targets: this.timeText, scaleX: 1.05, scaleY: 1.05, duration: 100, yoyo: true });
       }
     }
   }
@@ -1358,15 +1416,21 @@ export class ExecutionScene extends Phaser.Scene {
 
     this.budgetText
       .setText(state.playerClass === 'corporateDev' ? '💳 Company Card' : `💰 Budget: $${budget.toLocaleString()}`)
-      .setColor('#e6edf3');
+      .setColor('#e6edf3')
+      .setScale(1.0);
 
-    this.hardwareText.setText(`🖥️ Hardware: ${hardwareHp}%`).setColor('#e6edf3');
+    this.hardwareText.setText(`🖥️ Hardware: ${hardwareHp}%`).setColor('#e6edf3').setScale(1.0);
 
     const hwBarColor = hardwareHp >= 60 ? 0x3fb950 : hardwareHp >= 30 ? 0xd29922 : 0xf85149;
     this.hwBar.width = Math.round((hardwareHp / 100) * 160);
     this.hwBar.setFillStyle(hwBarColor);
 
-    this.repText.setText(`⭐ Reputation: ${reputation}`).setColor('#e6edf3');
+    this.repText.setText(`⭐ Reputation: ${reputation}`).setColor('#e6edf3').setScale(1.0);
+
+    const timeFrac = this.timeSeconds / this.maxTimeSeconds;
+    this.timeText.setText(`⏱️ Time: ${this.timeSeconds}s`).setColor('#9da5b0').setScale(1.0);
+    this.timeBar.width = this.timeBg.width * timeFrac;
+    this.timeBar.setFillStyle(timeFrac <= 0.3 ? COLORS.error : COLORS.warning);
   }
 
   // ── Completion Choice modal ──
