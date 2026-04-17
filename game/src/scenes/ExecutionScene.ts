@@ -823,7 +823,7 @@ export class ExecutionScene extends Phaser.Scene {
   private onAllPromptsComplete(): void {
     // All day prompts typed — end the day successfully
     // ── Chunk-complete celebration ──
-    AudioManager.getInstance().playSFX('success');
+    AudioManager.getInstance().playSFX('day-complete');
     this.showChunkCompleteFlash();
     this.terminal.addLine('\n✅ All prompts complete!');
     if (this.dayTimer) {
