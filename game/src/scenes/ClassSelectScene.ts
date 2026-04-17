@@ -240,6 +240,12 @@ export class ClassSelectScene extends Phaser.Scene {
     }
   }
 
+  private disableContinueButton(): void {
+    if (this.continueBtn) {
+      this.continueBtn.setColor('#484f58').disableInteractive();
+    }
+  }
+
   private launchGame(playerClass: PlayerClass): void {
     initClassState(playerClass);
     Telemetry.logRunStart(getState());
