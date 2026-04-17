@@ -27,7 +27,7 @@ Judged on: **Innovation, Theme, Gameplay, Graphics, Audio** (Overall = sum)
 - **Build:** Vite
 - **Resolution:** 1280×720, scales via Phaser FIT mode
 - **Deploy targets:** itch.io, GitHub Pages, Wavedash
-- **Tests:** Vitest, 110 tests across 7 suites
+- **Tests:** Vitest, 112 tests across 7 suites
 
 ## Art Direction: "PromptOS"
 
@@ -60,21 +60,13 @@ See `ART-AUDIO.md` for full visual and audio details.
 
 | File | Contents |
 |------|----------|
-| `DESIGN.md` | Core loop, phase structure, day arc, class definitions |
-| `EVENTS.md` | All 55 events with choices, consequences, class variants |
-| `ART-AUDIO.md` | PromptOS visual concept, screen layouts, audio plan, voice narrator |
-| `SYSTEMS.md` | Token Market items/prices, agent roster + synergy, balance numbers |
-| `docs/archive/` | Completed specs (Bug Hunt, typing rework, visual audit, etc.) |
+| `docs/archive/` | Completed specs (events catalog, art/audio plan, bug hunt, typing rework, visual audit, balance audit, etc.) |
 
 ## Project Structure
 
 ```
 gamedevjs-2026/
 ├── CONTEXT.md          ← you are here
-├── DESIGN.md           ← game design spec
-├── EVENTS.md           ← event catalog (55 events)
-├── ART-AUDIO.md        ← art direction + audio plan
-├── SYSTEMS.md          ← token market, agents, balance
 ├── README.md           ← GitHub/jam readme
 ├── docs/archive/       ← completed spec files
 ├── scripts/            ← generation scripts (voice, music, SFX)
@@ -181,7 +173,7 @@ gamedevjs-2026/
 
 - **Every code change → `git add` + `git commit`.** Uncommitted = unfinished.
 - **TypeScript `strict: true`** (noUnusedLocals/Params off for jam speed).
-- **Vitest test suite:** 112 tests across 7 files. Run `npm test` in `game/`.
+- **Vitest test suite:** 112 tests across 7 suites. Run `npm test` in `game/`.
 - **Commit format:** `feat: description [Agent - OpenClaw (model)]` or `feat: description [Haze]`
 - **Agent matching:**
   - Boris (Codex) → mechanical, clear-spec, single-file tasks
@@ -220,9 +212,9 @@ gamedevjs-2026/
 | Telemetry | `src/systems/Telemetry.ts` | DaySnapshot tracking, file output via Vite plugin |
 | EventEngine | `src/systems/EventEngine.ts` | Event selection, weighting, cooldowns |
 
-### Scene Map (12 scenes)
+### Scene Map (13 scenes)
 `Boot → Title → ClassSelect → Briefing → Planning → Execution → Results → Night → (loop) → Final`
-Plus: `BugBountySelect → BugBounty (Use AI) | BugHunt (Old School)`
+Plus: `BugBountySelect → BugBounty (Use AI) | BugHunt (Old School) | TokenMarket`
 
 ### Audio Assets
 - `public/assets/audio/music/` — 5 tracks (title, execution, execution-late, night, bugbounty)
@@ -237,6 +229,6 @@ npm install
 npm run dev
 # → http://localhost:5173
 
-npm test        # 110 tests
+npm test        # 112 tests
 npm run build   # production build
 ```
