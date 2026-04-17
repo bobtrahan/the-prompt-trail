@@ -32,10 +32,10 @@ interface StrategyOption {
 }
 
 const STRATEGIES: StrategyOption[] = [
-  { id: 'planThenBuild', name: 'Plan Then Build', icon: '🎯', desc: 'Slower start, higher success rate, fewer hallucinations.', timeBonus: 6, riskLabel: EconomySystem.getStrategyModifier('planThenBuild').riskLabel },
-  { id: 'justStart', name: 'Just Start Building', icon: '🚀', desc: 'Medium speed, medium risk. The reliable choice.', timeBonus: 0, riskLabel: EconomySystem.getStrategyModifier('justStart').riskLabel },
-  { id: 'oneShot', name: 'One-Shot It', icon: '🎲', desc: 'Fast and cheap on time. High hallucination chance.', timeBonus: -6, riskLabel: EconomySystem.getStrategyModifier('oneShot').riskLabel },
-  { id: 'vibeCode', name: 'Vibe Code', icon: '🧠', desc: 'Wildcard. Could be brilliant or catastrophic.', timeBonus: 3, riskLabel: EconomySystem.getStrategyModifier('vibeCode').riskLabel },
+  { id: 'planThenBuild', name: 'Plan Then Build', icon: '🎯', desc: 'Slow down and think. +6 seconds, higher success rate, fewer hallucinations.', timeBonus: 6, riskLabel: EconomySystem.getStrategyModifier('planThenBuild').riskLabel },
+  { id: 'justStart', name: 'Just Start Building', icon: '🚀', desc: 'The reliable middle ground. Standard timer, balanced risk.', timeBonus: 0, riskLabel: EconomySystem.getStrategyModifier('justStart').riskLabel },
+  { id: 'oneShot', name: 'One-Shot It', icon: '🎲', desc: 'Full send, no going back. −6 seconds, high hallucination chance.', timeBonus: -6, riskLabel: EconomySystem.getStrategyModifier('oneShot').riskLabel },
+  { id: 'vibeCode', name: 'Vibe Code', icon: '🧠', desc: 'Ignore the specs. +3 seconds, but results are a complete toss-up.', timeBonus: 3, riskLabel: EconomySystem.getStrategyModifier('vibeCode').riskLabel },
 ];
 
 export class PlanningScene extends Phaser.Scene {
@@ -405,12 +405,12 @@ export class PlanningScene extends Phaser.Scene {
     for (const id of this.selectedAgentIds) {
       const agent = AGENT_ROSTER.find(a => a.id === id);
       if (!agent) continue;
-      if (agent.trait === 'low_hallucination') traitNotes.push('+5 rep/day (Oracle)');
-      if (agent.trait === 'agreeable') traitNotes.push('+3s (Parrot)');
-      if (agent.trait === 'deploy_unapproved') traitNotes.push('20%: +10 progress (Turbo)');
-      if (agent.trait === 'architecture_debates') traitNotes.push('-3s/day (Linter)');
-      if (agent.trait === 'feature_creep') traitNotes.push('25%: -6s (Scope)');
-      if (agent.trait === 'wildcard_shortcut') traitNotes.push('50/50: +6s or -3s (Gremlin)');
+      if (agent.trait === 'low_hallucination') traitNotes.push('Oracle: +5 rep/day');
+      if (agent.trait === 'agreeable') traitNotes.push('Parrot: +3s');
+      if (agent.trait === 'deploy_unapproved') traitNotes.push('Turbo: 20% chance for +10 progress');
+      if (agent.trait === 'architecture_debates') traitNotes.push('Linter: -3s/day');
+      if (agent.trait === 'feature_creep') traitNotes.push('Scope: 25% chance for -6s');
+      if (agent.trait === 'wildcard_shortcut') traitNotes.push('Gremlin: 50/50 for +6s or -3s');
     }
     if (traitNotes.length > 0) parts.push(traitNotes.join(' · '));
 

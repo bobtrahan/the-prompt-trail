@@ -4,6 +4,9 @@ import { TUNING } from '../data/tuning';
 export const GAME_WIDTH = 1280;
 export const GAME_HEIGHT = 720;
 
+// Viewport constraints
+export const MIN_VIEWPORT_WIDTH = 768;
+
 // Timing
 export const TOTAL_DAYS = TUNING.TOTAL_DAYS;
 export const BASE_TIMER_SECONDS = TUNING.BASE_TIMER_SECONDS;

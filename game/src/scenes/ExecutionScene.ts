@@ -1394,7 +1394,7 @@ export class ExecutionScene extends Phaser.Scene {
         this.tweens.add({ targets: this.timeText, scaleX: 1.05, scaleY: 1.05, duration: 100, yoyo: true });
       } else if (effect.type === 'agentSpeed' && typeof effect.value === 'number') {
         const dayBaseMid = (TUNING.TIMER_BY_DAY as Record<number, number>)[state.day] ?? TUNING.BASE_TIMER_SECONDS;
-      const baseTimer = state.playerClass === 'corporateDev' ? Math.round(dayBaseMid * TUNING.CORP_TIMER_RATIO) : dayBaseMid;
+        const baseTimer = state.playerClass === 'corporateDev' ? Math.round(dayBaseMid * TUNING.CORP_TIMER_RATIO) : dayBaseMid;
         const deltaSecs = Math.round(baseTimer * (effect.value / 100));
         const projected = Math.max(0, this.timeSeconds + deltaSecs);
         const isGain = deltaSecs > 0;
