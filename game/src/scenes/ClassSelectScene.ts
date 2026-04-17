@@ -182,23 +182,26 @@ export class ClassSelectScene extends Phaser.Scene {
       });
     });
 
-    // Continue button — hidden until a class is selected
+    // Continue button — always visible, disabled by default
     // Center between bottom of cards (y=570) and bottom of game
-    this.continueBtn = this.add.text(GAME_WIDTH / 2, (570 + GAME_HEIGHT) / 2, '[ Continue → ]', {
+    const btnY = (570 + GAME_HEIGHT) / 2;
+    this.continueBtn = this.add.text(GAME_WIDTH / 2, btnY, '[ Continue → ]', {
       fontFamily: 'monospace',
       fontSize: '16px',
-      color: '#e6edf3',
-      backgroundColor: '#238636',
+      color: '#6e7681',
+      backgroundColor: '#1c2128',
       padding: { x: 20, y: 10 },
-    }).setOrigin(0.5).setInteractive({ useHandCursor: true }).setVisible(false).setDepth(10);
+    }).setOrigin(0.5).setDepth(10);
 
-    this.continueBtn.on('pointerover', () => this.continueBtn?.setBackgroundColor('#2ea043'));
-    this.continueBtn.on('pointerout', () => this.continueBtn?.setBackgroundColor('#238636'));
-    this.continueBtn.on('pointerdown', () => {
-      if (this.selectedClass) {
-        this.launchGame(this.selectedClass);
-      }
-    });
+    // Helper text below button
+    this.add.text(GAME_WIDTH / 2, btnY + 50, 'Select a profile to continue.', {
+      fontFamily: 'monospace',
+      fontSize: '13px',
+      color: `#${COLORS.textDim.toString(16).padStart(6, '0')}`,
+    }).setOrigin(0.5).setDepth(10);
+
+    // Button interaction state managed in onSelectCard
+    this.disableContinueButton();
   }
 
   private onSelectCard(classId: PlayerClass): void {
