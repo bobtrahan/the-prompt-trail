@@ -99,6 +99,9 @@ export class ExecutionScene extends Phaser.Scene {
   private eventCountdownTimer?: Phaser.Time.TimerEvent;
   private eventCountdownText?: Phaser.GameObjects.Text;
 
+  // Juice / telemetry feedback
+  private lastStreakMilestone = 0;
+
   // Completion / Overtime
   private inOvertime: boolean = false;
   private overtimeBonus: number = 0;
@@ -239,6 +242,76 @@ export class ExecutionScene extends Phaser.Scene {
           });
         },
       });
+    });
+  }
+
+  /** Floating streak combo flash anchored near the progress bar */
+  private showStreakFlash(streak: number): void {
+    const label = streak >= 20 ? `🔥 ULTRA COMBO ×${streak}!` :
+                  streak >= 15 ? `⚡ MEGA COMBO ×${streak}` :
+                  streak >= 10 ? `🎯 COMBO ×${streak}` :
+                                 `✨ Streak ×${streak}`;
+    const color = streak >= 20 ? '#f0883e' : streak >= 10 ? '#d29922' : '#58a6ff';
+    const size   = streak >= 20 ? '28px' : streak >= 10 ? '22px' : '18px';
+
+    // Flash the progress bar briefly
+    const origColor = this.progress >= 100 ? COLORS.success : getTheme(getState().playerClass ?? undefined).accent;
+    this.progressBar.setFillStyle(0xffffff);
+    this.time.delayedCall(150, () => {
+      if (this.progressBar) this.progressBar.setFillStyle(origColor);
+    });
+
+    const flash = this.add.text(GAME_WIDTH / 2, 380, label, {
+      fontFamily: 'monospace', fontSize: size, color,
+      stroke: '#000000', strokeThickness: 3,
+    }).setOrigin(0.5).setDepth(500).setAlpha(0);
+
+    this.tweens.add({
+      targets: flash,
+      alpha: { from: 0, to: 1 },
+      y: flash.y - 10,
+      duration: 180,
+      ease: 'Power2.Out',
+      onComplete: () => {
+        this.tweens.add({
+          targets: flash,
+          alpha: 0,
+          y: flash.y - 30,
+          duration: 900,
+          delay: 500,
+          ease: 'Power2.In',
+          onComplete: () => flash.destroy(),
+        });
+      },
+    });
+
+    AudioManager.getInstance().playSFX('notification');
+  }
+
+  /** Floating "✓ Perfect!" badge on clean prompt completion */
+  private showPerfectFlash(): void {
+    const badge = this.add.text(GAME_WIDTH / 2, 360, '✓  Perfect!', {
+      fontFamily: 'monospace', fontSize: '16px', color: '#3fb950',
+      stroke: '#000000', strokeThickness: 3,
+    }).setOrigin(0.5).setDepth(500).setAlpha(0);
+
+    this.tweens.add({
+      targets: badge,
+      alpha: { from: 0, to: 1 },
+      y: badge.y - 8,
+      duration: 150,
+      ease: 'Power2.Out',
+      onComplete: () => {
+        this.tweens.add({
+          targets: badge,
+          alpha: 0,
+          y: badge.y - 24,
+          duration: 700,
+          delay: 400,
+          ease: 'Power2.In',
+          onComplete: () => badge.destroy(),
+        });
+      },
     });
   }
 
@@ -747,12 +820,52 @@ export class ExecutionScene extends Phaser.Scene {
 
   private onAllPromptsComplete(): void {
     // All day prompts typed — end the day successfully
+    // ── Chunk-complete celebration ──
+    AudioManager.getInstance().playSFX('success');
+    this.showChunkCompleteFlash();
     this.terminal.addLine('\n✅ All prompts complete!');
     if (this.dayTimer) {
       this.dayTimer.destroy();
     }
     this.time.delayedCall(600, () => {
       this.endDay();
+    });
+  }
+
+  /** Full-screen brief green pulse on chunk/all-prompts completion */
+  private showChunkCompleteFlash(): void {
+    const overlay = this.add.rectangle(0, 0, GAME_WIDTH, GAME_HEIGHT, 0x3fb950, 0).setOrigin(0).setDepth(600);
+    this.tweens.add({
+      targets: overlay,
+      alpha: { from: 0.18, to: 0 },
+      duration: 700,
+      ease: 'Power2.Out',
+      onComplete: () => overlay.destroy(),
+    });
+
+    const msg = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 20, '✅  BUILD COMPLETE', {
+      fontFamily: 'monospace', fontSize: '36px', color: '#3fb950',
+      stroke: '#000000', strokeThickness: 5,
+    }).setOrigin(0.5).setDepth(601).setAlpha(0);
+
+    this.tweens.add({
+      targets: msg,
+      alpha: { from: 0, to: 1 },
+      scaleX: { from: 0.8, to: 1 },
+      scaleY: { from: 0.8, to: 1 },
+      duration: 250,
+      ease: 'Back.Out',
+      onComplete: () => {
+        this.tweens.add({
+          targets: msg,
+          alpha: 0,
+          y: msg.y - 20,
+          duration: 500,
+          delay: 400,
+          ease: 'Power2.In',
+          onComplete: () => msg.destroy(),
+        });
+      },
     });
   }
 
@@ -766,6 +879,28 @@ export class ExecutionScene extends Phaser.Scene {
       this.progress = Math.min(100, Math.round(frac * 100));
     }
     this.updateProgressBar();
+
+    // ── Telemetry-driven juice ──
+    const tel = this.typingEngine.getTelemetry();
+
+    // Perfect-prompt badge
+    if (tel.isPerfectPrompt && !this.inOvertime) {
+      this.showPerfectFlash();
+    }
+
+    // Streak milestone flashes: fire once per milestone crossing
+    const STREAK_MILESTONES = [5, 10, 15, 20, 30, 40, 50];
+    for (const m of STREAK_MILESTONES) {
+      if (tel.streak >= m && this.lastStreakMilestone < m) {
+        this.lastStreakMilestone = m;
+        this.showStreakFlash(tel.streak);
+        break;
+      }
+    }
+    // Reset milestone tracker if streak dropped below last milestone
+    if (tel.streak < this.lastStreakMilestone) {
+      this.lastStreakMilestone = 0;
+    }
 
     if (this.progress >= 100 && !this.completionShown && !this.inOvertime) {
       this.showCompletionChoice();
