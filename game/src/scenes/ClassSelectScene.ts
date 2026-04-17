@@ -120,19 +120,19 @@ export class ClassSelectScene extends Phaser.Scene {
       }).setOrigin(0.5, 0).setDepth(2);
 
       // Divider line
-      this.add.rectangle(x, y - halfH + 234, cardWidth - 40, 1, COLORS.textDim)
+      this.add.rectangle(x, y - halfH + 240, cardWidth - 40, 1, COLORS.textDim)
         .setAlpha(0.2)
         .setDepth(2);
 
       // Difficulty badge
-      this.add.text(x, y - halfH + 252, DIFFICULTY[def.id], {
+      this.add.text(x, y - halfH + 280, DIFFICULTY[def.id], {
         fontFamily: 'monospace',
         fontSize: '14px',
         color: accentHex,
       }).setOrigin(0.5).setDepth(2);
 
       // Stats
-      const statsY = y - halfH + 278;
+      const statsY = y - halfH + 306;
       const stats = [
         `Budget: $${def.startingBudget.toLocaleString()}`,
         `Hardware: ${def.hardwareHp} HP`,
