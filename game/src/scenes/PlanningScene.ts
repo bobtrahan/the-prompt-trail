@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { TUNING } from '../data/tuning';
 import { GAME_WIDTH, GAME_HEIGHT, COLORS } from '../utils/constants';
 import { getState } from '../systems/GameState';
 import type { Strategy, ModelTier } from '../systems/GameState';
@@ -368,7 +369,7 @@ export class PlanningScene extends Phaser.Scene {
     const parts: string[] = [];
 
     // Timer: base + strategy + agent speed + GPU
-    const baseTimer = state.playerClass === 'corporateDev' ? 22 : BASE_TIMER_SECONDS;
+    const baseTimer = state.playerClass === 'corporateDev' ? TUNING.CORP_TIMER_SECONDS : BASE_TIMER_SECONDS;
     const agentSpeedMod = AgentSystem.getSpeedModifier(this.selectedAgentIds);
     const agentSpeedSec = Math.round(baseTimer * agentSpeedMod);
     const strategyBonus = this.lastStrategyTimeBonus;

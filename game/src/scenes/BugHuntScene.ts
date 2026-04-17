@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { TUNING } from '../data/tuning';
 import { GAME_WIDTH, GAME_HEIGHT, COLORS } from '../utils/constants';
 import { getState } from '../systems/GameState';
 import { Telemetry, type ShotLog, type BugLog } from '../systems/Telemetry';
@@ -19,14 +20,14 @@ const AMMO_BAR_H = 36;
 const AMMO_CELL_W = 18;
 const AMMO_CELL_H = 14;
 const AMMO_CELL_GAP = 3;
-const GAME_DURATION = 30_000;
-const PLAYER_SPEED = 150;
-const AMMO_MAX = 10;
-const AMMO_REGEN_MS = 3000;
+const GAME_DURATION = TUNING.BUG_HUNT.DURATION_MS;
+const PLAYER_SPEED = TUNING.BUG_HUNT.PLAYER_SPEED;
+const AMMO_MAX = TUNING.BUG_HUNT.AMMO_MAX;
+const AMMO_REGEN_MS = TUNING.BUG_HUNT.AMMO_REGEN_MS;
 const CROSSHAIR_DIST = 90;
 const PLAYER_HW = 10;
 const PLAYER_HH = 12;
-const BULLET_SPEED = 600;
+const BULLET_SPEED = TUNING.BUG_HUNT.BULLET_SPEED;
 const BULLET_LEN = 8;
 const BULLET_THICKNESS = 3;
 const BULLET_TRAIL_LEN = 12;
@@ -37,9 +38,9 @@ const BULLET_TRAIL_DEPTH = 16;
 const SPARK_DEPTH = 18;
 
 // Bug spawning + movement
-const BUG_SPAWN_INTERVAL = 3000;
-const MAX_ALIVE_BUGS = 6;
-const DESPAWN_WARN_MS = 1500;
+const BUG_SPAWN_INTERVAL = TUNING.BUG_HUNT.SPAWN_INTERVAL_MS;
+const MAX_ALIVE_BUGS = TUNING.BUG_HUNT.MAX_BUGS;
+const DESPAWN_WARN_MS = TUNING.BUG_HUNT.DESPAWN_WARN_MS;
 
 // Chip visual dims (mirrors BugBountyScene)
 const CHIP_W = 120;
@@ -47,11 +48,11 @@ const CHIP_H = 28;
 const CHIP_R = 6;
 
 // Bug speeds (px/sec)
-const SYNTAX_SPEED      = 60;
-const LOGIC_SPEED       = 120;
-const RACE_BURST_SPEED  = 300;
-const MEMLEAK_SPEED     = 40;
-const HEISEN_SPEED      = 80;
+const SYNTAX_SPEED      = TUNING.BUG_HUNT.SPEEDS.syntax;
+const LOGIC_SPEED       = TUNING.BUG_HUNT.SPEEDS.logic;
+const RACE_BURST_SPEED  = TUNING.BUG_HUNT.SPEEDS.race;
+const MEMLEAK_SPEED     = TUNING.BUG_HUNT.SPEEDS.memleak;
+const HEISEN_SPEED      = TUNING.BUG_HUNT.SPEEDS.heisen;
 
 // Bug hit radii
 const HIT_RADIUS: Record<BugType, number> = {
@@ -912,11 +913,11 @@ export class BugHuntScene extends Phaser.Scene {
       });
     } else {
       // Escaped
-      this.totalEarned = Math.max(0, this.totalEarned - 5);
+      this.totalEarned = Math.max(0, this.totalEarned - TUNING.BUG_BOUNTY.ESCAPED_PENALTY_USD);
       this.escapedBugs++;
       this.statsText.setText(this.statsStr());
 
-      const txt = this.add.text(bug.x, bug.y, '−$5 ESCAPED', {
+      const txt = this.add.text(bug.x, bug.y, `−$${TUNING.BUG_BOUNTY.ESCAPED_PENALTY_USD} ESCAPED`, {
         fontFamily: 'monospace', fontSize: '14px', color: '#ff0000',
       }).setDepth(30);
       this.tweens.add({
@@ -1302,7 +1303,7 @@ export class BugHuntScene extends Phaser.Scene {
     this.lastCatchTime = now;
     if (this.comboCount > this.maxCombo) this.maxCombo = this.comboCount;
 
-    const comboMultiplier = 1 + (this.comboCount - 1) * 0.25;
+    const comboMultiplier = 1 + (this.comboCount - 1) * TUNING.BUG_BOUNTY.COMBO_STEP;
 
     // Camera shake (stronger for heisen + white flash)
     if (bug.type === 'heisen') {
@@ -1384,7 +1385,7 @@ export class BugHuntScene extends Phaser.Scene {
     const returnScene = state.bugHuntReturnScene || 'Night';
     state.bugHuntReturnScene = 'Night';
 
-    const earned1_5x = Math.floor(this.totalEarned * 1.5);
+    const earned1_5x = Math.floor(this.totalEarned * TUNING.BUG_HUNT.OLD_SCHOOL_MULTIPLIER);
     state.budget += earned1_5x;
     state.totalBugsSquashed += this.bugCount;
     if (returnScene === 'Night') {
@@ -1432,15 +1433,15 @@ export class BugHuntScene extends Phaser.Scene {
 
     type LineEntry = { text: string; color: string; size: string };
     const lines: LineEntry[] = [
-      { text: "Time's up!", color: '#58a6ff', size: '26px' },
+      { text: TUNING.COPY.TIME_EXPIRED_TITLE, color: '#58a6ff', size: '26px' },
       { text: `Bugs squashed: ${this.bugCount}`, color: '#e6edf3', size: '16px' },
       { text: `Earned: $${this.totalEarned}`, color: '#e6edf3', size: '16px' },
-      { text: 'Old School Bonus: ×1.5', color: '#ffd700', size: '16px' },
+      { text: `Old School Bonus: ×${TUNING.BUG_HUNT.OLD_SCHOOL_MULTIPLIER}`, color: '#ffd700', size: '16px' },
       { text: `Total: $${earned1_5x}`, color: '#3fb950', size: '18px' },
       { text: `Shots fired: ${this.shotsFired} | Accuracy: ${accuracy}%`, color: '#9da5b0', size: '14px' },
     ];
     if (this.escapedBugs > 0) {
-      lines.push({ text: `Escaped: ${this.escapedBugs} (−$${this.escapedBugs * 5})`, color: '#f85149', size: '14px' });
+      lines.push({ text: `Escaped: ${this.escapedBugs} (−$${this.escapedBugs * TUNING.BUG_BOUNTY.ESCAPED_PENALTY_USD})`, color: '#f85149', size: '14px' });
     }
     if (bonusHp) {
       lines.push({ text: '+5 HP hardware repair bonus', color: '#3fb950', size: '16px' });

@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
-import { GAME_WIDTH, GAME_HEIGHT, COLORS, BASE_TIMER_SECONDS } from '../utils/constants';
+import { TUNING } from '../data/tuning';
+import { GAME_WIDTH, GAME_HEIGHT, COLORS } from '../utils/constants';
 import { DAY_PROMPTS, OVERTIME_PROMPTS } from '../data/prompts';
 import { EVENT_SCHEDULE } from '../data/eventTriggers';
 import { getState, type GameState } from '../systems/GameState';
@@ -36,7 +37,7 @@ function formatEffectHint(effects: EventEffect[]): string {
         return typeof effect.value === 'number' ? `${formatSigned(effect.value)} rep` : [];
       case 'agentSpeed': {
         if (typeof effect.value !== 'number') return [];
-        const secs = Math.round(BASE_TIMER_SECONDS * (effect.value / 100));
+        const secs = Math.round(TUNING.BASE_TIMER_SECONDS * (effect.value / 100));
         return `${secs >= 0 ? '+' : '−'}${Math.abs(secs)}s timer`;
       }
       case 'flag':
@@ -611,7 +612,7 @@ export class ExecutionScene extends Phaser.Scene {
       this.typeHint = this.add.text(
         16 + tArea.x + tArea.width / 2,
         72 + tArea.y + tArea.height / 2 - 20,
-        '⌨️  START TYPING TO BUILD  ⌨️',
+        TUNING.COPY.START_TYPING_PROMPT,
         { fontFamily: 'monospace', fontSize: '20px', color: '#58a6ff', fontStyle: 'bold' }
       ).setOrigin(0.5).setDepth(50);
 
@@ -643,7 +644,7 @@ export class ExecutionScene extends Phaser.Scene {
 
     // Calculate final timer: base (45s, or 22s for Corporate Dev) + modifiers
     const state = getState();
-    const baseTimer = state.playerClass === 'corporateDev' ? 22 : BASE_TIMER_SECONDS;
+    const baseTimer = state.playerClass === 'corporateDev' ? TUNING.CORP_TIMER_SECONDS : TUNING.BASE_TIMER_SECONDS;
     const agentSpeedSeconds = Math.round(baseTimer * this.speedMod);
     const eventBonus = state.timerBonusSeconds;
     this.timeSeconds = Math.max(10, baseTimer + agentSpeedSeconds + eventBonus);
@@ -684,9 +685,9 @@ export class ExecutionScene extends Phaser.Scene {
       this.showCompletionChoice();
     } else if (this.inOvertime) {
       this.overtimePromptsCompleted++;
-      this.overtimeBonus += 3;
+      this.overtimeBonus += TUNING.OVERTIME_REP_PER_PROMPT;
       if (this.overtimeText) {
-        this.overtimeText.setText(`Production ♙: +${this.overtimeBonus}`);
+        this.overtimeText.setText(`${TUNING.COPY.OVERTIME_LABEL} +${this.overtimeBonus}`);
       }
     }
 
@@ -855,7 +856,7 @@ export class ExecutionScene extends Phaser.Scene {
     this.input.keyboard!.once('keydown-THREE', () => choices.length > 2 && this.resolveEvent(2, choices[2]));
 
     // ── Countdown overlay (top-right corner of modal) ──
-    const COUNTDOWN_SEC = 10;
+    const COUNTDOWN_SEC = TUNING.EVENT_READ_WINDOW_SEC;
     let remaining = COUNTDOWN_SEC;
     this.eventCountdownText = this.add.text(
       dx + dw - 12, dy + 8,
@@ -1180,13 +1181,13 @@ export class ExecutionScene extends Phaser.Scene {
     this.modalGroup.add(strip);
 
     // Title
-    const titleObj = this.add.text(dx + 12, dy + 6, '✅ Project Complete!', {
+    const titleObj = this.add.text(dx + 12, dy + 6, TUNING.COPY.PROJECT_COMPLETE_TITLE, {
       fontFamily: 'monospace', fontSize: '13px', color: '#e6edf3',
     });
     this.modalGroup.add(titleObj);
 
     // Body
-    const bodyObj = this.add.text(dx + 20, dy + 48, 'You finished early. What now?', {
+    const bodyObj = this.add.text(dx + 20, dy + 48, TUNING.COPY.PROJECT_COMPLETE_BODY, {
       fontFamily: 'monospace', fontSize: '14px', color: '#e6edf3',
       lineSpacing: 6, wordWrap: { width: dw - 40 },
     });
@@ -1246,7 +1247,7 @@ export class ExecutionScene extends Phaser.Scene {
     this.overtimeText = this.add.text(
       16 + tArea.x + tArea.width - 8,
       72 + tArea.y - 14,
-      'Production ♙: +0',
+      `${TUNING.COPY.OVERTIME_LABEL} +0`,
       { fontFamily: 'monospace', fontSize: '11px', color: '#f0883e' }
     ).setOrigin(1, 0).setDepth(100);
   }

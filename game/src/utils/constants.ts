@@ -1,11 +1,13 @@
+import { TUNING } from '../data/tuning';
+
 // Game dimensions
 export const GAME_WIDTH = 1280;
 export const GAME_HEIGHT = 720;
 
 // Timing
-export const TOTAL_DAYS = 13;
-export const BASE_TIMER_SECONDS = 45;
-export const EVENT_INTERVAL_MS = 9000; // event every ~9 sec
+export const TOTAL_DAYS = TUNING.TOTAL_DAYS;
+export const BASE_TIMER_SECONDS = TUNING.BASE_TIMER_SECONDS;
+export const EVENT_INTERVAL_MS = TUNING.EVENT_INTERVAL_MS;
 
 // Colors — PromptOS base theme (overridden per class)
 export const COLORS = {

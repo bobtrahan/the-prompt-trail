@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { TUNING } from '../data/tuning';
 import { GAME_WIDTH, GAME_HEIGHT, COLORS } from '../utils/constants';
 import { getState } from '../systems/GameState';
 import { Telemetry } from '../systems/Telemetry';
@@ -80,11 +81,11 @@ function scramble(len: number): string {
 
 const WIN_W = 900;
 const WIN_H = 520;
-const GAME_DURATION = 30_000;
-const SPAWN_INTERVAL = 1500;
-const MAX_BUGS = 5;
+const GAME_DURATION = TUNING.BUG_BOUNTY.DURATION_MS;
+const SPAWN_INTERVAL = TUNING.BUG_BOUNTY.SPAWN_INTERVAL_MS;
+const MAX_BUGS = TUNING.BUG_BOUNTY.MAX_BUGS;
 const TIMER_BAR_H = 8;
-const DESPAWN_WARN_MS = 1500;
+const DESPAWN_WARN_MS = TUNING.BUG_BOUNTY.DESPAWN_WARN_MS;
 
 export class BugBountyScene extends Phaser.Scene {
   // UI
@@ -564,7 +565,7 @@ export class BugBountyScene extends Phaser.Scene {
     this.lastCatchTime = now;
     if (this.comboCount > this.maxCombo) this.maxCombo = this.comboCount;
 
-    const comboMultiplier = 1 + (this.comboCount - 1) * 0.25;
+    const comboMultiplier = 1 + (this.comboCount - 1) * TUNING.BUG_BOUNTY.COMBO_STEP;
 
     if (bug.type === 'heisen') {
       this.cameras.main.shake(120, 0.008);
@@ -654,12 +655,12 @@ export class BugBountyScene extends Phaser.Scene {
         onComplete: () => bug.obj.destroy(),
       });
     } else {
-      this.totalEarned = Math.max(0, this.totalEarned - 5);
+      this.totalEarned = Math.max(0, this.totalEarned - TUNING.BUG_BOUNTY.ESCAPED_PENALTY_USD);
       this.escapedBugs++;
       this.updateStats();
       AudioManager.getInstance().playSFX('bug-miss');
 
-      const txt = this.add.text(bug.obj.x, bug.obj.y, '−$5 ESCAPED', {
+      const txt = this.add.text(bug.obj.x, bug.obj.y, `−$${TUNING.BUG_BOUNTY.ESCAPED_PENALTY_USD} ESCAPED`, {
         fontFamily: 'monospace', fontSize: '14px', color: '#ff0000',
       }).setDepth(30);
       this.tweens.add({ targets: txt, y: txt.y - 30, alpha: 0, duration: 600, onComplete: () => txt.destroy() });
@@ -720,12 +721,12 @@ export class BugBountyScene extends Phaser.Scene {
 
     type LineEntry = { text: string; color: string; size: string };
     const lines: LineEntry[] = [
-      { text: "Time's up!", color: '#58a6ff', size: '26px' },
+      { text: TUNING.COPY.TIME_EXPIRED_TITLE, color: '#58a6ff', size: '26px' },
       { text: `Bugs squashed: ${this.bugCount}`, color: '#e6edf3', size: '16px' },
       { text: `Earned: $${this.totalEarned}`, color: '#e6edf3', size: '16px' },
     ];
     if (this.missClicks > 0) lines.push({ text: `Misclicks: ${this.missClicks} (−${this.missClicks}s)`, color: '#f85149', size: '14px' });
-    if (this.escapedBugs > 0) lines.push({ text: `Escaped: ${this.escapedBugs} (−$${this.escapedBugs * 5})`, color: '#f85149', size: '14px' });
+    if (this.escapedBugs > 0) lines.push({ text: `Escaped: ${this.escapedBugs} (−$${this.escapedBugs * TUNING.BUG_BOUNTY.ESCAPED_PENALTY_USD})`, color: '#f85149', size: '14px' });
     if (bonusHp) lines.push({ text: '+5 HP hardware repair bonus', color: '#3fb950', size: '16px' });
     if (this.maxCombo >= 2) lines.push({ text: `Best combo: ×${this.maxCombo}`, color: '#3fb950', size: '16px' });
 
