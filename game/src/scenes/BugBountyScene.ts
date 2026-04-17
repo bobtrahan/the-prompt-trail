@@ -569,7 +569,7 @@ export class BugBountyScene extends Phaser.Scene {
           }
         });
         // Urgent alert sound
-        AudioManager.getInstance().playSFX('event-alert');
+        AudioManager.getInstance().playSFX('notification');
         // Initial flash
         const alertFlash = this.add.rectangle(x, y, CHIP_W + 20, CHIP_H + 20, 0xff0000, 0.4).setDepth(19);
         this.tweens.add({ targets: alertFlash, scaleX: 1.5, scaleY: 1.5, alpha: 0, duration: 300, onComplete: () => alertFlash.destroy() });

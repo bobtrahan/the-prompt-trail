@@ -33,23 +33,24 @@ export const TUNING = {
   // ─── Bug Bounty / Hunt Tuning ─────────────────────────────────────────
   BUG_BOUNTY: {
     DURATION_MS: 30000,
-    SPAWN_INTERVAL_MS: 1500,
-    MAX_BUGS: 5,
+    SPAWN_INTERVAL_MS: 1200,
+    MAX_BUGS: 8,
     DESPAWN_WARN_MS: 1500,
-    ESCAPED_PENALTY_USD: 5,
-    COMBO_STEP: 0.4,
+    ESCAPED_PENALTY_USD: 2,
+    COMBO_STEP: 0.2,
   },
   
   BUG_HUNT: {
     DURATION_MS: 30000,
-    SPAWN_INTERVAL_MS: 3000,
+    SPAWN_INTERVAL_MS: 2500,
     MAX_BUGS: 6,
     DESPAWN_WARN_MS: 1500,
-    PLAYER_SPEED: 150,
-    BULLET_SPEED: 600,
+    PLAYER_SPEED: 180,
+    BULLET_SPEED: 700,
     OLD_SCHOOL_MULTIPLIER: 1.5,
-    AMMO_MAX: 10,
-    AMMO_REGEN_MS: 3000,
+    COMBO_STEP: 0.4,
+    AMMO_MAX: 12,
+    AMMO_REGEN_MS: 2500,
     
     // Bug speeds (px/sec)
     SPEEDS: {

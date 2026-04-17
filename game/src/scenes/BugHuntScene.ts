@@ -1288,7 +1288,7 @@ export class BugHuntScene extends Phaser.Scene {
     this.lastCatchTime = now;
     if (this.comboCount > this.maxCombo) this.maxCombo = this.comboCount;
 
-    const comboMultiplier = 1 + (this.comboCount - 1) * TUNING.BUG_BOUNTY.COMBO_STEP;
+    const comboMultiplier = 1 + (this.comboCount - 1) * TUNING.BUG_HUNT.COMBO_STEP;
 
     // Camera shake (stronger for heisen + white flash)
     if (bug.type === 'heisen') {
