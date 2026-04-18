@@ -178,7 +178,7 @@ export const EVENTS: EventDef[] = [
       },
       {
         text: 'Hand-code like it\'s the 90s',
-        effects: [{ type: 'flag', value: 'manual-progress-25pct' }, { type: 'agentSpeed', value: -25 }],
+        effects: [{ type: 'flag', value: 'manual-progress-25pct' }, { type: 'agentSpeed', value: -25 }, { type: 'reputation', value: 20 }],
       },
     ],
     classVariants: {
@@ -193,8 +193,8 @@ export const EVENTS: EventDef[] = [
             effects: [{ type: 'budget', value: -100 }],
           },
           {
-            text: "Work manually... myself? (10% speed)",
-            effects: [{ type: 'flag', value: 'manual-progress-10pct' }, { type: 'agentSpeed', value: -40 }],
+            text: "Work manually... myself?",
+            effects: [{ type: 'flag', value: 'manual-progress-10pct' }, { type: 'agentSpeed', value: -40 }, { type: 'reputation', value: -20 }],
           },
         ],
       },
@@ -662,7 +662,7 @@ export const EVENTS: EventDef[] = [
           },
           {
             text: 'Run uncensored local model',
-            effects: [{ type: 'flag', value: 'local-model' }, { type: 'agentSpeed', value: -15 }],
+            effects: [{ type: 'flag', value: 'local-model' }, { type: 'agentSpeed', value: -15 }, { type: 'reputation', value: 5 }],
           },
         ],
       },
@@ -837,11 +837,11 @@ export const EVENTS: EventDef[] = [
     choices: [
       {
         text: "Pick Agent A's approach",
-        effects: [{ type: 'agentSpeed', value: -10 }, { type: 'flag', value: 'agent-b-slower' }],
+        effects: [{ type: 'agentSpeed', value: -10 }, { type: 'flag', value: 'agent-b-slower' }, { type: 'reputation', value: 3 }],
       },
       {
         text: "Pick Agent B's approach",
-        effects: [{ type: 'agentSpeed', value: -10 }, { type: 'flag', value: 'agent-a-slower' }],
+        effects: [{ type: 'agentSpeed', value: -15 }, { type: 'flag', value: 'agent-a-slower' }, { type: 'hardware', value: -5 }],
       },
       {
         text: 'Make them pair program',
@@ -853,18 +853,18 @@ export const EVENTS: EventDef[] = [
         choices: [
           {
             text: "Pick Agent A's approach",
-            effects: [{ type: 'agentSpeed', value: -10 }, { type: 'flag', value: 'agent-b-slower' }],
+            effects: [{ type: 'agentSpeed', value: -10 }, { type: 'flag', value: 'agent-b-slower' }, { type: 'reputation', value: 3 }],
           },
           {
             text: "Pick Agent B's approach",
-            effects: [{ type: 'agentSpeed', value: -10 }, { type: 'flag', value: 'agent-a-slower' }],
+            effects: [{ type: 'agentSpeed', value: -15 }, { type: 'flag', value: 'agent-a-slower' }, { type: 'hardware', value: -5 }],
           },
           {
             text: 'Make them pair program',
             effects: [{ type: 'time', value: -2 }, { type: 'agentSpeed', value: 5 }],
           },
           {
-            text: "They're both wrong, I'll do it myself (+20% quality, -3 time)",
+            text: "They're both wrong, I'll do it myself",
             effects: [{ type: 'time', value: -3 }, { type: 'flag', value: 'quality-boost-20pct' }, { type: 'reputation', value: 8 }],
           },
         ],
@@ -937,7 +937,7 @@ export const EVENTS: EventDef[] = [
     cooldown: 3,
     choices: [
       {
-        text: 'Throttle performance (-20% speed)',
+        text: 'Throttle performance',
         effects: [{ type: 'agentSpeed', value: -20 }],
       },
       {
@@ -954,7 +954,7 @@ export const EVENTS: EventDef[] = [
       techBro: {
         choices: [
           {
-            text: 'Throttle performance (-20% speed)',
+            text: 'Throttle performance',
             effects: [{ type: 'agentSpeed', value: -20 }],
           },
           {
@@ -975,8 +975,8 @@ export const EVENTS: EventDef[] = [
         body: "It's a Chromebook. It's not overheating, it's just struggling.",
         choices: [
           {
-            text: "It's doing its best (-30% speed, no risk)",
-            effects: [{ type: 'agentSpeed', value: -30 }],
+            text: "It's doing its best",
+            effects: [{ type: 'hardware', value: -15 }],
           },
         ],
       },
@@ -994,7 +994,7 @@ export const EVENTS: EventDef[] = [
     cooldown: 5,
     choices: [
       {
-        text: 'Update (+5% speed rest of run, -3 time)',
+        text: 'Update (takes a few minutes)',
         effects: [{ type: 'time', value: -3 }, { type: 'agentSpeed', value: 5 }],
       },
       {
@@ -1002,7 +1002,7 @@ export const EVENTS: EventDef[] = [
         effects: [{ type: 'flag', value: 'update-overnight-roll' }, { type: 'time', value: -1 }],
       },
       {
-        text: 'Postpone forever (notification spam rest of day)',
+        text: 'Postpone forever',
         effects: [{ type: 'flag', value: 'update-notification-spam' }, { type: 'agentSpeed', value: -5 }],
       },
     ],
@@ -1039,15 +1039,15 @@ export const EVENTS: EventDef[] = [
     cooldown: 3,
     choices: [
       {
-        text: 'Performance mode (+10% speed, louder)',
+        text: 'Performance mode (louder)',
         effects: [{ type: 'agentSpeed', value: 10 }],
       },
       {
-        text: 'Eco mode (-10% speed, quiet)',
-        effects: [{ type: 'agentSpeed', value: -10 }],
+        text: 'Eco mode (quiet)',
+        effects: [{ type: 'agentSpeed', value: -10 }, { type: 'reputation', value: 10 }],
       },
       {
-        text: 'Close some tabs (-1 time, fan quiets, no speed change)',
+        text: 'Close some tabs',
         effects: [{ type: 'time', value: -1 }],
       },
     ],
@@ -1056,15 +1056,15 @@ export const EVENTS: EventDef[] = [
         body: 'Open office. Three coworkers have passive-aggressively put on headphones.',
         choices: [
           {
-            text: 'Performance mode (+10% speed, -5 rep from coworkers)',
+            text: 'Performance mode (louder)',
             effects: [{ type: 'agentSpeed', value: 10 }, { type: 'reputation', value: -5 }],
           },
           {
-            text: 'Eco mode (-10% speed, no rep loss)',
-            effects: [{ type: 'agentSpeed', value: -10 }],
+            text: 'Eco mode (quiet)',
+            effects: [{ type: 'agentSpeed', value: -10 }, { type: 'reputation', value: -10 }],
           },
           {
-            text: 'Close some tabs (-1 time, no speed change)',
+            text: 'Close some tabs',
             effects: [{ type: 'time', value: -1 }],
           },
         ],
@@ -1083,7 +1083,7 @@ export const EVENTS: EventDef[] = [
     cooldown: 4,
     choices: [
       {
-        text: 'Tether to phone ($30 data overage, 50% speed)',
+        text: 'Tether to phone ($30 data overage)',
         effects: [{ type: 'budget', value: -30 }, { type: 'agentSpeed', value: -50 }],
       },
       {
@@ -1103,12 +1103,12 @@ export const EVENTS: EventDef[] = [
       techBro: {
         choices: [
           {
-            text: 'Tether to phone ($30, 50% speed)',
+            text: 'Tether to phone ($30)',
             effects: [{ type: 'budget', value: -30 }, { type: 'agentSpeed', value: -50 }],
           },
           {
-            text: 'Work offline (local models, 80% speed — this is why you bought the hardware)',
-            effects: [{ type: 'agentSpeed', value: -20 }],
+            text: 'Work offline — this is why you bought the hardware',
+            effects: [{ type: 'agentSpeed', value: -20 }, { type: 'reputation', value: 10 }],
           },
           {
             text: 'Coffee shop (-2 time, +$10 latte)',
@@ -1123,7 +1123,7 @@ export const EVENTS: EventDef[] = [
       collegeStudent: {
         choices: [
           {
-            text: 'Tether to phone ($30, 50% speed)',
+            text: 'Tether to phone ($30)',
             effects: [{ type: 'budget', value: -30 }, { type: 'agentSpeed', value: -50 }],
           },
           {
@@ -1143,7 +1143,7 @@ export const EVENTS: EventDef[] = [
       corporateDev: {
         choices: [
           {
-            text: 'Tether to phone ($30, 50% speed)',
+            text: 'Tether to phone ($30)',
             effects: [{ type: 'budget', value: -30 }, { type: 'agentSpeed', value: -50 }],
           },
           {
@@ -2171,7 +2171,7 @@ export const EVENTS: EventDef[] = [
         effects: [{ type: 'time', value: -2 }, { type: 'agentSpeed', value: 10 }],
       },
       {
-        text: "Let it keep going (80% nothing, 20% +25% speed rest of run)",
+        text: "Let it keep going",
         effects: [{ type: 'flag', value: 'singularity-roll' }, { type: 'agentSpeed', value: 15 }],
       },
     ],
@@ -2358,11 +2358,11 @@ export const EVENTS: EventDef[] = [
     tags: ['rare'],
     choices: [
       {
-        text: 'Read it and laugh (+5 morale)',
+        text: 'Read it and laugh',
         effects: [{ type: 'flag', value: 'morale-up' }, { type: 'agentSpeed', value: 5 }],
       },
       {
-        text: 'Read it and cry (-5 morale, +2 time existential crisis)',
+        text: 'Read it and cry (existential crisis)',
         effects: [{ type: 'flag', value: 'morale-down' }, { type: 'time', value: -2 }, { type: 'agentSpeed', value: -5 }],
       },
       {
@@ -2374,11 +2374,11 @@ export const EVENTS: EventDef[] = [
       corporateDev: {
         choices: [
           {
-            text: 'Read it and laugh (+5 morale)',
+            text: 'Read it and laugh',
             effects: [{ type: 'flag', value: 'morale-up' }, { type: 'agentSpeed', value: 5 }],
           },
           {
-            text: 'Read it and cry (-5 morale, +2 time)',
+            text: 'Read it and cry (existential crisis)',
             effects: [{ type: 'flag', value: 'morale-down' }, { type: 'time', value: -2 }, { type: 'agentSpeed', value: -5 }],
           },
           {
