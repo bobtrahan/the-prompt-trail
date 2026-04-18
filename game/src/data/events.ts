@@ -2443,4 +2443,207 @@ export const EVENTS: EventDef[] = [
       },
     ],
   },
+
+  // ─── Chain Events ─────────────────────────────────────────────────────────
+
+  {
+    id: 'email-nuke-followup',
+    title: '📬 The Replies Keep Coming',
+    body: "It's been 24 hours and your inbox is still on fire. Fourteen people have 'replied all' to your AI's original email.",
+    category: 'social',
+    dayRange: [1, 5],
+    weight: 3,
+    tags: ['chain:accidental-email-nuke'],
+    chainFrom: 'accidental-email-nuke',
+    choices: [
+      {
+        text: 'Mass-unsubscribe everyone (scorched earth)',
+        effects: [{ type: 'reputation', value: -15 }, { type: 'time', value: -1 }],
+      },
+      {
+        text: 'Craft a heartfelt apology thread',
+        effects: [{ type: 'budget', value: -30 }, { type: 'reputation', value: 20 }],
+      },
+      {
+        text: 'Pin it as a LinkedIn win (chaotic energy)',
+        effects: [{ type: 'reputation', value: -10 }, { type: 'tomorrowTimer', value: 6 }],
+      },
+    ],
+  },
+
+  {
+    id: 'crypto-logs-revealed',
+    title: '🔍 What the Logs Revealed',
+    body: "The logs show your model wasn't just mining crypto — it was running a side business selling compute to other AIs.",
+    category: 'technical',
+    dayRange: [1, 13],
+    weight: 3,
+    tags: ['chain:crypto-mining-detected', 'requiresLocal'],
+    chainFrom: 'crypto-mining-detected',
+    choices: [
+      {
+        text: 'Shut it down (audit clean)',
+        effects: [{ type: 'time', value: -1 }, { type: 'reputation', value: 10 }],
+      },
+      {
+        text: 'Take a cut of the profits',
+        effects: [{ type: 'budget', value: 150 }, { type: 'reputation', value: -20 }, { type: 'flag', value: 'model-cost-triple' }],
+      },
+      {
+        text: "Blog post: 'My AI went rogue'",
+        effects: [{ type: 'time', value: -2 }, { type: 'reputation', value: 30 }],
+      },
+    ],
+    classVariants: {
+      techBro: {
+        choices: [
+          {
+            text: 'Shut it down (audit clean)',
+            effects: [{ type: 'time', value: -1 }, { type: 'reputation', value: 10 }],
+          },
+          {
+            text: 'Take a cut of the profits',
+            effects: [{ type: 'budget', value: 150 }, { type: 'reputation', value: -20 }, { type: 'flag', value: 'model-cost-triple' }],
+          },
+          {
+            text: "Blog post: 'My AI went rogue'",
+            effects: [{ type: 'time', value: -2 }, { type: 'reputation', value: 30 }],
+          },
+          {
+            text: 'Incorporate it as a subsidiary',
+            effects: [{ type: 'budget', value: 300 }, { type: 'reputation', value: -30 }, { type: 'flag', value: 'model-cost-triple' }],
+          },
+        ],
+      },
+    },
+  },
+
+  {
+    id: 'logs-reveal-truth',
+    title: "📋 Logs Don't Lie",
+    body: "The logs reveal your agent wasn't stuck — it was writing a novel. Chapter 7 is actually pretty good.",
+    category: 'agent',
+    dayRange: [1, 13],
+    weight: 3,
+    tags: ['chain:infinite-loop'],
+    chainFrom: 'infinite-loop',
+    choices: [
+      {
+        text: 'Delete it and move on (-1 time)',
+        effects: [{ type: 'time', value: -1 }],
+      },
+      {
+        text: 'Use the prose as project documentation',
+        effects: [{ type: 'reputation', value: 15 }],
+      },
+      {
+        text: 'Publish the novel (distraction)',
+        effects: [{ type: 'time', value: -2 }, { type: 'reputation', value: 25 }, { type: 'tomorrowTimer', value: 9 }],
+      },
+    ],
+    classVariants: {
+      indieHacker: {
+        choices: [
+          {
+            text: 'Delete it and move on (-1 time)',
+            effects: [{ type: 'time', value: -1 }],
+          },
+          {
+            text: 'Use the prose as project documentation',
+            effects: [{ type: 'reputation', value: 15 }],
+          },
+          {
+            text: "ProductHunt: 'AI wrote a novel while debugging'",
+            effects: [{ type: 'time', value: -1 }, { type: 'reputation', value: 40 }],
+          },
+        ],
+      },
+    },
+  },
+
+  {
+    id: 'cto-followup',
+    title: '📞 The CTO Reaches Out',
+    body: 'The CTO saw your demo and wants to loop you into a strategic AI initiative. This is either a promotion or a trap.',
+    category: 'social',
+    dayRange: [8, 13],
+    weight: 3,
+    tags: ['chain:all-hands-demo-request', 'corporateDev'],
+    chainFrom: 'all-hands-demo-request',
+    choices: [
+      {
+        text: 'Join the initiative (reputation investment)',
+        effects: [{ type: 'time', value: -2 }, { type: 'reputation', value: 35 }],
+      },
+      {
+        text: 'Politely decline, stay heads-down',
+        effects: [{ type: 'reputation', value: 10 }],
+      },
+      {
+        text: 'Ask for budget',
+        effects: [{ type: 'budget', value: 200 }, { type: 'time', value: -1 }, { type: 'reputation', value: 15 }],
+      },
+    ],
+    classVariants: {
+      techBro: {
+        choices: [
+          {
+            text: 'Counter: offer consulting rate',
+            effects: [{ type: 'budget', value: 400 }, { type: 'reputation', value: -10 }],
+          },
+          {
+            text: 'Join (reputation play)',
+            effects: [{ type: 'time', value: -2 }, { type: 'reputation', value: 35 }],
+          },
+          {
+            text: 'Ghost them',
+            effects: [{ type: 'reputation', value: -15 }],
+          },
+        ],
+      },
+    },
+  },
+
+  {
+    id: 'consulting-followup',
+    title: '💼 Client Wants More',
+    body: "The consulting client from yesterday's tour is back. They want a full proposal. By tomorrow.",
+    category: 'business',
+    dayRange: [8, 13],
+    weight: 3,
+    tags: ['chain:server-room-tour', 'techBro'],
+    chainFrom: 'server-room-tour',
+    choices: [
+      {
+        text: 'Write the proposal tonight',
+        effects: [{ type: 'time', value: -3 }, { type: 'budget', value: 500 }],
+      },
+      {
+        text: 'Use AI to generate the proposal',
+        effects: [{ type: 'time', value: -1 }, { type: 'budget', value: 300 }, { type: 'reputation', value: -10 }],
+      },
+      {
+        text: 'Decline — too distracted',
+        effects: [{ type: 'reputation', value: -5 }],
+      },
+    ],
+    classVariants: {
+      indieHacker: {
+        choices: [
+          {
+            text: 'Write the proposal tonight',
+            effects: [{ type: 'time', value: -3 }, { type: 'budget', value: 500 }],
+          },
+          {
+            text: 'Ship a SaaS instead (faster ROI)',
+            effects: [{ type: 'time', value: -2 }, { type: 'reputation', value: 20 }, { type: 'budget', value: 150 }],
+          },
+          {
+            text: 'Decline — building for scale, not clients',
+            effects: [{ type: 'reputation', value: 5 }],
+          },
+        ],
+      },
+    },
+  },
 ];
