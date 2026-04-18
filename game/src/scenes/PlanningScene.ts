@@ -89,14 +89,14 @@ export class PlanningScene extends Phaser.Scene {
     const STRAT_Y = 28;
     const stratWin = new Window({
       scene: this, x: 40, y: STRAT_Y,
-      width: 700, height: 366,
+      width: 700, height: 360,
       title: 'Strategy Picker',
       titleIcon: '⚙️',
       accentColor: theme.accent,
     });
 
     const sArea = stratWin.contentArea;
-    this.add.text(40 + sArea.x, STRAT_Y + sArea.y + 4, 'Choose your approach:', {
+    this.add.text(40 + sArea.x, STRAT_Y + sArea.y, 'Choose your approach:', {
       fontFamily: 'monospace', fontSize: '14px', color: '#9da5b0',
     });
 
@@ -240,7 +240,7 @@ export class PlanningScene extends Phaser.Scene {
     const agentWin = new Window({
       scene: this, x: 760, y: agentWinY,
       width: 480, height: 350,
-      title: 'Agent Dashboard',
+      title: 'Agent Selector',
       titleIcon: '🤖',
       accentColor: theme.accent,
     });
@@ -316,8 +316,8 @@ export class PlanningScene extends Phaser.Scene {
     });
 
     // ── Effects Preview window ─────────────────────────────────────────
-    const EFFECTS_Y = 402;
-    const EFFECTS_H = 210;
+    const EFFECTS_Y = 396;
+    const EFFECTS_H = 200;
     const effectsWin = new Window({
       scene: this, x: 40, y: EFFECTS_Y,
       width: 700, height: EFFECTS_H,
@@ -358,7 +358,7 @@ export class PlanningScene extends Phaser.Scene {
     }).setOrigin(1, 0);
 
     // ── Launch button ───────────────────────────────────────────────────
-    this.launchBtn = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 50, '[ Select a strategy to continue ]', {
+    this.launchBtn = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 70, '[ Select a strategy to continue ]', {
       fontFamily: 'monospace', fontSize: '16px', color: '#30363d',
     }).setOrigin(0.5);
   }
