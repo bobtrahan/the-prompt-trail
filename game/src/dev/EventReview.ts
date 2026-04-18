@@ -5,8 +5,11 @@ import { buildOutcomeLine, outcomeLineColor } from '../utils/outcomeFormatting';
 interface EventPatch {
   id: string;
   body?: string;
+  bodyNote?: string;                              // free-text comment on the event body
   choiceTexts?: Record<number, string>;           // default choices
-  variantChoiceTexts?: Record<string, Record<number, string>>; // variant → index → text
+  choiceNotes?: Record<number, string>;           // free-text comments on default choices
+  variantChoiceTexts?: Record<string, Record<number, string>>;
+  variantChoiceNotes?: Record<string, Record<number, string>>;
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -51,31 +54,46 @@ function buildChoicesHTML(choices: EventChoice[]): string {
   return choices.map((choice, i) => {
     const outcomeLine = buildOutcomeLine(choice.effects);
     const color = outcomeLineColor(choice.effects);
-    const effectsId = `effects-${Math.random().toString(36).slice(2)}`;
     return `<div class="choice">
       <div class="choice-action"><span class="choice-idx">[${i + 1}]</span>&nbsp;<span class="choice-text" data-choice-index="${i}" data-original="${escapeHtml(choice.text)}">${escapeHtml(choice.text)}</span></div>
       <div class="choice-outcome" style="color:${color}">${escapeHtml(outcomeLine)}</div>
-      <details class="choice-effects"><summary>effects</summary><div id="${effectsId}" class="effects-list">${buildEffectsHTML(choice)}</div></details>
+      <details class="choice-effects"><summary>effects</summary><div class="effects-list">${buildEffectsHTML(choice)}</div></details>
+      <textarea class="choice-note" data-choice-index="${i}" placeholder="note on choice ${i + 1}..."></textarea>
     </div>`;
   }).join('');
 }
 
 function buildPatchString(patch: EventPatch): string {
   const lines: string[] = [`EVENT: ${patch.id}`];
-  if (patch.body !== undefined) {
-    lines.push(`  body: "${patch.body}"`);
-  }
-  if (patch.choiceTexts) {
-    const indices = Object.keys(patch.choiceTexts).map(Number).sort((a, b) => a - b);
-    for (const idx of indices) {
+  if (patch.body !== undefined) lines.push(`  body: "${patch.body}"`);
+  if (patch.bodyNote) lines.push(`  # ${patch.bodyNote}`);
+
+  // Gather all touched choice indices across text + notes
+  const defaultIndices = new Set([
+    ...Object.keys(patch.choiceTexts ?? {}).map(Number),
+    ...Object.keys(patch.choiceNotes ?? {}).map(Number),
+  ]);
+  for (const idx of [...defaultIndices].sort((a, b) => a - b)) {
+    if (patch.choiceTexts?.[idx] !== undefined)
       lines.push(`  choice[${idx}].text: "${patch.choiceTexts[idx]}"`);
-    }
+    if (patch.choiceNotes?.[idx])
+      lines.push(`  choice[${idx}].# ${patch.choiceNotes[idx]}`);
   }
-  if (patch.variantChoiceTexts) {
-    for (const [variant, texts] of Object.entries(patch.variantChoiceTexts)) {
-      const indices = Object.keys(texts).map(Number).sort((a, b) => a - b);
-      for (const idx of indices) {
-        lines.push(`  classVariants.${variant}.choice[${idx}].text: "${texts[idx]}"`);
+
+  if (patch.variantChoiceTexts || patch.variantChoiceNotes) {
+    const variants = new Set([
+      ...Object.keys(patch.variantChoiceTexts ?? {}),
+      ...Object.keys(patch.variantChoiceNotes ?? {}),
+    ]);
+    for (const variant of variants) {
+      const textMap = patch.variantChoiceTexts?.[variant] ?? {};
+      const noteMap = patch.variantChoiceNotes?.[variant] ?? {};
+      const indices = new Set([...Object.keys(textMap), ...Object.keys(noteMap)].map(Number));
+      for (const idx of [...indices].sort((a, b) => a - b)) {
+        if (textMap[idx] !== undefined)
+          lines.push(`  classVariants.${variant}.choice[${idx}].text: "${textMap[idx]}"`);
+        if (noteMap[idx])
+          lines.push(`  classVariants.${variant}.choice[${idx}].# ${noteMap[idx]}`);
       }
     }
   }
@@ -84,8 +102,11 @@ function buildPatchString(patch: EventPatch): string {
 
 function hasRealChanges(patch: EventPatch): boolean {
   return patch.body !== undefined ||
+    !!patch.bodyNote ||
     (patch.choiceTexts !== undefined && Object.keys(patch.choiceTexts).length > 0) ||
-    (patch.variantChoiceTexts !== undefined && Object.values(patch.variantChoiceTexts).some(t => Object.keys(t).length > 0));
+    (patch.choiceNotes !== undefined && Object.values(patch.choiceNotes).some(Boolean)) ||
+    (patch.variantChoiceTexts !== undefined && Object.values(patch.variantChoiceTexts).some(t => Object.keys(t).length > 0)) ||
+    (patch.variantChoiceNotes !== undefined && Object.values(patch.variantChoiceNotes).some(m => Object.values(m).some(Boolean)));
 }
 
 function updateCardUI(card: HTMLElement): void {
@@ -174,6 +195,45 @@ function onChoiceInput(card: HTMLElement, span: HTMLElement): void {
       }
     }
     span.classList.remove('dirty-field');
+  }
+
+  updateCardUI(card);
+  updateHeader();
+}
+
+function onChoiceNoteInput(card: HTMLElement, textarea: HTMLTextAreaElement): void {
+  const eventId = card.dataset.id!;
+  const idx = parseInt(textarea.dataset.choiceIndex ?? '0', 10);
+  const note = textarea.value.trim();
+  const patch = getOrCreatePatch(eventId);
+  const panel = textarea.closest<HTMLElement>('.card-choices');
+  const panelKey = panel?.dataset.panel ?? 'default';
+  const isDefault = panelKey === 'default';
+
+  if (isDefault) {
+    if (note) {
+      if (!patch.choiceNotes) patch.choiceNotes = {};
+      patch.choiceNotes[idx] = note;
+    } else {
+      if (patch.choiceNotes) {
+        delete patch.choiceNotes[idx];
+        if (Object.keys(patch.choiceNotes).length === 0) delete patch.choiceNotes;
+      }
+    }
+  } else {
+    if (note) {
+      if (!patch.variantChoiceNotes) patch.variantChoiceNotes = {};
+      if (!patch.variantChoiceNotes[panelKey]) patch.variantChoiceNotes[panelKey] = {};
+      patch.variantChoiceNotes[panelKey][idx] = note;
+    } else {
+      if (patch.variantChoiceNotes?.[panelKey]) {
+        delete patch.variantChoiceNotes[panelKey][idx];
+        if (Object.keys(patch.variantChoiceNotes[panelKey]).length === 0)
+          delete patch.variantChoiceNotes[panelKey];
+        if (Object.keys(patch.variantChoiceNotes).length === 0)
+          delete patch.variantChoiceNotes;
+      }
+    }
   }
 
   updateCardUI(card);
@@ -419,14 +479,19 @@ function init(): void {
 
   app.appendChild(header);
 
-  // Input event delegation for all contenteditable fields
+  // Input event delegation for all contenteditable fields and note textareas
+  // Notes are always active (no edit mode gate) so you can annotate without toggling edit mode
   document.addEventListener('input', (e) => {
-    if (!editMode) return;
     const target = e.target as HTMLElement;
     const card = target.closest<HTMLElement>('.event-card');
     if (!card) return;
 
-    if (target.classList.contains('card-body')) {
+    if (target.classList.contains('choice-note')) {
+      // Notes work regardless of edit mode
+      onChoiceNoteInput(card, target as HTMLTextAreaElement);
+    } else if (!editMode) {
+      return;
+    } else if (target.classList.contains('card-body')) {
       onBodyInput(card, target);
     } else if (target.classList.contains('choice-text')) {
       onChoiceInput(card, target);
