@@ -1,6 +1,7 @@
 import { EVENTS } from '../data/events';
 import type { EventDef, EventChoice } from '../data/events';
-import { buildOutcomeLine, outcomeLineColor } from '../utils/outcomeFormatting';
+import { buildOutcomeParts } from '../utils/outcomeFormatting';
+import type { OutcomePart } from '../utils/outcomeFormatting';
 
 interface EventPatch {
   id: string;
@@ -52,11 +53,13 @@ function buildEffectsHTML(choice: EventChoice): string {
 
 function buildChoicesHTML(choices: EventChoice[]): string {
   return choices.map((choice, i) => {
-    const outcomeLine = buildOutcomeLine(choice.effects);
-    const color = outcomeLineColor(choice.effects);
+    const parts: OutcomePart[] = buildOutcomeParts(choice.effects);
+    const outcomeHTML = parts.length > 0
+      ? parts.map(p => `<span style="color:${p.color}">${escapeHtml(p.text)}</span>`).join('')
+      : `<span style="color:#484f58">—</span>`;
     return `<div class="choice">
       <div class="choice-action"><span class="choice-idx">[${i + 1}]</span>&nbsp;<span class="choice-text" data-choice-index="${i}" data-original="${escapeHtml(choice.text)}">${escapeHtml(choice.text)}</span></div>
-      <div class="choice-outcome" style="color:${color}">${escapeHtml(outcomeLine)}</div>
+      <div class="choice-outcome">${outcomeHTML}</div>
       <details class="choice-effects"><summary>effects</summary><div class="effects-list">${buildEffectsHTML(choice)}</div></details>
       <textarea class="choice-note" data-choice-index="${i}" placeholder="note on choice ${i + 1}..."></textarea>
     </div>`;

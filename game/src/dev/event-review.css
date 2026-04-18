@@ -153,6 +153,9 @@ body {
 .choice-outcome {
   font-size: 11px;
   margin-top: 3px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .hidden {

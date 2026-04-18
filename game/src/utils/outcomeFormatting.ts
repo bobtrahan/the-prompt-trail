@@ -1,5 +1,58 @@
 import type { EventEffect } from '../data/events';
 
+export interface OutcomePart {
+  text: string;
+  color: string;
+}
+
+export function buildOutcomeParts(effects: EventEffect[]): OutcomePart[] {
+  const parts: OutcomePart[] = [];
+  for (const effect of effects) {
+    if (effect.type === 'budget' && typeof effect.value === 'number') {
+      const sym = effect.value >= 0 ? '💰' : '💸';
+      const sign = effect.value >= 0 ? '+' : '−';
+      parts.push({
+        text: `${sym} ${sign}$${Math.abs(effect.value)}`,
+        color: effect.value >= 0 ? '#3fb950' : '#f85149',
+      });
+    } else if (effect.type === 'time' && typeof effect.value === 'number') {
+      const secs = effect.value * 3;
+      const sign = secs >= 0 ? '+' : '−';
+      parts.push({
+        text: `⏱ ${sign}${Math.abs(secs)}s`,
+        color: secs >= 0 ? '#3fb950' : '#d29922',
+      });
+    } else if (effect.type === 'hardware' && typeof effect.value === 'number') {
+      const sym = effect.value >= 0 ? '💪' : '🔥';
+      const sign = effect.value >= 0 ? '+' : '−';
+      parts.push({
+        text: `${sym} ${sign}${Math.abs(effect.value)} HP`,
+        color: effect.value >= 0 ? '#3fb950' : '#f0883e',
+      });
+    } else if (effect.type === 'reputation' && typeof effect.value === 'number') {
+      const sign = effect.value >= 0 ? '+' : '−';
+      parts.push({
+        text: `★ ${sign}${Math.abs(effect.value)} rep`,
+        color: effect.value >= 0 ? '#3fb950' : '#f0883e',
+      });
+    } else if (effect.type === 'agentSpeed' && typeof effect.value === 'number') {
+      const secs = Math.round(45 * (effect.value / 100));
+      if (secs !== 0) {
+        parts.push({
+          text: secs >= 0 ? `⏱ +${secs}s` : `⏱ −${Math.abs(secs)}s`,
+          color: secs >= 0 ? '#3fb950' : '#d29922',
+        });
+      }
+    } else if (effect.type === 'modelSwitch' && typeof effect.value === 'string') {
+      const v = effect.value;
+      if (v === 'sketchy') parts.push({ text: '🔀 sketchy model', color: '#9da5b0' });
+      else if (v === 'backup') parts.push({ text: '🔀 backup model', color: '#9da5b0' });
+    }
+    // flag/tomorrowTimer/nightBonus: omit
+  }
+  return parts;
+}
+
 export function buildOutcomeLine(effects: EventEffect[]): string {
   const parts: string[] = [];
   for (const effect of effects) {
