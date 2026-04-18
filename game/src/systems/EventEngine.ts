@@ -52,6 +52,10 @@ export class EventEngine {
         if (day - lastFired < event.cooldown) continue;
       }
 
+      // Flag-based event blocks
+      if (eventFlags['liquid-nitrogen'] && event.id === 'hardware-overheating') continue;
+      if (eventFlags['ups-installed'] && event.id === 'power-flickered') continue;
+
       // Hardware immunity/reduction
       const owned = this.state.ownedUpgrades;
       if (owned.includes('hw-ups') && event.id.includes('power')) continue;
@@ -174,6 +178,24 @@ export class EventEngine {
           const flagName = effect.value as string;
           state.eventFlags[flagName] = true;
           logs.push(`> FLAG SET: ${flagName}`);
+          if (flagName === 'cloud-autosave') {
+            state.hasBackupProtection = true;
+            logs.push('> ☁️ Cloud Autosave enabled — progress protected');
+          } else if (flagName === 'agent-reset') {
+            state.model = 'free';
+            logs.push('> 🔄 Agent reset — model reverted to free tier');
+          }
+          break;
+        }
+
+        case 'loseProgress': {
+          const val = effect.value as 'all' | number;
+          state.loseProgressSignal = val;
+          if (val === 'all') {
+            logs.push('> ⚠️ Progress lost — all work wiped!');
+          } else {
+            logs.push(`> ⚠️ Progress chunk lost (-${Math.round((val as number) * 100)}%)`);
+          }
           break;
         }
 

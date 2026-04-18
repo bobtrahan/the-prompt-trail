@@ -79,7 +79,10 @@ export class EconomySystem {
       return;
     }
 
-    const modelCost = this.getModelDayCost(state.model);
+    let modelCost = this.getModelDayCost(state.model);
+    if (state.eventFlags['model-cost-triple']) {
+      modelCost *= 3;
+    }
     let finalModelCost = modelCost;
     if (state.modelCostDiscount > 0) {
       finalModelCost = Math.round(modelCost * (1 - state.modelCostDiscount));

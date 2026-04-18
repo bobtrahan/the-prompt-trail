@@ -57,6 +57,9 @@ export interface GameState {
   modelCostDiscount: number;
   consumablesUsedToday: string[];
 
+  // Progress signal from events (read + cleared by ExecutionScene after applyEffects)
+  loseProgressSignal?: number | 'all';
+
   // Last day results snapshot
   lastDayResult?: {
     progress: number;

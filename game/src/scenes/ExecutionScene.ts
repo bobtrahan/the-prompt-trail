@@ -1326,6 +1326,17 @@ export class ExecutionScene extends Phaser.Scene {
       this.terminal.addLine(line);
     }
 
+    // Apply progress loss signal written by loseProgress effects
+    if (state.loseProgressSignal !== undefined) {
+      if (state.loseProgressSignal === 'all') {
+        this.progress = 0;
+      } else {
+        this.progress = Math.max(0, this.progress - (state.loseProgressSignal as number) * 100);
+      }
+      state.loseProgressSignal = undefined;
+      this.updateProgressBar();
+    }
+
     if (this.currentEvent) {
       this.eventEngine.markFired(this.currentEvent.id, state.day);
       this.currentEvent = undefined;
