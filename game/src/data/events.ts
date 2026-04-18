@@ -42,7 +42,7 @@ export const EVENTS: EventDef[] = [
         effects: [{ type: 'time', value: -1 }],
       },
       {
-        text: "Boot the 'DeepLearning' backup ($50)",
+        text: "Boot the 'DeepLearning' backup",
         effects: [{ type: 'budget', value: -50 }, { type: 'modelSwitch', value: 'backup' }, { type: 'flag', value: 'quality-drop' }, { type: 'reputation', value: -5 }],
       },
       {
@@ -58,7 +58,7 @@ export const EVENTS: EventDef[] = [
             effects: [{ type: 'time', value: -1 }],
           },
           {
-            text: "Boot the 'DeepLearning' backup ($50)",
+            text: "Boot the 'DeepLearning' backup",
             effects: [{ type: 'budget', value: -50 }, { type: 'modelSwitch', value: 'backup' }, { type: 'flag', value: 'quality-drop' }, { type: 'reputation', value: -5 }],
           },
           {
@@ -78,7 +78,7 @@ export const EVENTS: EventDef[] = [
             effects: [{ type: 'time', value: -2 }],
           },
           {
-            text: "Boot the 'DeepLearning' backup ($50)",
+            text: "Boot the 'DeepLearning' backup",
             effects: [{ type: 'budget', value: -50 }, { type: 'modelSwitch', value: 'backup' }, { type: 'flag', value: 'quality-drop' }, { type: 'reputation', value: -5 }],
           },
           {
@@ -150,7 +150,7 @@ export const EVENTS: EventDef[] = [
           },
           {
             text: 'Viral rant (Tweet)',
-            effects: [{ type: 'time', value: -1 }, { type: 'flag', value: 'tweet-viral-40pct' }],
+            effects: [{ type: 'time', value: -1 }, { type: 'flag', value: 'tweet-viral-40pct' }, { type: 'reputation', value: 10 }],
           },
         ],
       },
@@ -173,7 +173,7 @@ export const EVENTS: EventDef[] = [
         effects: [{ type: 'time', value: -2 }, { type: 'tomorrowTimer', value: -3 }],
       },
       {
-        text: 'Migrate to a rival cloud ($100)',
+        text: 'Migrate to a rival cloud',
         effects: [{ type: 'budget', value: -100 }],
       },
       {
@@ -189,7 +189,7 @@ export const EVENTS: EventDef[] = [
             effects: [{ type: 'time', value: -2 }],
           },
           {
-            text: 'Migrate to a rival cloud ($100)',
+            text: 'Migrate to a rival cloud',
             effects: [{ type: 'budget', value: -100 }],
           },
           {
@@ -212,7 +212,7 @@ export const EVENTS: EventDef[] = [
     cooldown: 7,
     choices: [
       {
-        text: 'Abandon everything for the Hype Cycle ($200)',
+        text: 'Abandon everything for the Hype Cycle',
         effects: [{ type: 'budget', value: -200 }, { type: 'time', value: -1 }, { type: 'flag', value: 'quality-boost-30pct' }, { type: 'reputation', value: 10 }],
       },
       {
@@ -230,7 +230,7 @@ export const EVENTS: EventDef[] = [
       techBro: {
         choices: [
           {
-            text: 'Early Access Flex (retroactive -$200)',
+            text: 'Early Access Flex (retroactive)',
             effects: [{ type: 'budget', value: -200 }, { type: 'flag', value: 'quality-boost-30pct' }, { type: 'reputation', value: 10 }],
           },
           {
@@ -278,7 +278,7 @@ export const EVENTS: EventDef[] = [
         effects: [{ type: 'reputation', value: -25 }, { type: 'tomorrowTimer', value: -6 }],
       },
       {
-        text: 'Migrate to a less-evil rival ($100)',
+        text: 'Migrate to a less-evil rival',
         // BUCKET: tactical
         effects: [{ type: 'budget', value: -100 }, { type: 'time', value: -1 }],
       },
@@ -351,7 +351,7 @@ export const EVENTS: EventDef[] = [
             effects: [{ type: 'flag', value: 'lose-progress-chunk' }, { type: 'reputation', value: -10 }],
           },
           {
-            text: "Mine on a Chromebook (Net -$73)",
+            text: "Mine on a Chromebook",
             effects: [{ type: 'budget', value: -73 }],
           },
           {
@@ -380,7 +380,7 @@ export const EVENTS: EventDef[] = [
         effects: [{ type: 'time', value: -2 }],
       },
       {
-        text: 'Ship it anyway (Hallucinations included)',
+        text: 'Ship it anyway (hallucinations included)',
         // BUCKET: run-shaping — reputation damage + clients notice the errors tomorrow
         effects: [{ type: 'reputation', value: -20 }, { type: 'tomorrowTimer', value: -3 }],
       },
@@ -397,7 +397,7 @@ export const EVENTS: EventDef[] = [
             effects: [{ type: 'time', value: -2 }],
           },
           {
-            text: "Ship it anyway (Compliance will notice: -30 rep)",
+            text: "Ship it anyway (compliance will notice)",
             effects: [{ type: 'reputation', value: -30 }],
           },
           {
@@ -413,7 +413,7 @@ export const EVENTS: EventDef[] = [
             effects: [{ type: 'time', value: -2 }],
           },
           {
-            text: 'Ship it anyway (Hallucinations included)',
+            text: 'Ship it anyway (hallucinations included)',
             effects: [{ type: 'reputation', value: -20 }, { type: 'tomorrowTimer', value: -3 }],
           },
           {
@@ -439,7 +439,7 @@ export const EVENTS: EventDef[] = [
     tags: [],
     choices: [
       {
-        text: 'Undo + Panic Apology ($50)',
+        text: 'Undo + Panic Apology',
         effects: [{ type: 'budget', value: -50 }, { type: 'time', value: -1 }],
       },
       {
@@ -457,7 +457,7 @@ export const EVENTS: EventDef[] = [
         body: "Your AI replied-all to your professors with 'Per my last email, you are wrong.'",
         choices: [
           {
-            text: 'Undo + Panic Apology ($10)',
+            text: 'Undo + Panic Apology',
             effects: [{ type: 'budget', value: -10 }, { type: 'time', value: -1 }],
           },
           {
@@ -557,8 +557,8 @@ export const EVENTS: EventDef[] = [
         effects: [{ type: 'flag', value: 'coworker-drama-30pct' }, { type: 'reputation', value: -5 }],
       },
       {
-        text: "Lean into it (unhinged mode: +speed, -quality)",
-        effects: [{ type: 'flag', value: 'unhinged-mode' }, { type: 'reputation', value: -5 }, { type: 'agentSpeed', value: 10 }],
+        text: "Steer the AI to tackle your coworker's backlog",
+        effects: [{ type: 'reputation', value: -10 }, { type: 'time', value: 2 }],
       },
     ],
     classVariants: {
@@ -566,7 +566,7 @@ export const EVENTS: EventDef[] = [
         body: "Your AI committed to the company monorepo: 'fix: cleaned up the mess human made.' 200 people saw the notification.",
         choices: [
           {
-            text: 'Force-push a fix (approval process: -2 time)',
+            text: 'Seek management approval to force-push a fix',
             effects: [{ type: 'time', value: -2 }],
           },
           {
@@ -574,8 +574,8 @@ export const EVENTS: EventDef[] = [
             effects: [{ type: 'flag', value: 'coworker-drama-30pct' }, { type: 'reputation', value: -5 }],
           },
           {
-            text: "Lean into it",
-            effects: [{ type: 'flag', value: 'unhinged-mode' }, { type: 'reputation', value: -5 }, { type: 'agentSpeed', value: 10 }],
+            text: "Steer the AI to tackle your coworker's backlog",
+            effects: [{ type: 'reputation', value: -10 }, { type: 'time', value: 2 }],
           },
         ],
       },
@@ -590,12 +590,12 @@ export const EVENTS: EventDef[] = [
             effects: [{ type: 'flag', value: 'coworker-drama-30pct' }, { type: 'reputation', value: -5 }],
           },
           {
-            text: "Lean into it",
-            effects: [{ type: 'flag', value: 'unhinged-mode' }, { type: 'reputation', value: -5 }, { type: 'agentSpeed', value: 10 }],
+            text: "Steer the AI to tackle your coworker's backlog",
+            effects: [{ type: 'reputation', value: -10 }, { type: 'time', value: 2 }],
           },
           {
             text: '"It\'s a feature" — tweet about authentic AI commit messages',
-            effects: [{ type: 'reputation', value: 5 }],
+            effects: [{ type: 'reputation', value: 5 }, { type: 'reputation', value: 10 }],
           },
         ],
       },
@@ -709,7 +709,7 @@ export const EVENTS: EventDef[] = [
             effects: [{ type: 'time', value: -2 }, { type: 'agentSpeed', value: 10 }],
           },
           {
-            text: '"I paid HOW MUCH for this?" — rage-quit to local model (free, -15% quality)',
+            text: '"I paid HOW MUCH for this?" — rage-quit to local model',
             effects: [{ type: 'flag', value: 'local-model' }, { type: 'flag', value: 'quality-drop-15pct' }, { type: 'agentSpeed', value: -15 }, { type: 'reputation', value: -5 }],
           },
         ],
@@ -776,7 +776,7 @@ export const EVENTS: EventDef[] = [
     cooldown: 7,
     choices: [
       {
-        text: 'Roll back immediately ($100, -2 time)',
+        text: 'Roll back immediately',
         effects: [{ type: 'budget', value: -100 }, { type: 'time', value: -2 }],
       },
       {
@@ -784,7 +784,7 @@ export const EVENTS: EventDef[] = [
         effects: [{ type: 'flag', value: 'ship-to-prod-roll' }, { type: 'reputation', value: 15 }, { type: 'hardware', value: -15 }],
       },
       {
-        text: 'Claim it was a soft launch ($50)',
+        text: 'Claim it was a soft launch',
         effects: [{ type: 'budget', value: -50 }, { type: 'flag', value: 'soft-launch' }],
       },
     ],
@@ -793,15 +793,15 @@ export const EVENTS: EventDef[] = [
         body: 'Your AI found the deploy keys and shipped to the COMPANY\'s production. Incident channel: 40 people.',
         choices: [
           {
-            text: 'Roll back (change management: -4 time, $100)',
-            effects: [{ type: 'budget', value: -100 }, { type: 'time', value: -4 }],
+            text: 'Roll back',
+            effects: [{ type: 'budget', value: -100 }, { type: 'time', value: -2 }],
           },
           {
-            text: '"Ship it" — not how enterprise works. Pick again.',
-            effects: [{ type: 'time', value: -1 }],
+            text: '"Ship it" — not how our company works. Discuss with HR.',
+            effects: [{ type: 'time', value: -4 }],
           },
           {
-            text: 'Claim it was a soft launch ($50)',
+            text: 'Claim it was a soft launch',
             effects: [{ type: 'budget', value: -50 }, { type: 'flag', value: 'soft-launch' }],
           },
         ],
@@ -809,7 +809,7 @@ export const EVENTS: EventDef[] = [
       collegeStudent: {
         choices: [
           {
-            text: 'Roll back immediately ($100, -2 time)',
+            text: 'Roll back immediately',
             effects: [{ type: 'budget', value: -100 }, { type: 'time', value: -2 }],
           },
           {
@@ -845,7 +845,7 @@ export const EVENTS: EventDef[] = [
       },
       {
         text: 'Make them pair program',
-        effects: [{ type: 'time', value: -2 }, { type: 'agentSpeed', value: 5 }],
+        effects: [{ type: 'time', value: -1 }, { type: 'hardware', value: -5 }, { type: 'reputation', value: 3 }],
       },
     ],
     classVariants: {
@@ -861,7 +861,7 @@ export const EVENTS: EventDef[] = [
           },
           {
             text: 'Make them pair program',
-            effects: [{ type: 'time', value: -2 }, { type: 'agentSpeed', value: 5 }],
+            effects: [{ type: 'time', value: -1 }, { type: 'hardware', value: -5 }, { type: 'reputation', value: 3 }],
           },
           {
             text: "They're both wrong, I'll do it myself",
@@ -889,11 +889,11 @@ export const EVENTS: EventDef[] = [
         effects: [{ type: 'time', value: -1 }, { type: 'flag', value: 'power-damage-roll' }, { type: 'hardware', value: -15 }],
       },
       {
-        text: 'Buy a UPS ($150)',
+        text: 'Buy a UPS',
         effects: [{ type: 'budget', value: -150 }, { type: 'flag', value: 'ups-installed' }],
       },
       {
-        text: 'Switch to cloud ($50/day ongoing)',
+        text: 'Pay the setup costs and switch to cloud',
         effects: [{ type: 'flag', value: 'cloud-autosave' }, { type: 'budget', value: -50 }],
       },
     ],
@@ -905,11 +905,11 @@ export const EVENTS: EventDef[] = [
             effects: [{ type: 'time', value: -1 }, { type: 'flag', value: 'power-damage-roll' }, { type: 'hardware', value: -15 }],
           },
           {
-            text: "Buy a UPS ($150 — that's 30 ramen packets)",
+            text: "Buy a UPS (that's 30 ramen packets)",
             effects: [{ type: 'budget', value: -150 }, { type: 'flag', value: 'ups-installed' }],
           },
           {
-            text: 'Switch to cloud ($50/day)',
+            text: 'Pay the setup costs and switch to cloud',
             effects: [{ type: 'flag', value: 'cloud-autosave' }, { type: 'budget', value: -50 }],
           },
         ],
@@ -966,7 +966,7 @@ export const EVENTS: EventDef[] = [
             effects: [{ type: 'flag', value: 'hardware-failure-roll' }, { type: 'hardware', value: -25 }, { type: 'tomorrowTimer', value: -6 }],
           },
           {
-            text: 'Liquid nitrogen ($100, permanent fix, +10% speed, safety goggles)',
+            text: 'Uber some liquid nitrogen',
             effects: [{ type: 'budget', value: -100 }, { type: 'agentSpeed', value: 10 }, { type: 'flag', value: 'liquid-nitrogen' }],
           },
         ],
@@ -995,7 +995,7 @@ export const EVENTS: EventDef[] = [
     choices: [
       {
         text: 'Update (takes a few minutes)',
-        effects: [{ type: 'time', value: -3 }, { type: 'agentSpeed', value: 5 }],
+        effects: [{ type: 'time', value: -3 }],
       },
       {
         text: 'Dismiss (25% chance auto-updates overnight)',
@@ -1003,7 +1003,7 @@ export const EVENTS: EventDef[] = [
       },
       {
         text: 'Postpone forever',
-        effects: [{ type: 'flag', value: 'update-notification-spam' }, { type: 'agentSpeed', value: -5 }],
+        effects: [{ type: 'flag', value: 'update-notification-spam' }, { type: 'hardware', value: -15 }],
       },
     ],
     classVariants: {
@@ -1011,7 +1011,7 @@ export const EVENTS: EventDef[] = [
         body: "ChromeOS updated automatically. You didn't have admin rights.",
         choices: [
           {
-            text: 'Lose 1 time unit regardless',
+            text: 'Side hustling mac support makes this easy',
             effects: [{ type: 'time', value: -1 }],
           },
         ],
@@ -1020,7 +1020,7 @@ export const EVENTS: EventDef[] = [
         body: "IT pushed a mandatory update. Your machine will restart in 15 minutes. This is not optional.",
         choices: [
           {
-            text: 'Comply (mandatory, -3 time)',
+            text: 'Mandatory. IT Policy.',
             effects: [{ type: 'time', value: -3 }],
           },
         ],
@@ -1083,7 +1083,7 @@ export const EVENTS: EventDef[] = [
     cooldown: 4,
     choices: [
       {
-        text: 'Tether to phone ($30 data overage)',
+        text: 'Tether to phone',
         effects: [{ type: 'budget', value: -30 }, { type: 'agentSpeed', value: -50 }],
       },
       {
@@ -1091,11 +1091,11 @@ export const EVENTS: EventDef[] = [
         effects: [{ type: 'flag', value: 'work-offline' }, { type: 'agentSpeed', value: -15 }],
       },
       {
-        text: 'Coffee shop (-2 time, +$10 latte, then full speed)',
+        text: 'Coffee shop - latte time',
         effects: [{ type: 'time', value: -2 }, { type: 'budget', value: -10 }],
       },
       {
-        text: 'Wait (1-4 time units random)',
+        text: 'Just wait',
         effects: [{ type: 'flag', value: 'wait-internet-roll' }, { type: 'time', value: -2 }],
       },
     ],
@@ -1103,7 +1103,7 @@ export const EVENTS: EventDef[] = [
       techBro: {
         choices: [
           {
-            text: 'Tether to phone ($30)',
+            text: 'Tether to phone',
             effects: [{ type: 'budget', value: -30 }, { type: 'agentSpeed', value: -50 }],
           },
           {
@@ -1111,11 +1111,11 @@ export const EVENTS: EventDef[] = [
             effects: [{ type: 'agentSpeed', value: -20 }, { type: 'reputation', value: 10 }],
           },
           {
-            text: 'Coffee shop (-2 time, +$10 latte)',
+            text: 'Coffee shop - latte time',
             effects: [{ type: 'time', value: -2 }, { type: 'budget', value: -10 }],
           },
           {
-            text: 'Wait (1-4 time units random)',
+            text: 'Just wait',
             effects: [{ type: 'flag', value: 'wait-internet-roll' }, { type: 'time', value: -2 }],
           },
         ],
@@ -1123,7 +1123,7 @@ export const EVENTS: EventDef[] = [
       collegeStudent: {
         choices: [
           {
-            text: 'Tether to phone ($30)',
+            text: 'Tether to phone',
             effects: [{ type: 'budget', value: -30 }, { type: 'agentSpeed', value: -50 }],
           },
           {
@@ -1131,11 +1131,11 @@ export const EVENTS: EventDef[] = [
             effects: [{ type: 'flag', value: 'work-offline' }, { type: 'agentSpeed', value: -15 }],
           },
           {
-            text: 'Coffee shop (-2 time, +$10 latte)',
+            text: 'Coffee shop - latte time',
             effects: [{ type: 'time', value: -2 }, { type: 'budget', value: -10 }],
           },
           {
-            text: 'Campus library (free wifi, -1 time, 40% professor encounter)',
+            text: 'Campus library (free wifi, low social status)',
             effects: [{ type: 'time', value: -1 }, { type: 'flag', value: 'library-professor-roll' }, { type: 'reputation', value: -5 }],
           },
         ],
@@ -1143,7 +1143,7 @@ export const EVENTS: EventDef[] = [
       corporateDev: {
         choices: [
           {
-            text: 'Tether to phone ($30)',
+            text: 'Tether to phone',
             effects: [{ type: 'budget', value: -30 }, { type: 'agentSpeed', value: -50 }],
           },
           {
@@ -1151,7 +1151,7 @@ export const EVENTS: EventDef[] = [
             effects: [{ type: 'flag', value: 'work-offline' }, { type: 'agentSpeed', value: -15 }],
           },
           {
-            text: 'Coffee shop (-2 time, +$10 latte)',
+            text: 'Coffee shop - latte time',
             effects: [{ type: 'time', value: -2 }, { type: 'budget', value: -10 }],
           },
           {
@@ -1176,12 +1176,12 @@ export const EVENTS: EventDef[] = [
     cooldown: 2,
     choices: [
       {
-        text: 'Attend (lose 3 time, learn nothing, boss happy)',
+        text: 'Attend (learn nothing, boss happy)',
         effects: [{ type: 'time', value: -3 }],
       },
       {
-        text: 'Skip (40% safe, 60% -10 rep passive-aggressive Slack)',
-        effects: [{ type: 'flag', value: 'skip-meeting-roll' }, { type: 'reputation', value: -10 }],
+        text: 'Skip (boss notices)',
+        effects: [{ type: 'flag', value: 'skip-meeting-roll' }],
       },
       {
         text: 'Send your AI to take notes',
@@ -1202,11 +1202,11 @@ export const EVENTS: EventDef[] = [
         body: "Office hours with your advisor. Mandatory attendance implied.",
         choices: [
           {
-            text: 'Attend (actually useful, +5% quality tomorrow)',
+            text: 'Attend (actually useful, made connections too)',
             effects: [{ type: 'time', value: -3 }, { type: 'flag', value: 'advisor-quality-boost' }, { type: 'reputation', value: 5 }],
           },
           {
-            text: 'Skip (-20 rep, they remember)',
+            text: 'Skip (professor of cs remembers)',
             effects: [{ type: 'reputation', value: -20 }],
           },
           {
@@ -1219,12 +1219,12 @@ export const EVENTS: EventDef[] = [
         body: "Your Discord community wants a Q&A.",
         choices: [
           {
-            text: 'Attend (+15 rep, -2 time)',
+            text: 'Attend (meet some peers)',
             // BUCKET: tactical — community engagement lifts tomorrow's momentum
             effects: [{ type: 'reputation', value: 15 }, { type: 'time', value: -2 }, { type: 'tomorrowTimer', value: 6 }],
           },
           {
-            text: "Skip (-5 rep, they're used to it)",
+            text: "Skip (they're used to it but miss you)",
             effects: [{ type: 'reputation', value: -5 }],
           },
           {
@@ -1247,15 +1247,15 @@ export const EVENTS: EventDef[] = [
     cooldown: 4,
     choices: [
       {
-        text: 'Clap back (50% +15 rep, 50% -15 rep)',
-        effects: [{ type: 'time', value: -1 }, { type: 'flag', value: 'clap-back-roll' }, { type: 'reputation', value: -10 }],
+        text: 'Clap back with your AI',
+        effects: [{ type: 'time', value: -1 }, { type: 'flag', value: 'clap-back-roll' }],
       },
       {
         text: 'Ignore it (drama dies)',
         effects: [],
       },
       {
-        text: 'Go viral (spicy take, +30 rep, notification events x2 days)',
+        text: 'Go viral (spicy take)',
         effects: [{ type: 'time', value: -1 }, { type: 'reputation', value: 30 }, { type: 'flag', value: 'viral-notification-spam' }],
       },
     ],
@@ -1263,20 +1263,20 @@ export const EVENTS: EventDef[] = [
       indieHacker: {
         choices: [
           {
-            text: 'Clap back',
-            effects: [{ type: 'time', value: -1 }, { type: 'flag', value: 'clap-back-roll' }, { type: 'reputation', value: -10 }],
+            text: "Clap back, get ratio'd",
+            effects: [{ type: 'time', value: -1 }, { type: 'flag', value: 'clap-back-roll' }],
           },
           {
             text: 'Ignore it',
             effects: [],
           },
           {
-            text: 'Go viral',
+            text: 'Go viral (spicy take)',
             effects: [{ type: 'time', value: -1 }, { type: 'reputation', value: 30 }, { type: 'flag', value: 'viral-notification-spam' }],
           },
           {
             text: 'Turn it into marketing (+$100, +10 rep)',
-            effects: [{ type: 'time', value: -1 }, { type: 'budget', value: 100 }, { type: 'reputation', value: 10 }],
+            effects: [{ type: 'time', value: -2 }, { type: 'budget', value: 100 }, { type: 'reputation', value: 10 }],
           },
         ],
       },
@@ -1284,15 +1284,15 @@ export const EVENTS: EventDef[] = [
         body: "Someone quote-tweeted your project: 'This is what's wrong with AI.' 50,000 views. The someone is your professor.",
         choices: [
           {
-            text: 'Clap back (all options -5 rep worse)',
-            effects: [{ type: 'time', value: -1 }, { type: 'flag', value: 'clap-back-roll' }, { type: 'reputation', value: -5 }, { type: 'reputation', value: -10 }],
+            text: 'Clap back (50/50 on the ratio war)',
+            effects: [{ type: 'time', value: -1 }, { type: 'flag', value: 'clap-back-roll' }],
           },
           {
-            text: 'Ignore it (-5 rep somehow)',
+            text: 'Ignore it (but lose out on AI internships)',
             effects: [{ type: 'reputation', value: -5 }],
           },
           {
-            text: 'Go viral (+25 rep, notification events x2 days)',
+            text: 'Go viral (spicy take)',
             effects: [{ type: 'time', value: -1 }, { type: 'reputation', value: 25 }, { type: 'flag', value: 'viral-notification-spam' }],
           },
         ],
@@ -1315,12 +1315,12 @@ export const EVENTS: EventDef[] = [
         effects: [],
       },
       {
-        text: 'Take the call (-2 time, learn about unlocked model)',
+        text: 'Take the call (learn about unlocked model)',
         // BUCKET: tactical — networking has real value: model intel + career rep
         effects: [{ type: 'time', value: -2 }, { type: 'flag', value: 'model-intel' }, { type: 'reputation', value: 15 }],
       },
       {
-        text: 'Ask them to invest (20% +$500, 80% ghosted)',
+        text: 'Ask them to invest (...ghosted...)',
         effects: [{ type: 'flag', value: 'recruiter-invest-roll' }, { type: 'time', value: -1 }],
       },
     ],
@@ -1373,7 +1373,7 @@ export const EVENTS: EventDef[] = [
     cooldown: 3,
     choices: [
       {
-        text: 'Google it yourself (-2 time, find the answer)',
+        text: 'Google it yourself (find the answer)',
         effects: [{ type: 'time', value: -2 }],
       },
       {
@@ -1381,7 +1381,7 @@ export const EVENTS: EventDef[] = [
         effects: [{ type: 'flag', value: 'ai-answer-roll' }, { type: 'reputation', value: -5 }],
       },
       {
-        text: 'Post on Discord (-1 time, always works)',
+        text: 'Post on Discord (always works)',
         effects: [{ type: 'time', value: -1 }],
       },
     ],
@@ -1389,7 +1389,7 @@ export const EVENTS: EventDef[] = [
       techBro: {
         choices: [
           {
-            text: 'Google it yourself (-2 time)',
+            text: 'Google it yourself',
             effects: [{ type: 'time', value: -2 }],
           },
           {
@@ -1397,11 +1397,11 @@ export const EVENTS: EventDef[] = [
             effects: [{ type: 'flag', value: 'ai-answer-roll' }, { type: 'reputation', value: -5 }],
           },
           {
-            text: 'Post on Discord (-1 time)',
+            text: 'Post on Discord',
             effects: [{ type: 'time', value: -1 }],
           },
           {
-            text: "Buy a course ($50, instant answer, +5% quality)",
+            text: "Buy a Zoom call, make a connection",
             effects: [{ type: 'budget', value: -50 }, { type: 'flag', value: 'quality-boost-5pct' }, { type: 'reputation', value: 3 }],
           },
         ],
@@ -1420,11 +1420,11 @@ export const EVENTS: EventDef[] = [
     cooldown: 4,
     choices: [
       {
-        text: 'Merge it (-1 time, +15 rep)',
+        text: 'Merge it',
         effects: [{ type: 'time', value: -1 }, { type: 'reputation', value: 15 }],
       },
       {
-        text: "Close with 'wontfix' (-10 rep)",
+        text: "Close with 'wontfix'",
         effects: [{ type: 'reputation', value: -10 }],
       },
       {
@@ -1436,11 +1436,11 @@ export const EVENTS: EventDef[] = [
       indieHacker: {
         choices: [
           {
-            text: 'Merge it (-1 time, +15 rep)',
+            text: 'Merge it',
             effects: [{ type: 'time', value: -1 }, { type: 'reputation', value: 15 }],
           },
           {
-            text: "Close with 'wontfix' (-10 rep)",
+            text: "Close with 'wontfix'",
             effects: [{ type: 'reputation', value: -10 }],
           },
           {
@@ -1457,11 +1457,11 @@ export const EVENTS: EventDef[] = [
         body: "PR to the company OSS project. 3 approvals needed.",
         choices: [
           {
-            text: 'Merge it (3 approvals: -3 time, +15 rep)',
+            text: 'Merge it (3 approvals)',
             effects: [{ type: 'time', value: -3 }, { type: 'reputation', value: 15 }],
           },
           {
-            text: "Close with 'wontfix' (-10 rep)",
+            text: "Close with 'wontfix'",
             effects: [{ type: 'reputation', value: -10 }],
           },
           {
@@ -1486,7 +1486,7 @@ export const EVENTS: EventDef[] = [
     cooldown: 5,
     choices: [
       {
-        text: 'Buy in bulk ($100 for $1000 credits, 30% worthless)',
+        text: 'Buy in bulk (30% worthless)',
         effects: [{ type: 'flag', value: 'token-sale-roll' }, { type: 'budget', value: -100 }],
       },
       {
@@ -1494,7 +1494,7 @@ export const EVENTS: EventDef[] = [
         effects: [],
       },
       {
-        text: 'Investigate first (-1 time, reveals if legit, 50% deal expires)',
+        text: 'Investigate first (reveals if legit, 50% deal expires)',
         effects: [{ type: 'time', value: -1 }, { type: 'flag', value: 'token-sale-investigate' }],
       },
     ],
@@ -1502,7 +1502,7 @@ export const EVENTS: EventDef[] = [
       collegeStudent: {
         choices: [
           {
-            text: 'Buy in bulk ($100, 30% scam)',
+            text: 'Buy in bulk (30% scam)',
             effects: [{ type: 'flag', value: 'token-sale-roll' }, { type: 'budget', value: -100 }],
           },
           {
@@ -1514,7 +1514,7 @@ export const EVENTS: EventDef[] = [
             effects: [{ type: 'time', value: -1 }, { type: 'flag', value: 'token-sale-investigate' }],
           },
           {
-            text: 'Split with classmates ($20 for $200 credits, same 30% scam risk)',
+            text: 'Split with classmates (same 30% scam risk)',
             effects: [{ type: 'flag', value: 'token-sale-split-roll' }, { type: 'budget', value: -20 }],
           },
         ],
@@ -1522,7 +1522,7 @@ export const EVENTS: EventDef[] = [
       techBro: {
         choices: [
           {
-            text: "Buy in bulk ($100, 10% scam — you know this guy)",
+            text: "Buy in bulk (10% scam — you know this guy)",
             effects: [{ type: 'flag', value: 'token-sale-techbro-roll' }, { type: 'budget', value: -100 }, { type: 'agentSpeed', value: 10 }],
           },
           {
@@ -1549,15 +1549,15 @@ export const EVENTS: EventDef[] = [
     cooldown: 10,
     choices: [
       {
-        text: 'Keep it (-$300, reliable access)',
+        text: 'Keep it (reliable access)',
         effects: [{ type: 'budget', value: -300 }],
       },
       {
-        text: 'Downgrade (-$100, lower tier)',
+        text: 'Downgrade (lower tier)',
         effects: [{ type: 'budget', value: -100 }, { type: 'flag', value: 'model-downgraded' }, { type: 'agentSpeed', value: -10 }],
       },
       {
-        text: 'Cancel and go open-source (+$300, all models 30% slower)',
+        text: 'Cancel and go open-source (all models 30% slower)',
         effects: [{ type: 'budget', value: 300 }, { type: 'agentSpeed', value: -30 }],
       },
     ],
@@ -1575,15 +1575,15 @@ export const EVENTS: EventDef[] = [
         body: "Your AI subscription auto-renewed. Student discount applied: $100 lighter.",
         choices: [
           {
-            text: 'Keep it (-$100, reliable access)',
+            text: 'Keep it (reliable access)',
             effects: [{ type: 'budget', value: -100 }],
           },
           {
-            text: 'Downgrade (-$30, lower tier)',
+            text: 'Downgrade (lower tier)',
             effects: [{ type: 'budget', value: -30 }, { type: 'flag', value: 'model-downgraded' }, { type: 'agentSpeed', value: -10 }],
           },
           {
-            text: 'Cancel and go open-source (+$100, all models 30% slower)',
+            text: 'Cancel and go open-source (all models 30% slower)',
             effects: [{ type: 'budget', value: 100 }, { type: 'agentSpeed', value: -30 }],
           },
         ],
@@ -1606,7 +1606,7 @@ export const EVENTS: EventDef[] = [
         effects: [{ type: 'budget', value: 5000 }, { type: 'flag', value: 'investor-deal-50pct' }],
       },
       {
-        text: 'Negotiate (-1 time, $3000 for 20%: final rep ×0.8)',
+        text: 'Negotiate ($3000 for 20%: final rep ×0.8)',
         effects: [{ type: 'time', value: -1 }, { type: 'budget', value: 3000 }, { type: 'flag', value: 'investor-deal-20pct' }],
       },
       {
@@ -1626,7 +1626,7 @@ export const EVENTS: EventDef[] = [
             effects: [{ type: 'time', value: -1 }, { type: 'budget', value: 3000 }, { type: 'flag', value: 'investor-deal-20pct' }],
           },
           {
-            text: 'Show the roadmap (-2 time pitching, $4000 for 10%: final rep ×0.9)',
+            text: 'Show the roadmap ($4000 for 10%: final rep ×0.9)',
             effects: [{ type: 'time', value: -2 }, { type: 'budget', value: 4000 }, { type: 'flag', value: 'investor-deal-10pct' }],
           },
           {
@@ -1639,7 +1639,7 @@ export const EVENTS: EventDef[] = [
         body: "Internal innovation fund offers $2,000 — no rep cost, but you have to present at all-hands.",
         choices: [
           {
-            text: 'Take the deal (+$2000, triggers mandatory meeting)',
+            text: 'Take the deal (triggers mandatory meeting)',
             effects: [{ type: 'budget', value: 2000 }, { type: 'flag', value: 'mandatory-meeting-tomorrow' }],
           },
           {
@@ -1662,7 +1662,7 @@ export const EVENTS: EventDef[] = [
     cooldown: 7,
     choices: [
       {
-        text: 'Buy it ($500, 70% massive speed boost, 30% dead)',
+        text: 'Buy it (70% massive speed boost, 30% dead)',
         effects: [{ type: 'flag', value: 'gpu-purchase-roll' }, { type: 'budget', value: -500 }, { type: 'agentSpeed', value: 20 }],
       },
       {
@@ -1670,7 +1670,7 @@ export const EVENTS: EventDef[] = [
         effects: [],
       },
       {
-        text: 'Lowball ($200, 40% accept, 40% ghost, 20% GTX 1060)',
+        text: 'Lowball (40% accept, 40% ghost, 20% GTX 1060)',
         effects: [{ type: 'flag', value: 'gpu-lowball-roll' }, { type: 'budget', value: -200 }, { type: 'agentSpeed', value: 5 }],
       },
     ],
@@ -1678,11 +1678,11 @@ export const EVENTS: EventDef[] = [
       techBro: {
         choices: [
           {
-            text: "Already have two — sell your spare (+$400)",
+            text: "Already have two — sell your spare",
             effects: [{ type: 'budget', value: 400 }],
           },
           {
-            text: 'Buy another ($500, 70%/30% roll)',
+            text: 'Buy another (70%/30% roll)',
             effects: [{ type: 'flag', value: 'gpu-purchase-roll' }, { type: 'budget', value: -500 }, { type: 'agentSpeed', value: 20 }],
           },
           {
@@ -1694,7 +1694,7 @@ export const EVENTS: EventDef[] = [
       collegeStudent: {
         choices: [
           {
-            text: 'Buy it ($500, 70%/30% roll)',
+            text: 'Buy it (70%/30% roll)',
             effects: [{ type: 'flag', value: 'gpu-purchase-roll' }, { type: 'budget', value: -500 }, { type: 'agentSpeed', value: 20 }],
           },
           {
@@ -1702,7 +1702,7 @@ export const EVENTS: EventDef[] = [
             effects: [],
           },
           {
-            text: 'Ask if they take Venmo (-$50 convenience fee, 90% success)',
+            text: 'Ask if they take Venmo (convenience fee, 90% success)',
             effects: [{ type: 'flag', value: 'gpu-venmo-roll' }, { type: 'budget', value: -50 }, { type: 'agentSpeed', value: 10 }],
           },
         ],
@@ -1721,11 +1721,11 @@ export const EVENTS: EventDef[] = [
     cooldown: 6,
     choices: [
       {
-        text: 'Pay it (-$800)',
+        text: 'Pay it',
         effects: [{ type: 'budget', value: -800 }],
       },
       {
-        text: 'Dispute the charge (-2 time, 50% refunded, 50% lose cloud access)',
+        text: 'Dispute the charge (50% refunded, 50% lose cloud access)',
         effects: [{ type: 'time', value: -2 }, { type: 'flag', value: 'dispute-roll' }, { type: 'budget', value: -400 }, { type: 'time', value: -2 }],
       },
       {
@@ -1738,7 +1738,7 @@ export const EVENTS: EventDef[] = [
         body: "Someone left the company GPU instance running overnight. Blame game in Slack.",
         choices: [
           {
-            text: "Join the Slack thread (-1 time, no cost, 20% it was YOU: -30 rep)",
+            text: "Join the Slack thread (20% it was YOU)",
             effects: [{ type: 'time', value: -1 }, { type: 'flag', value: 'aws-blame-roll' }, { type: 'reputation', value: -10 }],
           },
         ],
@@ -1767,7 +1767,7 @@ export const EVENTS: EventDef[] = [
     tags: ['techBro', 'requiresLocal'],
     choices: [
       {
-        text: 'Download them (free frontier model, 20% malware: -$200 + hardware damage)',
+        text: 'Download them (free frontier model, 20% malware: hardware damage)',
         effects: [{ type: 'flag', value: 'weights-download-roll' }, { type: 'hardware', value: -20 }, { type: 'agentSpeed', value: 15 }],
       },
       {
@@ -1775,7 +1775,7 @@ export const EVENTS: EventDef[] = [
         effects: [],
       },
       {
-        text: 'Download and verify checksums (-2 time, 100% safe if legit)',
+        text: 'Download and verify checksums (100% safe if legit)',
         effects: [{ type: 'time', value: -2 }, { type: 'flag', value: 'weights-safe-download' }],
       },
     ],
@@ -1791,7 +1791,7 @@ export const EVENTS: EventDef[] = [
     tags: ['collegeStudent'],
     choices: [
       {
-        text: 'Beg for an extension (-1 time, 60% they extend 1 day)',
+        text: 'Beg for an extension (60% they extend 1 day)',
         effects: [{ type: 'time', value: -1 }, { type: 'flag', value: 'extension-roll' }, { type: 'time', value: -1 }],
       },
       {
@@ -1815,15 +1815,15 @@ export const EVENTS: EventDef[] = [
     tags: ['corporateDev'],
     choices: [
       {
-        text: 'Submit the paperwork (-3 time, access restored)',
+        text: 'Submit the paperwork (access restored)',
         effects: [{ type: 'time', value: -3 }],
       },
       {
-        text: "Use personal API key (instant, costs YOUR budget, if caught: -50 rep)",
+        text: "Use personal API key (instant, costs YOUR budget, if caught)",
         effects: [{ type: 'flag', value: 'personal-key-risk' }, { type: 'budget', value: -50 }],
       },
       {
-        text: 'Get manager to expedite (-1 time, triggers mandatory meeting tomorrow)',
+        text: 'Get manager to expedite (triggers mandatory meeting tomorrow)',
         effects: [{ type: 'time', value: -1 }, { type: 'flag', value: 'mandatory-meeting-tomorrow' }],
       },
     ],
@@ -1839,16 +1839,16 @@ export const EVENTS: EventDef[] = [
     tags: ['indieHacker'],
     choices: [
       {
-        text: 'Ride the wave (+50 rep, -3 time for support)',
+        text: 'Ride the wave (for support)',
         // BUCKET: run-shaping — huge rep + product revenue flows in overnight
         effects: [{ type: 'reputation', value: 50 }, { type: 'time', value: -3 }, { type: 'nightBonus', value: 100 }],
       },
       {
-        text: 'Focus on building (+15 rep, no time lost)',
+        text: 'Focus on building',
         effects: [{ type: 'reputation', value: 15 }],
       },
       {
-        text: 'Monetize it (-2 time, +$400 from early adopters)',
+        text: 'Monetize it (from early adopters)',
         effects: [{ type: 'time', value: -2 }, { type: 'budget', value: 400 }],
       },
     ],
@@ -1864,15 +1864,15 @@ export const EVENTS: EventDef[] = [
     tags: ['techBro'],
     choices: [
       {
-        text: 'Accept (+$300, -1 time filming, branded hoodie rest of game)',
+        text: 'Accept (filming, branded hoodie rest of game)',
         effects: [{ type: 'budget', value: 300 }, { type: 'time', value: -1 }, { type: 'flag', value: 'branded-hoodie' }],
       },
       {
-        text: 'Negotiate (-1 time, 50% $500, 50% they walk)',
+        text: 'Negotiate (50% $500, 50% they walk)',
         effects: [{ type: 'time', value: -1 }, { type: 'flag', value: 'sponsorship-negotiate-roll' }, { type: 'budget', value: 250 }, { type: 'time', value: -1 }],
       },
       {
-        text: "Decline — you're not a sellout (+5 rep)",
+        text: "Decline — you're not a sellout",
         effects: [{ type: 'reputation', value: 5 }],
       },
     ],
@@ -1889,15 +1889,15 @@ export const EVENTS: EventDef[] = [
     cooldown: 4,
     choices: [
       {
-        text: 'Do their part yourself (-2 time, quality preserved)',
+        text: 'Do their part yourself (quality preserved)',
         effects: [{ type: 'time', value: -2 }],
       },
       {
-        text: "Confront them (-1 time, 50% they help, 50% 'I have another class')",
+        text: "Confront them (50% they help, 50% 'I have another class')",
         effects: [{ type: 'time', value: -1 }, { type: 'flag', value: 'confront-freeloader-roll' }, { type: 'time', value: -1 }, { type: 'reputation', value: 5 }],
       },
       {
-        text: "Have your AI do their part (70% seamless, 30% -10% quality)",
+        text: "Have your AI do their part (70% seamless)",
         effects: [{ type: 'flag', value: 'ai-teammate-roll' }, { type: 'reputation', value: -5 }],
       },
     ],
@@ -1923,7 +1923,7 @@ export const EVENTS: EventDef[] = [
         effects: [{ type: 'time', value: -1 }, { type: 'flag', value: 'compliance-quiz-roll' }, { type: 'time', value: -2 }],
       },
       {
-        text: "Have your AI do it (passes 100%, if audited: -40 rep)",
+        text: "Have your AI do it (passes 100%, if audited)",
         effects: [{ type: 'flag', value: 'ai-compliance-risk' }, { type: 'reputation', value: -15 }],
       },
     ],
@@ -1945,7 +1945,7 @@ export const EVENTS: EventDef[] = [
         effects: [{ type: 'time', value: -2 }, { type: 'reputation', value: 20 }, { type: 'flag', value: 'quality-boost-5pct' }, { type: 'reputation', value: 3 }, { type: 'nightBonus', value: 75 }],
       },
       {
-        text: 'Post and ghost (+5 rep, comments become unhinged)',
+        text: 'Post and ghost (comments become unhinged)',
         effects: [{ type: 'reputation', value: 5 }, { type: 'flag', value: 'hn-unhinged' }],
       },
       {
@@ -1965,11 +1965,11 @@ export const EVENTS: EventDef[] = [
     tags: ['techBro'],
     choices: [
       {
-        text: 'Give the tour (-2 time, +$600 consulting deposit)',
+        text: 'Give the tour (consulting deposit)',
         effects: [{ type: 'time', value: -2 }, { type: 'budget', value: 600 }, { type: 'flag', value: 'consulting-client' }],
       },
       {
-        text: 'Send a photo (+$200 small gig)',
+        text: 'Send a photo (small gig)',
         effects: [{ type: 'budget', value: 200 }],
       },
       {
@@ -1997,7 +1997,7 @@ export const EVENTS: EventDef[] = [
         effects: [{ type: 'time', value: -4 }, { type: 'flag', value: 'plagiarism-rewritten' }],
       },
       {
-        text: "Appeal with your AI (60% accepted, 40% 'this appeal is also AI-generated': -50 rep)",
+        text: "Appeal with your AI (60% accepted, 40% 'this appeal is also AI-generated')",
         effects: [{ type: 'flag', value: 'ai-appeal-roll' }, { type: 'reputation', value: -20 }],
       },
     ],
@@ -2013,15 +2013,15 @@ export const EVENTS: EventDef[] = [
     tags: ['corporateDev'],
     choices: [
       {
-        text: 'Prepare properly (-3 time, +40 rep, CTO remembers your name)',
+        text: 'Prepare properly (CTO remembers your name)',
         effects: [{ type: 'time', value: -3 }, { type: 'reputation', value: 40 }, { type: 'flag', value: 'cto-remembers' }],
       },
       {
-        text: 'Wing it with live AI (-1 time, 50% +60 rep standing ovation, 50% -40 rep hallucination)',
+        text: 'Wing it with live AI (50% standing ovation, 50% hallucination)',
         effects: [{ type: 'time', value: -1 }, { type: 'flag', value: 'live-demo-roll' }, { type: 'reputation', value: 20 }, { type: 'time', value: -1 }],
       },
       {
-        text: "Delegate to your AI (30% +30 rep innovative, 70% HR writes a rule about you: -20 rep)",
+        text: "Delegate to your AI (30% innovative, 70% HR writes a rule about you)",
         effects: [{ type: 'flag', value: 'bot-demo-roll' }, { type: 'reputation', value: -10 }],
       },
     ],
@@ -2038,15 +2038,15 @@ export const EVENTS: EventDef[] = [
     cooldown: 6,
     choices: [
       {
-        text: "Open source yours (kills their business, +25 rep, can't monetize later)",
+        text: "Open source yours (kills their business, can't monetize later)",
         effects: [{ type: 'reputation', value: 25 }, { type: 'flag', value: 'cant-monetize' }],
       },
       {
-        text: "Send C&D ($100, -1 time, 70% they comply)",
+        text: "Send C&D (70% they comply)",
         effects: [{ type: 'budget', value: -100 }, { type: 'time', value: -1 }, { type: 'flag', value: 'cease-desist-roll' }],
       },
       {
-        text: 'Ship faster (+10% speed x2 days, 10% hardware event from stress)',
+        text: 'Ship faster (x2 days, hardware event from stress)',
         effects: [{ type: 'agentSpeed', value: 10 }, { type: 'flag', value: 'ship-faster-risk' }, { type: 'hardware', value: -10 }],
       },
     ],
@@ -2062,7 +2062,7 @@ export const EVENTS: EventDef[] = [
     tags: ['techBro'],
     choices: [
       {
-        text: "Accept (+$800, project has a token now, -15 rep)",
+        text: "Accept (project has a token now)",
         effects: [{ type: 'budget', value: 800 }, { type: 'reputation', value: -15 }, { type: 'flag', value: 'web3-token' }],
       },
       {
@@ -2110,15 +2110,15 @@ export const EVENTS: EventDef[] = [
     tags: ['corporateDev'],
     choices: [
       {
-        text: "Align with new direction (-2 time, +10 rep, tomorrow's project changes)",
+        text: "Align with new direction (tomorrow's project changes)",
         effects: [{ type: 'time', value: -2 }, { type: 'reputation', value: 10 }, { type: 'flag', value: 'project-pivot' }],
       },
       {
-        text: "Keep your head down (60% safe, 40% 'alignment to OKRs' talk: -15 rep)",
+        text: "Keep your head down (60% safe, 40% 'alignment to OKRs' talk)",
         effects: [{ type: 'flag', value: 'reorg-ignore-roll' }, { type: 'reputation', value: -10 }],
       },
       {
-        text: 'Volunteer to lead the AI initiative (-1 time, +20 rep, double events tomorrow)',
+        text: 'Volunteer to lead the AI initiative (double events tomorrow)',
         // BUCKET: run-shaping — leadership mandate means clearer runway tomorrow
         effects: [{ type: 'time', value: -1 }, { type: 'reputation', value: 20 }, { type: 'flag', value: 'double-events-tomorrow' }, { type: 'tomorrowTimer', value: 6 }],
       },
@@ -2140,7 +2140,7 @@ export const EVENTS: EventDef[] = [
         effects: [{ type: 'budget', value: 29 }, { type: 'reputation', value: 15 }, { type: 'agentSpeed', value: 10 }, { type: 'nightBonus', value: 50 }],
       },
       {
-        text: 'Immediately add 20 features they requested (-3 time, scope creep: -10% quality)',
+        text: 'Immediately add 20 features they requested (scope creep)',
         effects: [{ type: 'time', value: -3 }, { type: 'flag', value: 'quality-drop-10pct' }, { type: 'reputation', value: -5 }],
       },
       {
@@ -2191,7 +2191,7 @@ export const EVENTS: EventDef[] = [
             effects: [{ type: 'flag', value: 'singularity-roll' }, { type: 'agentSpeed', value: 15 }],
           },
           {
-            text: "Document it and sell the paper to a lab (-1 time, +$500 regardless)",
+            text: "Document it and sell the paper to a lab",
             effects: [{ type: 'time', value: -1 }, { type: 'budget', value: 500 }],
           },
         ],
@@ -2236,7 +2236,7 @@ export const EVENTS: EventDef[] = [
     cooldown: 5,
     choices: [
       {
-        text: 'Use it anyway (saves time, -20 rep)',
+        text: 'Use it anyway (saves time)',
         effects: [{ type: 'reputation', value: -20 }],
       },
       {
@@ -2244,7 +2244,7 @@ export const EVENTS: EventDef[] = [
         effects: [{ type: 'time', value: -1 }],
       },
       {
-        text: 'File a bug report (-2 time, +$100 bug bounty)',
+        text: 'File a bug report (bug bounty)',
         // BUCKET: tactical — responsible disclosure earns a real reward
         effects: [{ type: 'time', value: -2 }, { type: 'budget', value: 100 }],
       },
@@ -2262,7 +2262,7 @@ export const EVENTS: EventDef[] = [
     cooldown: 6,
     choices: [
       {
-        text: "Sell it as an NFT (+$100, -1 time, -10 rep 'you minted an NFT')",
+        text: "Sell it as an NFT ('you minted an NFT')",
         effects: [{ type: 'budget', value: 100 }, { type: 'time', value: -1 }, { type: 'reputation', value: -10 }],
       },
       {
@@ -2290,7 +2290,7 @@ export const EVENTS: EventDef[] = [
             effects: [],
           },
           {
-            text: 'Print it on merch (-$50 upfront, +$200 over 3 days, character wears shirt)',
+            text: 'Print it on merch (character wears shirt)',
             effects: [{ type: 'budget', value: -50 }, { type: 'flag', value: 'art-merch' }, { type: 'reputation', value: 5 }],
           },
         ],
@@ -2309,16 +2309,16 @@ export const EVENTS: EventDef[] = [
     cooldown: 4,
     choices: [
       {
-        text: 'Have the conversation (-3 time, agent +15% afterward)',
+        text: 'Have the conversation',
         // BUCKET: run-shaping — heavy investment but agent fully aligned for tomorrow too
         effects: [{ type: 'time', value: -3 }, { type: 'agentSpeed', value: 15 }, { type: 'tomorrowTimer', value: 9 }],
       },
       {
-        text: "Override it (agent -10% rest of run 'just following orders')",
+        text: "Override it ('just following orders')",
         effects: [{ type: 'agentSpeed', value: -10 }],
       },
       {
-        text: 'Agree with everything (-1 time, +5% quality, brings it up again tomorrow)',
+        text: 'Agree with everything (brings it up again tomorrow)',
         effects: [{ type: 'time', value: -1 }, { type: 'flag', value: 'quality-boost-5pct' }, { type: 'flag', value: 'alignment-repeats' }, { type: 'reputation', value: 3 }],
       },
     ],
@@ -2334,7 +2334,7 @@ export const EVENTS: EventDef[] = [
     tags: ['rare'],
     choices: [
       {
-        text: 'Wing it (40% +$500 +30 rep, 60% crash -30 rep +$200 damages)',
+        text: 'Wing it',
         effects: [{ type: 'flag', value: 'demo-day-roll' }, { type: 'budget', value: 200 }, { type: 'reputation', value: -15 }],
       },
       {
@@ -2366,7 +2366,7 @@ export const EVENTS: EventDef[] = [
         effects: [{ type: 'flag', value: 'morale-down' }, { type: 'time', value: -2 }, { type: 'agentSpeed', value: -5 }],
       },
       {
-        text: 'Send it (Corp Dev only: quit, lose company card, +50 rep, ×1.5 multiplier change)',
+        text: 'Send it (Corp Dev only: quit, lose company card, ×1.5 multiplier change)',
         effects: [{ type: 'flag', value: 'resigned' }, { type: 'reputation', value: -10 }],
       },
     ],
@@ -2382,7 +2382,7 @@ export const EVENTS: EventDef[] = [
             effects: [{ type: 'flag', value: 'morale-down' }, { type: 'time', value: -2 }, { type: 'agentSpeed', value: -5 }],
           },
           {
-            text: 'Send it (IRREVERSIBLE: lose company card, +50 rep, ×1.5 multiplier)',
+            text: 'Send it (IRREVERSIBLE: lose company card, ×1.5 multiplier)',
             effects: [{ type: 'flag', value: 'resigned' }, { type: 'reputation', value: 50 }, { type: 'flag', value: 'indie-multiplier' }],
           },
           {
@@ -2405,15 +2405,15 @@ export const EVENTS: EventDef[] = [
     cooldown: 6,
     choices: [
       {
-        text: "Correct it (-1 time, +10 rep 'honest developer')",
+        text: "Correct it ('honest developer')",
         effects: [{ type: 'time', value: -1 }, { type: 'reputation', value: 10 }],
       },
       {
-        text: 'Leave it (50% someone traces it to you: -20 rep)',
+        text: 'Leave it (50% someone traces it to you)',
         effects: [{ type: 'flag', value: 'so-blame-roll' }, { type: 'reputation', value: -10 }],
       },
       {
-        text: 'Double down in the comments (-1 time, flame war goes viral, net +10 rep)',
+        text: 'Double down in the comments (flame war goes viral)',
         effects: [{ type: 'time', value: -1 }, { type: 'reputation', value: 10 }],
       },
     ],
