@@ -37,13 +37,25 @@ function escapeHtml(s: string): string {
     .replace(/"/g, '&quot;');
 }
 
+function buildEffectsHTML(choice: EventChoice): string {
+  if (choice.effects.length === 0) return '<em style="color:#484f58">no effects</em>';
+  return choice.effects.map(e => {
+    const val = typeof e.value === 'number'
+      ? (e.value >= 0 ? `+${e.value}` : `${e.value}`)
+      : String(e.value);
+    return `<span class="effect-tag">${escapeHtml(e.type)}: ${escapeHtml(val)}</span>`;
+  }).join(' ');
+}
+
 function buildChoicesHTML(choices: EventChoice[]): string {
   return choices.map((choice, i) => {
     const outcomeLine = buildOutcomeLine(choice.effects);
     const color = outcomeLineColor(choice.effects);
+    const effectsId = `effects-${Math.random().toString(36).slice(2)}`;
     return `<div class="choice">
       <div class="choice-action"><span class="choice-idx">[${i + 1}]</span>&nbsp;<span class="choice-text" data-choice-index="${i}" data-original="${escapeHtml(choice.text)}">${escapeHtml(choice.text)}</span></div>
       <div class="choice-outcome" style="color:${color}">${escapeHtml(outcomeLine)}</div>
+      <details class="choice-effects"><summary>effects</summary><div id="${effectsId}" class="effects-list">${buildEffectsHTML(choice)}</div></details>
     </div>`;
   }).join('');
 }

@@ -249,3 +249,43 @@ body {
   background: #1a1500;
 }
 
+.choice-effects {
+  margin-top: 4px;
+}
+
+.choice-effects summary {
+  font-size: 10px;
+  color: #484f58;
+  cursor: pointer;
+  user-select: none;
+  list-style: none;
+}
+
+.choice-effects summary::before {
+  content: '▶ ';
+}
+
+.choice-effects[open] summary::before {
+  content: '▼ ';
+}
+
+.choice-effects summary:hover {
+  color: #9da5b0;
+}
+
+.effects-list {
+  margin-top: 4px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.effect-tag {
+  font-size: 10px;
+  color: #9da5b0;
+  background: #21262d;
+  border: 1px solid #30363d;
+  border-radius: 3px;
+  padding: 1px 5px;
+}
+
