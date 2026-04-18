@@ -5,7 +5,8 @@ import { buildOutcomeLine, outcomeLineColor } from '../utils/outcomeFormatting';
 interface EventPatch {
   id: string;
   body?: string;
-  choiceTexts?: Record<number, string>;
+  choiceTexts?: Record<number, string>;           // default choices
+  variantChoiceTexts?: Record<string, Record<number, string>>; // variant → index → text
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -58,12 +59,21 @@ function buildPatchString(patch: EventPatch): string {
       lines.push(`  choice[${idx}].text: "${patch.choiceTexts[idx]}"`);
     }
   }
+  if (patch.variantChoiceTexts) {
+    for (const [variant, texts] of Object.entries(patch.variantChoiceTexts)) {
+      const indices = Object.keys(texts).map(Number).sort((a, b) => a - b);
+      for (const idx of indices) {
+        lines.push(`  classVariants.${variant}.choice[${idx}].text: "${texts[idx]}"`);
+      }
+    }
+  }
   return lines.join('\n');
 }
 
 function hasRealChanges(patch: EventPatch): boolean {
   return patch.body !== undefined ||
-    (patch.choiceTexts !== undefined && Object.keys(patch.choiceTexts).length > 0);
+    (patch.choiceTexts !== undefined && Object.keys(patch.choiceTexts).length > 0) ||
+    (patch.variantChoiceTexts !== undefined && Object.values(patch.variantChoiceTexts).some(t => Object.keys(t).length > 0));
 }
 
 function updateCardUI(card: HTMLElement): void {
@@ -121,16 +131,34 @@ function onChoiceInput(card: HTMLElement, span: HTMLElement): void {
   const original = span.dataset.original ?? '';
   const current = span.textContent ?? '';
   const patch = getOrCreatePatch(eventId);
+  // Which panel is this span in?
+  const panel = span.closest<HTMLElement>('.card-choices');
+  const panelKey = panel?.dataset.panel ?? 'default';
+  const isDefault = panelKey === 'default';
 
   if (current !== original) {
-    if (!patch.choiceTexts) patch.choiceTexts = {};
-    patch.choiceTexts[idx] = current;
+    if (isDefault) {
+      if (!patch.choiceTexts) patch.choiceTexts = {};
+      patch.choiceTexts[idx] = current;
+    } else {
+      if (!patch.variantChoiceTexts) patch.variantChoiceTexts = {};
+      if (!patch.variantChoiceTexts[panelKey]) patch.variantChoiceTexts[panelKey] = {};
+      patch.variantChoiceTexts[panelKey][idx] = current;
+    }
     span.classList.add('dirty-field');
   } else {
-    if (patch.choiceTexts) {
-      delete patch.choiceTexts[idx];
-      if (Object.keys(patch.choiceTexts).length === 0) {
-        delete patch.choiceTexts;
+    if (isDefault) {
+      if (patch.choiceTexts) {
+        delete patch.choiceTexts[idx];
+        if (Object.keys(patch.choiceTexts).length === 0) delete patch.choiceTexts;
+      }
+    } else {
+      if (patch.variantChoiceTexts?.[panelKey]) {
+        delete patch.variantChoiceTexts[panelKey][idx];
+        if (Object.keys(patch.variantChoiceTexts[panelKey]).length === 0)
+          delete patch.variantChoiceTexts[panelKey];
+        if (Object.keys(patch.variantChoiceTexts).length === 0)
+          delete patch.variantChoiceTexts;
       }
     }
     span.classList.remove('dirty-field');
@@ -144,14 +172,10 @@ function enableEditMode(): void {
   document.querySelectorAll<HTMLElement>('.event-card').forEach(card => {
     const body = card.querySelector<HTMLElement>('.card-body');
     if (body) body.contentEditable = 'true';
-
-    const defaultPanel = card.querySelector<HTMLElement>('.card-choices[data-panel="default"]');
-    if (defaultPanel) {
-      defaultPanel.querySelectorAll<HTMLElement>('.choice-text').forEach(span => {
-        span.contentEditable = 'true';
-      });
-    }
-
+    // Enable ALL panels, not just default
+    card.querySelectorAll<HTMLElement>('.choice-text').forEach(span => {
+      span.contentEditable = 'true';
+    });
     updateCardUI(card);
   });
 }
