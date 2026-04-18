@@ -49,7 +49,46 @@ function formatEffectHint(effects: EventEffect[]): string {
   }).join(', ');
 }
 
+function buildOutcomeLine(effects: EventEffect[]): string {
+  const parts: string[] = [];
+  for (const effect of effects) {
+    if (effect.type === 'budget' && typeof effect.value === 'number') {
+      const sym = effect.value >= 0 ? '💰' : '💸';
+      const sign = effect.value >= 0 ? '+' : '−';
+      parts.push(`${sym} ${sign}$${Math.abs(effect.value)}`);
+    } else if (effect.type === 'time' && typeof effect.value === 'number') {
+      const secs = effect.value * 3;
+      const sign = secs >= 0 ? '+' : '−';
+      parts.push(`⏱ ${sign}${Math.abs(secs)}s`);
+    } else if (effect.type === 'hardware' && typeof effect.value === 'number') {
+      const sym = effect.value >= 0 ? '💪' : '🔥';
+      const sign = effect.value >= 0 ? '+' : '−';
+      parts.push(`${sym} ${sign}${Math.abs(effect.value)} HP`);
+    } else if (effect.type === 'reputation' && typeof effect.value === 'number') {
+      const sign = effect.value >= 0 ? '+' : '−';
+      parts.push(`★ ${sign}${Math.abs(effect.value)} rep`);
+    }
+    // flag/modelSwitch/agentSpeed/etc: omit
+  }
+  return parts.length > 0 ? parts.join('  ') : '—';
+}
 
+function outcomeLineColor(effects: EventEffect[]): string {
+  for (const e of effects) {
+    if (e.type === 'budget' && typeof e.value === 'number' && e.value < 0) return '#f85149';
+  }
+  for (const e of effects) {
+    if (e.type === 'hardware' && typeof e.value === 'number' && e.value < 0) return '#f0883e';
+    if (e.type === 'reputation' && typeof e.value === 'number' && e.value < 0) return '#f0883e';
+  }
+  for (const e of effects) {
+    if (e.type === 'budget' && typeof e.value === 'number' && e.value > 0) return '#3fb950';
+  }
+  for (const e of effects) {
+    if (e.type === 'time' && typeof e.value === 'number' && e.value < 0) return '#d29922';
+  }
+  return '#9da5b0';
+}
 
 interface AgentPanelState {
   id: string;
@@ -1026,9 +1065,18 @@ export class ExecutionScene extends Phaser.Scene {
       duration: 400
     });
 
-    // Dialog box
-    const dw = 480;
-    const dh = 260 + choices.length * 40;
+    // ── Two-pass layout: measure body text first to know real height ──
+    const dw = 700;
+    const choiceH = 64;
+    const tempX = (GAME_WIDTH - dw) / 2;
+    const bodyMeasure = this.add.text(tempX + 20, -2000, body, {
+      fontFamily: 'monospace', fontSize: '14px', color: '#e6edf3',
+      lineSpacing: 6, wordWrap: { width: dw - 40 },
+    });
+    const bodyH = bodyMeasure.height;
+    bodyMeasure.destroy();
+
+    const dh = 28 + 2 + 16 + bodyH + 16 + (choices.length * (choiceH + 8)) + 12 + 90 + 12;
     const dx = (GAME_WIDTH - dw) / 2;
     const dy = (GAME_HEIGHT - dh) / 2 - 20;
 
@@ -1054,39 +1102,51 @@ export class ExecutionScene extends Phaser.Scene {
     });
     this.modalGroup.add(titleObj);
 
-    // Body
-    const bodyObj = this.add.text(dx + 20, dy + 48, body, {
+    // Body text
+    const bodyObj = this.add.text(dx + 20, dy + 28 + 2 + 16, body, {
       fontFamily: 'monospace', fontSize: '14px', color: '#e6edf3',
       lineSpacing: 6, wordWrap: { width: dw - 40 },
     });
     this.modalGroup.add(bodyObj);
 
-    // Choice buttons
-    const choiceStartY = dy + 48 + 60 + 20;
+    // ── Two-line choice buttons ──
+    const choiceStartY = dy + 28 + 2 + 16 + bodyH + 16;
     let cumulativeY = choiceStartY;
-    choices.forEach((choice, i) => {
-      const hint = formatEffectHint(choice.effects);
-      const label = hint ? `[${i + 1}] ${choice.text}\n    (${hint})` : `[${i + 1}] ${choice.text}`;
-      const btnTextObj = this.add.text(dx + 32, cumulativeY + 7, label, {
-        fontFamily: 'monospace', fontSize: '13px', color: '#58a6ff',
-        wordWrap: { width: dw - 72 },
-      });
-      const btnH = Math.max(48, btnTextObj.height + 14);
-      btnTextObj.setY(cumulativeY + (btnH - btnTextObj.height) / 2);
 
-      const btnBg = this.add.rectangle(dx + 20, cumulativeY, dw - 40, btnH, COLORS.titleBar).setOrigin(0)
-        .setInteractive({ useHandCursor: true });
+    choices.forEach((choice, i) => {
+      const outcomeLine = buildOutcomeLine(choice.effects);
+      const outlineColor = outcomeLineColor(choice.effects);
+
+      const btnBg = this.add.rectangle(dx + 20, cumulativeY, dw - 40, choiceH, COLORS.titleBar)
+        .setOrigin(0).setInteractive({ useHandCursor: true });
       this.modalGroup!.add(btnBg);
-      this.modalGroup!.add(btnTextObj);
+
+      // Line 1: action text
+      const actionTextObj = this.add.text(dx + 48, cumulativeY + 8, `[${i + 1}] ${choice.text}`, {
+        fontFamily: 'monospace', fontSize: '13px', color: '#58a6ff',
+        wordWrap: { width: dw - 100 },
+      });
+      this.modalGroup!.add(actionTextObj);
+
+      // Separator between action and outcome rows
+      const sep = this.add.rectangle(dx + 20, cumulativeY + 28, dw - 40, 1, 0x30363d)
+        .setOrigin(0).setAlpha(0.6);
+      this.modalGroup!.add(sep);
+
+      // Line 2: outcome text
+      const outcomeTextObj = this.add.text(dx + 48, cumulativeY + 32, outcomeLine, {
+        fontFamily: 'monospace', fontSize: '11px', color: outlineColor,
+      });
+      this.modalGroup!.add(outcomeTextObj);
 
       btnBg.on('pointerover', () => {
         btnBg.setFillStyle(COLORS.windowBorder);
-        btnTextObj.setColor('#ffffff');
+        actionTextObj.setColor('#ffffff');
         this.applyResourcePreview(choice.effects);
       });
       btnBg.on('pointerout', () => {
         btnBg.setFillStyle(COLORS.titleBar);
-        btnTextObj.setColor('#58a6ff');
+        actionTextObj.setColor('#58a6ff');
         this.restoreResourcePreview();
       });
       btnBg.on('pointerdown', () => {
@@ -1094,15 +1154,23 @@ export class ExecutionScene extends Phaser.Scene {
         this.resolveEvent(i, choice);
       });
 
-      cumulativeY += btnH + 8;
+      cumulativeY += choiceH + 8;
     });
+
+    // ── Illustration strip ──
+    const stripY = cumulativeY + 12;
+    // Top border line of strip
+    this.modalGroup!.add(
+      this.add.rectangle(dx + 20, stripY, dw - 40, 1, 0x30363d).setOrigin(0)
+    );
+    this.drawEventIllustration(dx + 20, stripY + 1, dw - 40, 90, evt.category);
 
     // Keyboard shortcuts (1/2/3)
     this.input.keyboard!.once('keydown-ONE', () => this.resolveEvent(0, choices[0]));
     this.input.keyboard!.once('keydown-TWO', () => choices.length > 1 && this.resolveEvent(1, choices[1]));
     this.input.keyboard!.once('keydown-THREE', () => choices.length > 2 && this.resolveEvent(2, choices[2]));
 
-    // ── Countdown overlay (top-right corner of modal) ──
+    // ── Countdown overlay (top-right corner of title bar) ──
     const state = getState();
     const COUNTDOWN_SEC = (TUNING.EVENT_READ_WINDOW_BY_DAY as any)[state.day] || TUNING.EVENT_READ_WINDOW_SEC;
     let remaining = COUNTDOWN_SEC;
@@ -1138,6 +1206,108 @@ export class ExecutionScene extends Phaser.Scene {
       duration: 200,
       ease: 'Power2',
     });
+  }
+
+  private drawEventIllustration(x: number, y: number, w: number, h: number, category: EventDef['category']): void {
+    const addText = (tx: number, ty: number, text: string, style: Phaser.Types.GameObjects.Text.TextStyle) => {
+      const obj = this.add.text(x + tx, y + ty, text, { fontFamily: 'monospace', ...style });
+      this.modalGroup!.add(obj);
+      return obj;
+    };
+
+    const addRect = (rx: number, ry: number, rw: number, rh: number, color: number, alpha = 1) => {
+      const obj = this.add.rectangle(x + rx, y + ry, rw, rh, color).setOrigin(0).setAlpha(alpha);
+      this.modalGroup!.add(obj);
+      return obj;
+    };
+
+    const addStrokedRect = (rx: number, ry: number, rw: number, rh: number, fill: number, stroke: number) => {
+      const obj = this.add.rectangle(x + rx, y + ry, rw, rh, fill).setOrigin(0).setStrokeStyle(1, stroke);
+      this.modalGroup!.add(obj);
+      return obj;
+    };
+
+    // Background
+    addRect(0, 0, w, h, 0x0d1117);
+
+    switch (category) {
+      case 'technical': {
+        const lines = [
+          { text: '$ await llm.generate(prompt)', color: '#39d353' },
+          { text: '> Connecting... ████░░░░ 47%', color: '#39d353' },
+          { text: '> ERR: context_window_exceeded', color: '#f85149' },
+          { text: '> retry? [y/N]', color: '#39d353' },
+        ];
+        lines.forEach((line, i) => {
+          addText(8, 8 + i * 18, line.text, { fontSize: '11px', color: line.color });
+        });
+        // Blinking red rect top-right corner
+        const blink = addRect(w - 16, 4, 8, 8, 0xf85149);
+        this.tweens.add({ targets: blink, alpha: { from: 1, to: 0 }, duration: 500, yoyo: true, repeat: -1 });
+        break;
+      }
+      case 'hardware': {
+        const cx = Math.floor(w / 2);
+        addStrokedRect(cx - 50, 12, 100, 66, 0x161b22, 0x484f58);
+        addText(cx - 10, 18, '🔥', { fontSize: '18px' });
+        addText(cx - 28, 42, '87°C TEMP', { fontSize: '11px', color: '#f0883e' });
+        addText(cx - 46, 62, 'THERMAL THROTTLE ACTIVE', { fontSize: '9px', color: '#f85149' });
+        break;
+      }
+      case 'business': {
+        const barValues = [0.7, 0.8, 0.75, 0.4, 0.2];
+        const barColors = [0x3fb950, 0x3fb950, 0x3fb950, 0xf85149, 0xf85149];
+        const barW = 80;
+        const barGap = 20;
+        const chartL = Math.floor((w - (barValues.length * barW + (barValues.length - 1) * barGap)) / 2);
+        const chartB = h - 12;
+        barValues.forEach((v, i) => {
+          const bh = Math.floor((h - 28) * v);
+          const bx = chartL + i * (barW + barGap);
+          addRect(bx, chartB - bh, barW, bh, barColors[i], 0.8);
+        });
+        // Axis line
+        addRect(chartL - 4, chartB, w - chartL * 2 + 8, 1, 0x484f58);
+        addText(6, 6, 'Q4 PROJECTION', { fontSize: '10px', color: '#d29922' });
+        break;
+      }
+      case 'agent': {
+        const rows = [
+          { icon: '●', name: 'Turbo', status: 'IDLE', color: '#3fb950' },
+          { icon: '◐', name: 'Oracle', status: 'THINKING...', color: '#d29922' },
+          { icon: '✗', name: 'Gremlin', status: 'TIMEOUT', color: '#f85149' },
+        ];
+        rows.forEach((row, i) => {
+          addText(12, 16 + i * 22, `${row.icon} ${row.name}`, { fontSize: '13px', color: row.color });
+          addText(130, 16 + i * 22, row.status, { fontSize: '11px', color: row.color });
+        });
+        break;
+      }
+      case 'social': {
+        // User bubble 1
+        addRect(10, 8, 200, 22, 0x1f6feb, 0.3);
+        addText(16, 12, 'just ship it', { fontSize: '11px', color: '#79c0ff' });
+        // AI bubble
+        addRect(150, 36, 260, 22, 0x2d333b, 0.5);
+        addText(156, 40, 'I have concerns...', { fontSize: '11px', color: '#d29922' });
+        // User bubble 2
+        addRect(10, 64, 160, 22, 0x1f6feb, 0.3);
+        addText(16, 68, 'ship. it.', { fontSize: '11px', color: '#79c0ff' });
+        break;
+      }
+      case 'meta': {
+        addText(8, 8, 'PromptOS v2.1.0', { fontSize: '11px', color: '#9da5b0' });
+        addText(8, 28, 'reality.exe has stopped working', { fontSize: '11px', color: '#f85149' });
+        // Three [OK] buttons slightly misaligned as glitch effect
+        addRect(20, 54, 36, 18, 0x30363d);
+        addText(28, 57, '[OK]', { fontSize: '10px', color: '#e6edf3' });
+        addRect(62, 57, 36, 18, 0x30363d);
+        addText(70, 60, '[OK]', { fontSize: '10px', color: '#e6edf3' });
+        addRect(104, 52, 36, 18, 0x30363d);
+        addText(112, 55, '[OK]', { fontSize: '10px', color: '#e6edf3' });
+        break;
+      }
+    }
   }
 
   /** Auto-dismiss event modal with no effect (countdown expired, no choice made) */
