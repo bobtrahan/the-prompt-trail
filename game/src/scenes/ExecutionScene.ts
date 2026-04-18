@@ -725,7 +725,7 @@ export class ExecutionScene extends Phaser.Scene {
 
       // Animated focus border around the terminal window (draws the eye)
       this.terminalFocusBorder = this.add.rectangle(
-        14, 70, 824, 444, 0x000000, 0
+        14, 70, 824, 404, 0x000000, 0
       ).setOrigin(0).setDepth(47).setStrokeStyle(2, 0x58a6ff);
       this.tweens.add({
         targets: this.terminalFocusBorder,
