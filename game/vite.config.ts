@@ -9,6 +9,14 @@ export default defineConfig({
   server: {
     host: true
   },
+  build: {
+    rollupOptions: {
+      input: {
+        main: 'index.html',
+        eventReview: 'event-review.html',
+      }
+    }
+  },
   test: {
     globals: true,
     environment: 'jsdom',

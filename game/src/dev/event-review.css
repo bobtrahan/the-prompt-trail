@@ -1,0 +1,160 @@
+body {
+  background: #0d1117;
+  color: #e6edf3;
+  font-family: monospace;
+  margin: 0;
+  padding: 0;
+}
+
+#header {
+  position: sticky;
+  top: 0;
+  background: #161b22;
+  border-bottom: 1px solid #30363d;
+  padding: 12px 20px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+  z-index: 10;
+}
+
+#header h1 {
+  font-size: 13px;
+  font-weight: bold;
+  color: #e6edf3;
+  margin: 0;
+  white-space: nowrap;
+}
+
+#search {
+  background: #0d1117;
+  border: 1px solid #30363d;
+  color: #e6edf3;
+  font-family: monospace;
+  padding: 6px 10px;
+  font-size: 12px;
+  border-radius: 4px;
+  width: 220px;
+}
+
+#search:focus {
+  outline: none;
+  border-color: #58a6ff;
+}
+
+.filter-btn {
+  background: #161b22;
+  border: 1px solid #30363d;
+  color: #e6edf3;
+  font-family: monospace;
+  font-size: 12px;
+  padding: 5px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.filter-btn:hover {
+  border-color: #58a6ff;
+}
+
+.filter-btn.active {
+  background: #1f6feb;
+  border-color: #1f6feb;
+}
+
+#grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  gap: 16px;
+  padding: 20px;
+}
+
+.event-card {
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.card-titlebar {
+  background: #21262d;
+  padding: 8px 12px;
+  border-bottom: 2px solid #30363d;
+}
+
+.card-title {
+  font-size: 13px;
+  font-weight: bold;
+  color: #e6edf3;
+}
+
+.card-category {
+  font-size: 10px;
+  color: #9da5b0;
+  float: right;
+  text-transform: uppercase;
+}
+
+.card-body {
+  padding: 10px 12px;
+  font-size: 12px;
+  color: #9da5b0;
+  border-bottom: 1px solid #21262d;
+  white-space: pre-wrap;
+  line-height: 1.5;
+}
+
+.variant-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 6px 12px;
+  background: #0d1117;
+  border-bottom: 1px solid #21262d;
+}
+
+.variant-tab {
+  background: #161b22;
+  border: 1px solid #30363d;
+  color: #9da5b0;
+  font-family: monospace;
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.variant-tab:hover {
+  border-color: #58a6ff;
+}
+
+.variant-tab.active {
+  background: #30363d;
+  color: #e6edf3;
+}
+
+.card-choices {
+  padding: 8px 12px;
+}
+
+.choice {
+  margin-bottom: 6px;
+  padding: 6px 8px;
+  background: #0d1117;
+  border: 1px solid #21262d;
+  border-radius: 2px;
+}
+
+.choice-action {
+  font-size: 12px;
+  color: #58a6ff;
+}
+
+.choice-outcome {
+  font-size: 11px;
+  margin-top: 3px;
+}
+
+.hidden {
+  display: none;
+}
