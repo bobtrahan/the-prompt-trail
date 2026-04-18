@@ -1,5 +1,6 @@
 import { EVENTS } from '../data/events';
 import type { EventDef, EventChoice } from '../data/events';
+import { ROLL_RESOLUTIONS } from '../data/rollResolutions';
 import { buildOutcomeParts } from '../utils/outcomeFormatting';
 import type { OutcomePart } from '../utils/outcomeFormatting';
 
@@ -11,6 +12,101 @@ interface EventPatch {
   choiceNotes?: Record<number, string>;           // free-text comments on default choices
   variantChoiceTexts?: Record<string, Record<number, string>>;
   variantChoiceNotes?: Record<string, Record<number, string>>;
+}
+
+type FlagStatus = 'wired' | 'engine' | 'chains' | 'direct' | 'removed';
+
+interface FlagInfo {
+  status: FlagStatus;
+  note: string;
+}
+
+const FLAG_GLOSSARY: Record<string, FlagInfo> = {
+  'cloud-access-frozen': { status: 'wired', note: 'Blocks requiresCloud events from firing' },
+  'broke': { status: 'wired', note: 'Triggers story branch in ExecutionScene' },
+  'cloud-autosave': { status: 'engine', note: 'Will set hasBackupProtection = true' },
+  'liquid-nitrogen': { status: 'engine', note: 'Will block hardware-overheating events' },
+  'ups-installed': { status: 'engine', note: 'Will block power-flickered events' },
+  'model-cost-triple': { status: 'engine', note: 'Will multiply daily model cost ×3' },
+  'lose-progress-all': { status: 'engine', note: 'Will reset state.progress to 0' },
+  'lose-progress-chunk': { status: 'engine', note: 'Will reduce state.progress by 25%' },
+  'agent-reset': { status: 'engine', note: 'Will reset model to standard' },
+  'email-nuke-let-ride': { status: 'chains', note: 'Will chain → "The Replies Keep Coming"' },
+  'crypto-investigate': { status: 'chains', note: 'Will chain → "What the Logs Revealed"' },
+  'check-logs-reveal': { status: 'chains', note: 'Will chain → "Logs Don\'t Lie"' },
+  'cto-remembers': { status: 'chains', note: 'Will chain → "The CTO Reaches Out"' },
+  'consulting-client': { status: 'chains', note: 'Will chain → "Client Wants More"' },
+  'quality-boost-5pct': { status: 'direct', note: 'Becoming reputation: +5' },
+  'quality-boost-20pct': { status: 'direct', note: 'Becoming reputation: +10' },
+  'quality-boost-30pct': { status: 'direct', note: 'Becoming reputation: +15' },
+  'quality-drop': { status: 'direct', note: 'Becoming reputation: -10' },
+  'quality-drop-10pct': { status: 'direct', note: 'Becoming reputation: -10' },
+  'quality-drop-15pct': { status: 'direct', note: 'Becoming reputation: -15' },
+  'manual-progress-10pct': { status: 'direct', note: 'Becoming reputation: +5' },
+  'manual-progress-25pct': { status: 'direct', note: 'Becoming reputation: +10' },
+  'morale-up': { status: 'direct', note: 'Becoming reputation: +5' },
+  'morale-down': { status: 'direct', note: 'Becoming reputation: -5' },
+  'advisor-quality-boost': { status: 'direct', note: 'Becoming reputation: +10' },
+  'fomo-sad': { status: 'direct', note: 'Becoming tomorrowTimer: -9s' },
+  'informed-model-choice': { status: 'direct', note: 'Becoming tomorrowTimer: +9s' },
+  'soft-launch': { status: 'direct', note: 'Becoming reputation: +5' },
+  'art-wallpaper': { status: 'direct', note: 'Becoming reputation: +3' },
+  'art-merch': { status: 'direct', note: 'Becoming nightBonus: +$50' },
+  'branded-hoodie': { status: 'direct', note: 'Becoming reputation: +5' },
+  'bird-mascot': { status: 'direct', note: 'Becoming tomorrowTimer: +6s' },
+  'web3-token': { status: 'direct', note: 'Becoming nightBonus: +$25' },
+  'celebration-morale': { status: 'direct', note: 'Becoming tomorrowTimer: +9s' },
+  'unhinged-mode': { status: 'direct', note: 'Becoming reputation: -5' },
+  'boss-watching': { status: 'direct', note: 'Becoming tomorrowTimer: -6s' },
+  'work-offline': { status: 'direct', note: 'Redundant with agentSpeed — dropping flag' },
+  'local-model': { status: 'direct', note: 'Redundant with modelSwitch — dropping flag' },
+  'agent-a-slower': { status: 'removed', note: 'No per-agent speed system — dropping' },
+  'agent-b-slower': { status: 'removed', note: 'No per-agent speed system — dropping' },
+  'finance-meeting-pending': { status: 'removed', note: 'Replacing with tomorrowTimer: -6s' },
+  'mandatory-meeting-tomorrow': { status: 'removed', note: 'Replacing with tomorrowTimer: -9s' },
+  'double-events-tomorrow': { status: 'removed', note: 'Not implementable — replacing with reputation: -10' },
+  'viral-notification-spam': { status: 'removed', note: 'Replacing with tomorrowTimer: -6s' },
+  'update-notification-spam': { status: 'removed', note: 'Already replaced with hardware: -15' },
+  'model-intel': { status: 'removed', note: 'Replacing with reputation: +5' },
+  'model-unlocked-standard': { status: 'removed', note: 'Replacing with modelSwitch: standard' },
+  'model-switch-cost': { status: 'removed', note: 'Redundant — budget effect already present' },
+  'coworker-drama-30pct': { status: 'removed', note: 'No follow-up event — dropping' },
+  'rage-refresh': { status: 'removed', note: 'No follow-up event — dropping' },
+};
+
+const FLAG_STATUS_COLORS: Record<FlagStatus, string> = {
+  wired: '#3fb950',
+  engine: '#58a6ff',
+  chains: '#bc8cff',
+  direct: '#d29922',
+  removed: '#f85149',
+};
+
+const FLAG_STATUS_ICONS: Record<FlagStatus, string> = {
+  wired: '✅',
+  engine: '🔧',
+  chains: '🔗',
+  direct: '💬',
+  removed: '🗑',
+};
+
+const FLAG_STATUS_LABELS: Record<FlagStatus, string> = {
+  wired: '✅ Wired',
+  engine: '🔧 Engine (planned)',
+  chains: '🔗 Chains (planned)',
+  direct: '💬 Direct (converting)',
+  removed: '🗑 Removed (converting)',
+};
+
+const FLAG_STATUS_ORDER: FlagStatus[] = ['wired', 'engine', 'chains', 'direct', 'removed'];
+
+for (const key of Object.keys(ROLL_RESOLUTIONS)) {
+  if (!FLAG_GLOSSARY[key]) {
+    FLAG_GLOSSARY[key] = {
+      status: 'wired',
+      note: `Roll: ${Math.round(ROLL_RESOLUTIONS[key].chance * 100)}% chance — see rollResolutions.ts`,
+    };
+  }
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -32,6 +128,8 @@ const changes: Map<string, EventPatch> = new Map();
 let changesBadge: HTMLSpanElement;
 let copyAllBtn: HTMLButtonElement;
 let editToggleBtn: HTMLButtonElement;
+let flagsToggleBtn: HTMLButtonElement;
+let flagPanel: HTMLDivElement;
 
 function escapeHtml(s: string): string {
   return s
@@ -44,6 +142,13 @@ function escapeHtml(s: string): string {
 function buildEffectsHTML(choice: EventChoice): string {
   if (choice.effects.length === 0) return '<em style="color:#484f58">no effects</em>';
   return choice.effects.map(e => {
+    if (e.type === 'flag') {
+      const flagKey = String(e.value);
+      const info = FLAG_GLOSSARY[flagKey];
+      const chipColor = info ? FLAG_STATUS_COLORS[info.status] : '#484f58';
+      const chipIcon = info ? FLAG_STATUS_ICONS[info.status] : '❓';
+      return `<span class="effect-tag flag-chip" style="border-color:${chipColor};color:${chipColor}" title="${escapeHtml(info?.note ?? 'unknown flag')}">${chipIcon} flag: ${escapeHtml(flagKey)}</span>`;
+    }
     const val = typeof e.value === 'number'
       ? (e.value >= 0 ? `+${e.value}` : `${e.value}`)
       : String(e.value);
@@ -411,6 +516,31 @@ function applyFilter(): void {
   });
 }
 
+function buildFlagPanelHTML(): string {
+  const entries = Object.entries(FLAG_GLOSSARY).sort(([a], [b]) => a.localeCompare(b));
+
+  return FLAG_STATUS_ORDER.map((status) => {
+    const flags = entries.filter(([, info]) => info.status === status);
+    if (flags.length === 0) return '';
+
+    const rows = flags.map(([flag, info]) => {
+      const color = FLAG_STATUS_COLORS[info.status];
+      const icon = FLAG_STATUS_ICONS[info.status];
+      return `<div class="flag-panel-row"><span class="flag-panel-name" style="color:${color}">${icon} ${escapeHtml(flag)}</span><span class="flag-panel-note"> — ${escapeHtml(info.note)}</span></div>`;
+    }).join('');
+
+    return `<div class="flag-panel-group">
+      <div class="flag-panel-group-title">${FLAG_STATUS_LABELS[status]}</div>
+      <div class="flag-panel-grid">${rows}</div>
+    </div>`;
+  }).join('');
+}
+
+function toggleFlagPanel(): void {
+  const isHidden = flagPanel.classList.toggle('hidden');
+  flagsToggleBtn.classList.toggle('active', !isHidden);
+}
+
 function init(): void {
   const app = document.getElementById('app')!;
 
@@ -434,11 +564,11 @@ function init(): void {
 
   // Category filter buttons
   const allBtn = document.createElement('button');
-  allBtn.className = 'filter-btn active';
+  allBtn.className = 'filter-btn category-filter-btn active';
   allBtn.textContent = 'All';
   allBtn.addEventListener('click', () => {
     activeCategory = 'all';
-    header.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    header.querySelectorAll('.category-filter-btn').forEach(b => b.classList.remove('active'));
     allBtn.classList.add('active');
     applyFilter();
   });
@@ -446,11 +576,11 @@ function init(): void {
 
   for (const cat of CATEGORIES) {
     const btn = document.createElement('button');
-    btn.className = 'filter-btn';
+    btn.className = 'filter-btn category-filter-btn';
     btn.textContent = cat;
     btn.addEventListener('click', () => {
       activeCategory = cat;
-      header.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      header.querySelectorAll('.category-filter-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       applyFilter();
     });
@@ -463,6 +593,12 @@ function init(): void {
   editToggleBtn.textContent = '✏️ Edit Mode';
   editToggleBtn.addEventListener('click', toggleEditMode);
   header.appendChild(editToggleBtn);
+
+  flagsToggleBtn = document.createElement('button');
+  flagsToggleBtn.className = 'filter-btn flags-toggle-btn';
+  flagsToggleBtn.textContent = '📖 Flags';
+  flagsToggleBtn.addEventListener('click', toggleFlagPanel);
+  header.appendChild(flagsToggleBtn);
 
   // Changes badge (amber, hidden until edits exist)
   changesBadge = document.createElement('span');
@@ -481,6 +617,12 @@ function init(): void {
   header.appendChild(copyAllBtn);
 
   app.appendChild(header);
+
+  flagPanel = document.createElement('div');
+  flagPanel.id = 'flag-panel';
+  flagPanel.className = 'hidden';
+  flagPanel.innerHTML = buildFlagPanelHTML();
+  app.appendChild(flagPanel);
 
   // Input event delegation for all contenteditable fields and note textareas
   // Notes are always active (no edit mode gate) so you can annotate without toggling edit mode
