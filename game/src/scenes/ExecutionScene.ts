@@ -1247,11 +1247,18 @@ export class ExecutionScene extends Phaser.Scene {
         break;
       }
       case 'hardware': {
-        const cx = Math.floor(w / 2);
-        addStrokedRect(cx - 50, 12, 100, 66, 0x161b22, 0x484f58);
-        addText(cx - 10, 18, '🔥', { fontSize: '18px' });
-        addText(cx - 28, 42, '87°C TEMP', { fontSize: '11px', color: '#f0883e' });
-        addText(cx - 46, 62, 'THERMAL THROTTLE ACTIVE', { fontSize: '9px', color: '#f85149' });
+        // Wide chip diagram spanning the strip
+        addStrokedRect(8, 8, w - 16, h - 16, 0x161b22, 0x484f58);
+        // CPU label top-left
+        addText(18, 14, '▣ CPU', { fontSize: '10px', color: '#9da5b0' });
+        // Temp reading center-left
+        addText(18, 34, '🔥  87°C', { fontSize: '14px', color: '#f0883e' });
+        // Heat bar (wide)
+        addRect(18, 58, w - 36, 8, 0x21262d);
+        addRect(18, 58, Math.floor((w - 36) * 0.87), 8, 0xf85149, 0.9); // 87% filled → red
+        // Throttle warning right side
+        addText(w - 200, 14, 'THERMAL THROTTLE ACTIVE', { fontSize: '10px', color: '#f85149' });
+        addText(w - 200, 34, 'performance: −40%', { fontSize: '10px', color: '#f0883e' });
         break;
       }
       case 'business': {
