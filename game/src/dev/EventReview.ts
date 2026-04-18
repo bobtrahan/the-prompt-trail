@@ -2,6 +2,12 @@ import { EVENTS } from '../data/events';
 import type { EventDef, EventChoice } from '../data/events';
 import { buildOutcomeLine, outcomeLineColor } from '../utils/outcomeFormatting';
 
+interface EventPatch {
+  id: string;
+  body?: string;
+  choiceTexts?: Record<number, string>;
+}
+
 const CATEGORY_COLORS: Record<string, string> = {
   technical: '#f85149',
   business:  '#d29922',
@@ -15,17 +21,12 @@ const CATEGORIES = ['technical', 'business', 'agent', 'hardware', 'social', 'met
 
 let activeCategory = 'all';
 let searchQuery = '';
+let editMode = false;
+const changes: Map<string, EventPatch> = new Map();
 
-function buildChoicesHTML(choices: EventChoice[]): string {
-  return choices.map((choice, i) => {
-    const outcomeLine = buildOutcomeLine(choice.effects);
-    const color = outcomeLineColor(choice.effects);
-    return `<div class="choice">
-      <div class="choice-action">[${i + 1}] ${escapeHtml(choice.text)}</div>
-      <div class="choice-outcome" style="color:${color}">${escapeHtml(outcomeLine)}</div>
-    </div>`;
-  }).join('');
-}
+let changesBadge: HTMLSpanElement;
+let copyAllBtn: HTMLButtonElement;
+let editToggleBtn: HTMLButtonElement;
 
 function escapeHtml(s: string): string {
   return s
@@ -33,6 +34,163 @@ function escapeHtml(s: string): string {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
+}
+
+function buildChoicesHTML(choices: EventChoice[]): string {
+  return choices.map((choice, i) => {
+    const outcomeLine = buildOutcomeLine(choice.effects);
+    const color = outcomeLineColor(choice.effects);
+    return `<div class="choice">
+      <div class="choice-action"><span class="choice-idx">[${i + 1}]</span>&nbsp;<span class="choice-text" data-choice-index="${i}" data-original="${escapeHtml(choice.text)}">${escapeHtml(choice.text)}</span></div>
+      <div class="choice-outcome" style="color:${color}">${escapeHtml(outcomeLine)}</div>
+    </div>`;
+  }).join('');
+}
+
+function buildPatchString(patch: EventPatch): string {
+  const lines: string[] = [`EVENT: ${patch.id}`];
+  if (patch.body !== undefined) {
+    lines.push(`  body: "${patch.body}"`);
+  }
+  if (patch.choiceTexts) {
+    const indices = Object.keys(patch.choiceTexts).map(Number).sort((a, b) => a - b);
+    for (const idx of indices) {
+      lines.push(`  choice[${idx}].text: "${patch.choiceTexts[idx]}"`);
+    }
+  }
+  return lines.join('\n');
+}
+
+function hasRealChanges(patch: EventPatch): boolean {
+  return patch.body !== undefined ||
+    (patch.choiceTexts !== undefined && Object.keys(patch.choiceTexts).length > 0);
+}
+
+function updateCardUI(card: HTMLElement): void {
+  const eventId = card.dataset.id!;
+  const patch = changes.get(eventId);
+  const hasPatch = !!patch && hasRealChanges(patch);
+
+  card.classList.toggle('card-changed', hasPatch);
+
+  const copyBtn = card.querySelector<HTMLButtonElement>('.copy-patch-btn')!;
+  copyBtn.classList.toggle('hidden', !(editMode && hasPatch));
+}
+
+function updateHeader(): void {
+  const total = Array.from(changes.values()).filter(hasRealChanges).length;
+
+  if (total > 0) {
+    changesBadge.textContent = `${total} change${total === 1 ? '' : 's'}`;
+    changesBadge.classList.remove('hidden');
+    copyAllBtn.classList.toggle('hidden', !editMode);
+  } else {
+    changesBadge.classList.add('hidden');
+    copyAllBtn.classList.add('hidden');
+  }
+}
+
+function getOrCreatePatch(eventId: string): EventPatch {
+  if (!changes.has(eventId)) {
+    changes.set(eventId, { id: eventId });
+  }
+  return changes.get(eventId)!;
+}
+
+function onBodyInput(card: HTMLElement, bodyEl: HTMLElement): void {
+  const eventId = card.dataset.id!;
+  const original = bodyEl.dataset.original ?? '';
+  const current = bodyEl.textContent ?? '';
+  const patch = getOrCreatePatch(eventId);
+
+  if (current !== original) {
+    patch.body = current;
+    bodyEl.classList.add('dirty-field');
+  } else {
+    delete patch.body;
+    bodyEl.classList.remove('dirty-field');
+  }
+
+  updateCardUI(card);
+  updateHeader();
+}
+
+function onChoiceInput(card: HTMLElement, span: HTMLElement): void {
+  const eventId = card.dataset.id!;
+  const idx = parseInt(span.dataset.choiceIndex ?? '0', 10);
+  const original = span.dataset.original ?? '';
+  const current = span.textContent ?? '';
+  const patch = getOrCreatePatch(eventId);
+
+  if (current !== original) {
+    if (!patch.choiceTexts) patch.choiceTexts = {};
+    patch.choiceTexts[idx] = current;
+    span.classList.add('dirty-field');
+  } else {
+    if (patch.choiceTexts) {
+      delete patch.choiceTexts[idx];
+      if (Object.keys(patch.choiceTexts).length === 0) {
+        delete patch.choiceTexts;
+      }
+    }
+    span.classList.remove('dirty-field');
+  }
+
+  updateCardUI(card);
+  updateHeader();
+}
+
+function enableEditMode(): void {
+  document.querySelectorAll<HTMLElement>('.event-card').forEach(card => {
+    const body = card.querySelector<HTMLElement>('.card-body');
+    if (body) body.contentEditable = 'true';
+
+    const defaultPanel = card.querySelector<HTMLElement>('.card-choices[data-panel="default"]');
+    if (defaultPanel) {
+      defaultPanel.querySelectorAll<HTMLElement>('.choice-text').forEach(span => {
+        span.contentEditable = 'true';
+      });
+    }
+
+    updateCardUI(card);
+  });
+}
+
+function disableEditMode(): void {
+  document.querySelectorAll<HTMLElement>('.event-card').forEach(card => {
+    const body = card.querySelector<HTMLElement>('.card-body');
+    if (body) body.contentEditable = 'false';
+
+    card.querySelectorAll<HTMLElement>('.choice-text').forEach(span => {
+      span.contentEditable = 'false';
+    });
+
+    updateCardUI(card);
+  });
+  copyAllBtn.classList.add('hidden');
+}
+
+function toggleEditMode(): void {
+  editMode = !editMode;
+  editToggleBtn.textContent = editMode ? '👁 View Mode' : '✏️ Edit Mode';
+
+  if (editMode) {
+    enableEditMode();
+  } else {
+    disableEditMode();
+  }
+  updateHeader();
+}
+
+async function copyToClipboard(text: string, btn: HTMLButtonElement): Promise<void> {
+  try {
+    await navigator.clipboard.writeText(text);
+    const original = btn.textContent ?? '';
+    btn.textContent = '✓ Copied!';
+    setTimeout(() => { btn.textContent = original; }, 1500);
+  } catch {
+    // clipboard not available
+  }
 }
 
 function buildCard(event: EventDef): HTMLElement {
@@ -56,6 +214,7 @@ function buildCard(event: EventDef): HTMLElement {
   const body = document.createElement('div');
   body.className = 'card-body';
   body.textContent = event.body;
+  body.dataset.original = event.body;
   card.appendChild(body);
 
   const hasVariants = event.classVariants && Object.keys(event.classVariants).length > 0;
@@ -82,13 +241,14 @@ function buildCard(event: EventDef): HTMLElement {
     }
     card.appendChild(tabs);
 
-    // Choices panels — one per variant + default
+    // Default choices panel
     const defaultPanel = document.createElement('div');
     defaultPanel.className = 'card-choices';
     defaultPanel.dataset.panel = 'default';
     defaultPanel.innerHTML = buildChoicesHTML(event.choices);
     card.appendChild(defaultPanel);
 
+    // Variant choices panels
     for (const key of variantKeys) {
       const variantChoices = event.classVariants[key as keyof typeof event.classVariants];
       const mergedChoices = variantChoices?.choices
@@ -114,27 +274,34 @@ function buildCard(event: EventDef): HTMLElement {
       target.classList.add('active');
       card.querySelectorAll('.card-choices').forEach(p => {
         const el = p as HTMLElement;
-        if (el.dataset.panel === variant) {
-          el.classList.remove('hidden');
-        } else {
-          el.classList.add('hidden');
-        }
+        el.classList.toggle('hidden', el.dataset.panel !== variant);
       });
     });
   } else {
-    // No variants — single choices panel
+    // No variants — single default panel
     const choicesPanel = document.createElement('div');
     choicesPanel.className = 'card-choices';
+    choicesPanel.dataset.panel = 'default';
     choicesPanel.innerHTML = buildChoicesHTML(event.choices);
     card.appendChild(choicesPanel);
   }
+
+  // Copy Patch button — hidden until this card has changes in edit mode
+  const copyPatchBtn = document.createElement('button');
+  copyPatchBtn.className = 'copy-patch-btn hidden';
+  copyPatchBtn.textContent = '📋 Copy Patch';
+  copyPatchBtn.addEventListener('click', () => {
+    const patch = changes.get(event.id);
+    if (!patch || !hasRealChanges(patch)) return;
+    void copyToClipboard(buildPatchString(patch), copyPatchBtn);
+  });
+  card.appendChild(copyPatchBtn);
 
   return card;
 }
 
 function applyFilter(): void {
-  const cards = document.querySelectorAll<HTMLElement>('.event-card');
-  cards.forEach(card => {
+  document.querySelectorAll<HTMLElement>('.event-card').forEach(card => {
     const matchesCategory = activeCategory === 'all' || card.dataset.category === activeCategory;
     const query = searchQuery.toLowerCase();
     const matchesSearch = !query
@@ -166,7 +333,7 @@ function init(): void {
   });
   header.appendChild(search);
 
-  // Filter buttons
+  // Category filter buttons
   const allBtn = document.createElement('button');
   allBtn.className = 'filter-btn active';
   allBtn.textContent = 'All';
@@ -191,7 +358,44 @@ function init(): void {
     header.appendChild(btn);
   }
 
+  // Edit mode toggle
+  editToggleBtn = document.createElement('button');
+  editToggleBtn.className = 'filter-btn edit-toggle-btn';
+  editToggleBtn.textContent = '✏️ Edit Mode';
+  editToggleBtn.addEventListener('click', toggleEditMode);
+  header.appendChild(editToggleBtn);
+
+  // Changes badge (amber, hidden until edits exist)
+  changesBadge = document.createElement('span');
+  changesBadge.className = 'changes-badge hidden';
+  header.appendChild(changesBadge);
+
+  // Copy All Changes (hidden until edits exist and in edit mode)
+  copyAllBtn = document.createElement('button');
+  copyAllBtn.className = 'filter-btn copy-all-btn hidden';
+  copyAllBtn.textContent = '📋 Copy All Changes';
+  copyAllBtn.addEventListener('click', () => {
+    const patches = Array.from(changes.values()).filter(hasRealChanges);
+    const text = patches.map(buildPatchString).join('\n\n');
+    void copyToClipboard(text, copyAllBtn);
+  });
+  header.appendChild(copyAllBtn);
+
   app.appendChild(header);
+
+  // Input event delegation for all contenteditable fields
+  document.addEventListener('input', (e) => {
+    if (!editMode) return;
+    const target = e.target as HTMLElement;
+    const card = target.closest<HTMLElement>('.event-card');
+    if (!card) return;
+
+    if (target.classList.contains('card-body')) {
+      onBodyInput(card, target);
+    } else if (target.classList.contains('choice-text')) {
+      onChoiceInput(card, target);
+    }
+  });
 
   // Grid
   const grid = document.createElement('div');

@@ -158,3 +158,94 @@ body {
 .hidden {
   display: none;
 }
+
+/* ── Edit Mode ─────────────────────────────────────────────────── */
+
+.edit-toggle-btn {
+  border-color: #3fb950;
+  color: #3fb950;
+  margin-left: 8px;
+}
+
+.edit-toggle-btn:hover {
+  border-color: #3fb950;
+  background: #0f2a1a;
+}
+
+.changes-badge {
+  font-family: monospace;
+  font-size: 11px;
+  font-weight: bold;
+  color: #d29922;
+  background: #2a1e00;
+  border: 1px solid #d29922;
+  padding: 3px 8px;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+
+.copy-all-btn {
+  border-color: #d29922;
+  color: #d29922;
+}
+
+.copy-all-btn:hover {
+  border-color: #d29922;
+  background: #2a1e00;
+}
+
+/* Editable choice text span */
+.choice-text[contenteditable="true"] {
+  outline: none;
+  border: 1px dashed #30363d;
+  padding: 1px 3px;
+  border-radius: 2px;
+  cursor: text;
+  display: inline;
+}
+
+.choice-text[contenteditable="true"]:focus {
+  border-color: #58a6ff;
+}
+
+/* Editable card body */
+.card-body[contenteditable="true"] {
+  border: 1px dashed #30363d;
+  cursor: text;
+  outline: none;
+}
+
+.card-body[contenteditable="true"]:focus {
+  border-color: #58a6ff;
+}
+
+/* Dirty (changed from original) field */
+.dirty-field {
+  background: #1a2332 !important;
+}
+
+/* Card that has at least one pending change */
+.card-changed {
+  border-left: 2px solid #d29922 !important;
+}
+
+/* Copy Patch button — bottom-right of card */
+.copy-patch-btn {
+  display: block;
+  width: fit-content;
+  margin: 6px 12px 10px auto;
+  padding: 5px 10px;
+  background: #0d1117;
+  border: 1px solid #30363d;
+  color: #d29922;
+  font-family: monospace;
+  font-size: 11px;
+  cursor: pointer;
+  border-radius: 3px;
+}
+
+.copy-patch-btn:hover {
+  border-color: #d29922;
+  background: #1a1500;
+}
+
