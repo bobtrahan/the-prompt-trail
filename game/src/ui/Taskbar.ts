@@ -62,14 +62,14 @@ export class Taskbar {
     this.container.add([sep1, sep2]);
 
     // Right side — indicators
-    this.budgetText = scene.add.text(GAME_WIDTH - 460, 8, '', style);
-    this.healthText = scene.add.text(GAME_WIDTH - 320, 8, '', style);
-    this.repText = scene.add.text(GAME_WIDTH - 210, 8, '', style);
+    this.budgetText = scene.add.text(GAME_WIDTH - 620, 8, '', style);
+    this.healthText = scene.add.text(GAME_WIDTH - 490, 8, '', style);
+    this.repText = scene.add.text(GAME_WIDTH - 360, 8, '', style);
     
     // System Tray
-    const trayWifi = scene.add.text(GAME_WIDTH - 145, 8, '📡', style);
-    const trayBattery = scene.add.text(GAME_WIDTH - 120, 8, '🔋', style);
-    const trayClock = scene.add.text(GAME_WIDTH - 95, 8, this._getTimeString(), style);
+    const trayWifi = scene.add.text(GAME_WIDTH - 185, 8, '📡', style);
+    const trayBattery = scene.add.text(GAME_WIDTH - 160, 8, '🔋', style);
+    const trayClock = scene.add.text(GAME_WIDTH - 135, 8, this._getTimeString(), style);
     
     // Update tray clock every minute
     scene.time.addEvent({
