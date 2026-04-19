@@ -363,7 +363,7 @@ export class BugHuntScene extends Phaser.Scene {
     // ── Input (raw DOM — bypasses Phaser keyboard conflicts) ─────────────
     this.keyDownHandler = (e: KeyboardEvent) => {
       const k = e.key.toLowerCase();
-      if (['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright','enter',' '].includes(k)) {
+      if (['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright',' '].includes(k)) {
         e.preventDefault();
       }
       this.keysDown.add(k);

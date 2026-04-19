@@ -30,7 +30,7 @@ const MODE_OPTIONS: ModeOption[] = [
     key: 'ai',
     title: 'Automated Copilot',
     icon: '🤖',
-    subtitle: 'Point-and-click bug triage for the modern dev.',
+    subtitle: 'Easier — point-and-click targeting, lower earnings ceiling.',
     difficulty: 'Low Effort',
     howItPlays: 'Click bugs as they appear.\nAI-assisted targeting — nearly\nimpossible to miss.',
     targetScene: 'BugBounty',
