@@ -86,6 +86,7 @@ interface HuntBug {
   x: number;
   y: number;
   container: Phaser.GameObjects.Container;
+  label: Phaser.GameObjects.Text;
   hitRadius: number;
   spawnedAt: number;
   alive: boolean;
@@ -98,6 +99,7 @@ interface HuntBug {
   invisible: boolean;   // heisen: currently dodging
   invisibleUntil: number;
   growScale: number;    // memleak: current scale
+  hitScale: number;     // memleak: first-hit punch scale
   // Despawn warning
   despawnWarned: boolean;
   despawnFlashTimer: Phaser.Time.TimerEvent | null;
@@ -747,6 +749,7 @@ export class BugHuntScene extends Phaser.Scene {
     container: Phaser.GameObjects.Container;
     bgGraphics: Phaser.GameObjects.Graphics;
     borderRect: Phaser.GameObjects.Rectangle;
+    label: Phaser.GameObjects.Text;
   } {
     const def = BUG_DEFS[type];
     const hw = CHIP_W / 2;
@@ -781,7 +784,7 @@ export class BugHuntScene extends Phaser.Scene {
       ease: 'Sine.easeInOut',
     });
 
-    return { container, bgGraphics, borderRect };
+    return { container, bgGraphics, borderRect, label: labelText };
   }
 
   // ── Bug spawning ──────────────────────────────────────────────────────────
@@ -832,7 +835,7 @@ export class BugHuntScene extends Phaser.Scene {
     const hitRadius = HIT_RADIUS[type];
     const pos = this.spawnEdgePosition(hitRadius);
 
-    const { container, bgGraphics, borderRect } = this.buildBugChip(type);
+    const { container, bgGraphics, borderRect, label } = this.buildBugChip(type);
     container.setPosition(pos.x, pos.y).setDepth(15).setScale(0);
 
     this.tweens.add({
@@ -850,6 +853,7 @@ export class BugHuntScene extends Phaser.Scene {
       x: pos.x,
       y: pos.y,
       container,
+      label,
       hitRadius,
       spawnedAt: time,
       alive: true,
@@ -862,6 +866,7 @@ export class BugHuntScene extends Phaser.Scene {
       invisible: false,
       invisibleUntil: 0,
       growScale: 1,
+      hitScale: 1,
       despawnWarned: false,
       despawnFlashTimer: null,
       bgGraphics,
@@ -1061,7 +1066,7 @@ export class BugHuntScene extends Phaser.Scene {
           this.moveBugLinear(bug, MEMLEAK_SPEED, dt);
           const growFrac  = Math.min(age / 5000, 1);
           bug.growScale   = 1 + growFrac;
-          bug.container.setScale(bug.growScale);
+          bug.container.setScale(bug.growScale * bug.hitScale);
           if (!bug.cracked) {
             const shifted = lerpColor(def.color, def.dotColor, growFrac * 0.6);
             drawChipBg(bug.bgGraphics, shifted, 0.85 + growFrac * 0.1);
@@ -1256,6 +1261,33 @@ export class BugHuntScene extends Phaser.Scene {
 
     if (bug.type === 'memleak' && !bug.cracked) {
       bug.cracked = true;
+      bug.label.setStyle({ color: '#ff6600' });
+      bug.borderRect.setStrokeStyle(2, 0xff6600, 0.9);
+      drawChipBg(bug.bgGraphics, 0x6e2410, 0.95);
+
+      const hitText = this.add.text(bug.x, bug.y - 10, 'HIT', {
+        fontFamily: 'monospace',
+        fontSize: '14px',
+        color: '#ff4444',
+      }).setOrigin(0.5).setDepth(30);
+
+      this.tweens.add({
+        targets: hitText,
+        y: hitText.y - 30,
+        alpha: 0,
+        duration: 600,
+        ease: 'Quad.easeOut',
+        onComplete: () => hitText.destroy(),
+      });
+
+      this.tweens.add({
+        targets: bug,
+        hitScale: 1.4,
+        duration: 100,
+        yoyo: true,
+        ease: 'Power2',
+      });
+
       // Flicker the chip background to signal damage
       this.tweens.add({
         targets: bug.bgGraphics,
