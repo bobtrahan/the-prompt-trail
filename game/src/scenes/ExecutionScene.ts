@@ -1425,6 +1425,7 @@ export class ExecutionScene extends Phaser.Scene {
       });
     } else {
       // If it was an auto-resolve, we might need to refresh UI anyway
+      this.typingEngine.resume();
       this.taskbar.refresh();
     }
   }
