@@ -121,11 +121,12 @@ export class EventEngine {
     }
 
     // Backup protection
-    const causesLoss = effects.some(e => 
-      (e.type === 'budget' && (e.value as number) < 0) || 
+    const causesLoss = effects.some(e =>
+      (e.type === 'budget' && (e.value as number) < 0) ||
       (e.type === 'hardware' && (e.value as number) < 0) ||
       (e.type === 'reputation' && (e.value as number) < 0) ||
-      (e.type === 'time' && (e.value as number) < 0)
+      (e.type === 'time' && (e.value as number) < 0) ||
+      (e.type === 'flag' && (e.value === 'lose-progress-all' || e.value === 'lose-progress-chunk'))
     );
 
     if (causesLoss && state.hasBackupProtection) {
@@ -184,6 +185,12 @@ export class EventEngine {
           } else if (flagName === 'agent-reset') {
             state.model = 'free';
             logs.push('> 🔄 Agent reset — model reverted to free tier');
+          } else if (flagName === 'lose-progress-all') {
+            state.loseProgressSignal = 'all';
+            logs.push('> ⚠️ Progress lost — all work wiped!');
+          } else if (flagName === 'lose-progress-chunk') {
+            state.loseProgressSignal = 0.25;
+            logs.push('> ⚠️ Progress chunk lost (-25%)');
           }
           break;
         }
