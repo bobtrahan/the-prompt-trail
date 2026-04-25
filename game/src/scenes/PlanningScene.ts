@@ -12,7 +12,6 @@ import { EconomySystem } from '../systems/EconomySystem';
 import { AgentSystem } from '../systems/AgentSystem';
 import { ScoringSystem } from '../systems/ScoringSystem';
 import { AGENT_ROSTER, SYNERGY_PAIRS, CLASH_PAIRS } from '../data/agents';
-import { BASE_TIMER_SECONDS } from '../utils/constants';
 import AudioManager from '../systems/AudioManager';
 import { drawWallpaper } from '../ui/DesktopWallpaper';
 
@@ -422,7 +421,10 @@ export class PlanningScene extends Phaser.Scene {
     const state = getState();
 
     // ─ Timer row ─
-    const baseTimer = state.playerClass === 'corporateDev' ? TUNING.CORP_TIMER_SECONDS : BASE_TIMER_SECONDS;
+    const dayBase = (TUNING.TIMER_BY_DAY as Record<number, number>)[state.day] ?? TUNING.BASE_TIMER_SECONDS;
+    const baseTimer = state.playerClass === 'corporateDev'
+      ? Math.round(dayBase * TUNING.CORP_TIMER_RATIO)
+      : dayBase;
     const agentSpeedMod = AgentSystem.getSpeedModifier(this.selectedAgentIds);
     const agentSpeedSec = Math.round(baseTimer * agentSpeedMod);
     const strategyBonus = this.lastStrategyTimeBonus;

@@ -17,10 +17,13 @@ export const TUNING = {
   //   Days 8-13 → tight   (competent typing required)
   // Corporate Dev always gets ~49% of these values (see CORP_TIMER_RATIO).
   TIMER_BY_DAY: {
-    1: 75, 2: 72, 3: 70,          // generous
-    4: 58, 5: 55, 6: 52, 7: 50,   // moderate
-    8: 44, 9: 42, 10: 40,         // pressure
-    11: 38, 12: 36, 13: 34,       // brutal
+    1: 40, 2: 40, 3: 38,           // tutorial — generous
+    4: 42,                          // easy — first real prompts
+    5: 50, 6: 50,                   // moderate — pressure building
+    7: 60, 8: 55,                   // pressure — tight for 60 WPM
+    9: 65, 10: 88,                  // hard — need good typing
+    11: 110, 12: 120,               // brutal — every second counts
+    13: 60,                         // impossible (intentional) — dramatic wall
   } as Record<number, number>,
 
   // Corporate Dev timer ratio (relative to base-day timer)
@@ -49,7 +52,7 @@ export const TUNING = {
   EVENT_INTERVAL_MS: 9000,
   
   // Overtime bonus reputation per prompt completed
-  OVERTIME_REP_PER_PROMPT: 3,
+  OVERTIME_REP_PER_PROMPT: 5,
   
   // Initial typo forgiveness count
   INITIAL_TYPO_FORGIVENESS: 0,

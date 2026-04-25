@@ -777,9 +777,12 @@ export class ExecutionScene extends Phaser.Scene {
       ease: 'Power2.Out',
     });
 
-    // Calculate final timer: base (45s, or 22s for Corporate Dev) + modifiers
+    // Calculate final timer: day-specific base (via TIMER_BY_DAY) + modifiers
     const state = getState();
-    const baseTimer = state.playerClass === 'corporateDev' ? TUNING.CORP_TIMER_SECONDS : TUNING.BASE_TIMER_SECONDS;
+    const dayBase = (TUNING.TIMER_BY_DAY as Record<number, number>)[state.day] ?? TUNING.BASE_TIMER_SECONDS;
+    const baseTimer = state.playerClass === 'corporateDev'
+      ? Math.round(dayBase * TUNING.CORP_TIMER_RATIO)
+      : dayBase;
     const agentSpeedSeconds = Math.round(baseTimer * this.speedMod);
     const eventBonus = state.timerBonusSeconds;
     this.timeSeconds = Math.max(10, baseTimer + agentSpeedSeconds + eventBonus);
