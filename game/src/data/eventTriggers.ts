@@ -33,6 +33,6 @@ export const EVENT_SCHEDULE: DayEventSchedule[] = [
   { day: 9,  afterPrompts: [2, 4, 5, 7] },     // 4 events / 7 prompts — relentless
   { day: 10, afterPrompts: [2, 3, 5, 7, 8] },  // 5 events / 8 prompts — clustered + spread
   { day: 11, afterPrompts: [2, 4, 5, 6, 8] },  // 5 events / 8 prompts — grind
-  { day: 12, afterPrompts: [2, 3, 5, 6, 7, 8, 9] }, // 7 events / 9 prompts — relentless
-  { day: 13, afterPrompts: [2, 3, 4, 5, 6, 7, 8, 9, 10] }, // 9 events / 10 prompts — maximum pressure
+  { day: 12, afterPrompts: [2, 4, 6, 8, 9] }, // 5 events / 9 prompts — reduced late-game density
+  { day: 13, afterPrompts: [2, 3, 5, 6, 8, 9, 10] }, // 7 events / 10 prompts — reduced late-game density
 ];

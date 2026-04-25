@@ -19,7 +19,7 @@ export const SHOP_ITEMS: ItemDef[] = [
     id: 'model-standard',
     name: 'Standard Model',
     category: 'model',
-    baseCost: 100,
+    baseCost: 80,
     description: 'A reliable workhorse model for everyday tasks.',
     effect: 'Reliable quality and normal speed. Costs $30/day.',
     mechanical: { type: 'unlockModel', value: 'standard' }
@@ -28,7 +28,7 @@ export const SHOP_ITEMS: ItemDef[] = [
     id: 'model-frontier',
     name: 'Frontier Model',
     category: 'model',
-    baseCost: 300,
+    baseCost: 400,
     description: 'The absolute state-of-the-art in neural architecture.',
     effect: 'Maximum quality, normal speed. Costs $100/day.',
     mechanical: { type: 'unlockModel', value: 'frontier' }
@@ -37,7 +37,7 @@ export const SHOP_ITEMS: ItemDef[] = [
     id: 'model-local',
     name: 'Local Model',
     category: 'model',
-    baseCost: 200,
+    baseCost: 150,
     description: 'Run it on your own hardware. No API fees.',
     effect: 'Free to run ($0/day), but slower and higher hallucination.',
     mechanical: { type: 'unlockModel', value: 'local' }
@@ -55,7 +55,7 @@ export const SHOP_ITEMS: ItemDef[] = [
     id: 'model-opensource',
     name: 'Open Source Model',
     category: 'model',
-    baseCost: 150,
+    baseCost: 120,
     description: 'Community-driven and transparent.',
     effect: 'Reliable, low daily cost ($10/day), but 30% slower than Standard.',
     mechanical: { type: 'unlockModel', value: 'openSource' }
@@ -75,7 +75,7 @@ export const SHOP_ITEMS: ItemDef[] = [
     id: 'hw-gpu',
     name: 'GPU Upgrade',
     category: 'hardware',
-    baseCost: 300,
+    baseCost: 120,
     description: 'High-end graphics card for local inference.',
     effect: 'Local models are faster; +10% speed when using local.',
     mechanical: { type: 'localModelSpeed', value: 0.1 }
@@ -93,7 +93,7 @@ export const SHOP_ITEMS: ItemDef[] = [
     id: 'hw-monitor',
     name: 'Extra Monitor',
     category: 'hardware',
-    baseCost: 75,
+    baseCost: 80,
     description: 'Because one screen is never enough.',
     effect: '+5% overall development speed.',
     mechanical: { type: 'globalSpeed', value: 0.05 }
@@ -102,7 +102,7 @@ export const SHOP_ITEMS: ItemDef[] = [
     id: 'hw-keyboard',
     name: 'Mechanical Keyboard',
     category: 'hardware',
-    baseCost: 50,
+    baseCost: 35,
     description: 'Clicky keys for maximum productivity.',
     effect: 'Typing errors forgive 1 wrong keystroke before slowing.',
     mechanical: { type: 'typingForgiveness', value: 1 }
@@ -111,7 +111,7 @@ export const SHOP_ITEMS: ItemDef[] = [
     id: 'hw-desk',
     name: 'Standing Desk',
     category: 'hardware',
-    baseCost: 120,
+    baseCost: 60,
     description: 'The health-conscious developer\'s choice.',
     effect: 'Hardware damage from events is halved.',
     mechanical: { type: 'hardwareDamageReduction', value: 0.5 }
@@ -131,7 +131,7 @@ export const SHOP_ITEMS: ItemDef[] = [
     id: 'slot-2',
     name: 'Agent Slot 2',
     category: 'agentSlot',
-    baseCost: 200,
+    baseCost: 180,
     description: 'Expand your team to two concurrent agents.',
     effect: 'Unlocks the second agent slot in Planning.',
     mechanical: { type: 'unlockSlot', value: 2 }
