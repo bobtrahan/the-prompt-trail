@@ -1,4 +1,6 @@
 import Phaser from 'phaser';
+import { CLASS_DEFS } from '../data/classes';
+import { PROJECTS } from '../data/projects';
 import { TUNING } from '../data/tuning';
 import { GAME_WIDTH, GAME_HEIGHT, COLORS } from '../utils/constants';
 import { getState } from '../systems/GameState';
@@ -8,6 +10,7 @@ import { Window } from '../ui/Window';
 import { Taskbar } from '../ui/Taskbar';
 import { EconomySystem } from '../systems/EconomySystem';
 import { AgentSystem } from '../systems/AgentSystem';
+import { ScoringSystem } from '../systems/ScoringSystem';
 import { AGENT_ROSTER, SYNERGY_PAIRS, CLASH_PAIRS } from '../data/agents';
 import { BASE_TIMER_SECONDS } from '../utils/constants';
 import AudioManager from '../systems/AudioManager';
@@ -50,6 +53,7 @@ export class PlanningScene extends Phaser.Scene {
   private effectTimerBarBg!: Phaser.GameObjects.Rectangle;
   private effectCostText!: Phaser.GameObjects.Text;
   private effectRepText!: Phaser.GameObjects.Text;
+  private effectRepEstText!: Phaser.GameObjects.Text;
   private effectAgentText!: Phaser.GameObjects.Text;
 
   // Agent picker state
@@ -317,7 +321,7 @@ export class PlanningScene extends Phaser.Scene {
 
     // ── Effects Preview window ─────────────────────────────────────────
     const EFFECTS_Y = 396;
-    const EFFECTS_H = 200;
+    const EFFECTS_H = 242;
     const effectsWin = new Window({
       scene: this, x: 40, y: EFFECTS_Y,
       width: 700, height: EFFECTS_H,
@@ -356,6 +360,11 @@ export class PlanningScene extends Phaser.Scene {
       fontFamily: 'monospace', fontSize: '13px', color: '#e6edf3',
       wordWrap: { width: eW - 120 }, align: 'right',
     }).setOrigin(1, 0);
+    this.add.rectangle(ex, ey + EROW * 4 - 2, eW, 1, COLORS.textDim).setAlpha(0.15).setOrigin(0);
+
+    // Row 4 — Reputation
+    this.add.text(ex + 8, ey + EROW * 4 + 8, '⭐  Reputation', labelStyle);
+    this.effectRepEstText = this.add.text(ex + eW - 4, ey + EROW * 4 + 8, '—', valStyle).setOrigin(1, 0);
 
     // ── Launch button ───────────────────────────────────────────────────
     this.launchBtn = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 70, '[ Select a strategy to continue ]', {
@@ -474,6 +483,38 @@ export class PlanningScene extends Phaser.Scene {
     if (repParts.length === 0) repParts.push('no modifier');
     const repColor = repParts.some(p => p.startsWith('-')) ? '#d29922' : '#3fb950';
     this.effectRepText.setText(repParts.join('  ·  ')).setColor(repColor);
+
+    // ─ Reputation estimate row ─
+    const project = PROJECTS[state.day - 1];
+    if (!project || !this.selectedStrategy) {
+      this.effectRepEstText.setText('—').setColor('#6e7681');
+    } else {
+      const floorScore = ScoringSystem.calcDayReputation(
+        60,
+        0.7,
+        this.selectedStrategy,
+        CLASS_DEFS[state.playerClass ?? 'techBro'],
+        state.day,
+        state.model
+      );
+      const ceilScore = ScoringSystem.calcDayReputation(
+        100,
+        1.0,
+        this.selectedStrategy,
+        CLASS_DEFS[state.playerClass ?? 'techBro'],
+        state.day,
+        state.model
+      );
+      if (this.selectedStrategy === 'vibeCode') {
+        this.effectRepEstText.setText('+?? – +?? rep est.  (variable)').setColor('#d29922');
+      } else {
+        const lo = floorScore.total;
+        const hi = ceilScore.total;
+        const txt = `${lo >= 0 ? '+' : ''}${lo} – ${hi >= 0 ? '+' : ''}${hi} rep est.`;
+        const color = hi < 0 ? '#f85149' : lo < 0 ? '#d29922' : '#3fb950';
+        this.effectRepEstText.setText(txt).setColor(color);
+      }
+    }
 
     // ─ Agents row ─
     if (this.selectedAgentIds.length === 0) {
