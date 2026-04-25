@@ -821,9 +821,12 @@ export class ExecutionScene extends Phaser.Scene {
     if (this.dayTimer) {
       this.dayTimer.destroy();
     }
-    this.time.delayedCall(600, () => {
-      this.endDay();
-    });
+    // Only auto-end if player hasn't already chosen a path via the completion modal
+    if (!this.completionShown && !this.inOvertime) {
+      this.time.delayedCall(600, () => {
+        this.endDay();
+      });
+    }
   }
 
   /** Full-screen brief green pulse on chunk/all-prompts completion */
