@@ -483,13 +483,15 @@ export class PlanningScene extends Phaser.Scene {
 
     // ─ Reputation estimate row ─
     const project = PROJECTS[state.day - 1];
-    if (!project || !this.selectedStrategy) {
+    if (!project) {
       this.effectRepEstText.setText('—').setColor('#6e7681');
     } else {
+      const stratForEst = this.selectedStrategy ?? 'justStart';
+      const noStrat = !this.selectedStrategy;
       const floorScore = ScoringSystem.calcDayReputation(
         60,
         0.7,
-        this.selectedStrategy,
+        stratForEst,
         CLASS_DEFS[state.playerClass ?? 'techBro'],
         state.day,
         state.model
@@ -497,17 +499,18 @@ export class PlanningScene extends Phaser.Scene {
       const ceilScore = ScoringSystem.calcDayReputation(
         100,
         1.0,
-        this.selectedStrategy,
+        stratForEst,
         CLASS_DEFS[state.playerClass ?? 'techBro'],
         state.day,
         state.model
       );
-      if (this.selectedStrategy === 'vibeCode') {
+      if (stratForEst === 'vibeCode') {
         this.effectRepEstText.setText('+?? – +?? rep est.  (variable)').setColor('#d29922');
       } else {
         const lo = floorScore.total;
         const hi = ceilScore.total;
-        const txt = `${lo >= 0 ? '+' : ''}${lo} – ${hi >= 0 ? '+' : ''}${hi} rep est.`;
+        const suffix = noStrat ? '  (no strategy)' : '';
+        const txt = `${lo >= 0 ? '+' : ''}${lo} – ${hi >= 0 ? '+' : ''}${hi} rep est.${suffix}`;
         const color = hi < 0 ? '#f85149' : lo < 0 ? '#d29922' : '#3fb950';
         this.effectRepEstText.setText(txt).setColor(color);
       }
