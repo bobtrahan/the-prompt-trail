@@ -482,8 +482,10 @@ export class TokenMarketScene extends Phaser.Scene {
         state.eventFlags['joke-trio-triggered'] = true;
         AudioManager.getInstance().playVoice('joke-trio');
         this.showJokeTrioToast();
+        this.time.delayedCall(500, () => this.showJokeModal(result.message));
+      } else {
+        this.showJokeModal(result.message);
       }
-      this.showJokeModal(result.message);
     } else {
       this.showPurchasedFeedback();
       this.renderItems();
@@ -528,13 +530,13 @@ export class TokenMarketScene extends Phaser.Scene {
       wordWrap: { width: mw - 32 },
     }).setDepth(302);
 
-    const okBtn = this.add.text(mx + mw / 2, my + mh - 28, '[ OK ]', {
+    const okBtn = this.add.text(mx + mw / 2, my + mh - 36, '[ OK ]', {
       fontFamily: 'monospace',
       fontSize: '13px',
       color: '#e6edf3',
       backgroundColor: '#30363d',
       padding: { x: 16, y: 6 },
-    }).setOrigin(0.5, 0).setDepth(302).setInteractive({ useHandCursor: true });
+    }).setOrigin(0.5, 0.5).setDepth(302).setInteractive({ useHandCursor: true });
 
     okBtn.on('pointerover', () => okBtn.setBackgroundColor('#444c56'));
     okBtn.on('pointerout', () => okBtn.setBackgroundColor('#30363d'));
