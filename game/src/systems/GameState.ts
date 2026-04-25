@@ -60,6 +60,9 @@ export interface GameState {
   // Progress signal from events (read + cleared by ExecutionScene after applyEffects)
   loseProgressSignal?: number | 'all';
 
+  // Queued chain event — set by applyEffects when a chain flag fires, consumed by selectEvent
+  queuedEvent: string | null;
+
   // Last day results snapshot
   lastDayResult?: {
     progress: number;
@@ -111,6 +114,7 @@ export function createInitialState(): GameState {
     bugHuntReturnScene: 'Night',
     dayStartBudget: 0,
     dayStartHardware: 100,
+    queuedEvent: null,
 
   };
 }

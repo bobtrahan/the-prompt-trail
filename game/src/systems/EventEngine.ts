@@ -14,6 +14,13 @@ export class EventEngine {
   }
 
   selectEvent(): EventDef | null {
+    // Queued chain event takes priority over all normal selection logic
+    if (this.state.queuedEvent) {
+      const queued = EVENTS.find(e => e.id === this.state.queuedEvent);
+      this.state.queuedEvent = null;
+      if (queued) return queued;
+    }
+
     const { day, playerClass, localSlots, eventFlags, hasDuckProtection } = this.state;
 
     const eligible: Array<{ event: EventDef; weight: number }> = [];
@@ -25,6 +32,9 @@ export class EventEngine {
       // This logic should probably be in ExecutionScene.ts where showEventModal is called, 
       // OR I can handle it here by returning a modified event or something.
       // Better to handle in ExecutionScene.ts to manage the UI/notification.
+
+      // chain-queued events only fire via queuedEvent, never via normal weighting
+      if (event.tags.includes('chain-queued')) continue;
 
       // dayRange filter
       if (day < event.dayRange[0] || day > event.dayRange[1]) continue;
@@ -179,6 +189,20 @@ export class EventEngine {
           const flagName = effect.value as string;
           state.eventFlags[flagName] = true;
           logs.push(`> FLAG SET: ${flagName}`);
+
+          // Chain event queuing — each flag queues a specific follow-up event
+          const CHAIN_FLAG_MAP: Record<string, string> = {
+            'email-nuke-let-ride': 'the-replies-keep-coming',
+            'crypto-investigate':  'what-the-logs-revealed',
+            'check-logs-reveal':   'logs-dont-lie',
+            'cto-remembers':       'cto-reaches-out',
+            'consulting-client':   'client-wants-more',
+          };
+          if (CHAIN_FLAG_MAP[flagName]) {
+            state.queuedEvent = CHAIN_FLAG_MAP[flagName];
+            logs.push(`> CHAIN QUEUED: ${CHAIN_FLAG_MAP[flagName]}`);
+          }
+
           if (flagName === 'cloud-autosave') {
             state.hasBackupProtection = true;
             logs.push('> ☁️ Cloud Autosave enabled — progress protected');

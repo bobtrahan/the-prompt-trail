@@ -2604,6 +2604,108 @@ export const EVENTS: EventDef[] = [
     },
   },
 
+  // ─── Queued Chain Events (flag-triggered, never appear in normal weighted pool) ──
+
+  {
+    id: 'the-replies-keep-coming',
+    title: '📥 The Replies Keep Coming',
+    body: "Your inbox is now a warzone. Hundreds of auto-replies, angry stakeholders, and someone's grandma are responding to that email chain.",
+    category: 'social',
+    dayRange: [1, 13],
+    weight: 1,
+    tags: ['chain-queued'],
+    choices: [
+      {
+        text: 'Unsubscribe from everything',
+        effects: [{ type: 'budget', value: -30 }],
+      },
+      {
+        text: 'Let it ride, it builds character',
+        effects: [{ type: 'reputation', value: -20 }, { type: 'hardware', value: -5 }],
+      },
+    ],
+  },
+
+  {
+    id: 'what-the-logs-revealed',
+    title: '🔎 What the Logs Revealed',
+    body: 'The investigation is complete. Your logs show... everything. Every API call, every cost overrun, every 3am deployment.',
+    category: 'technical',
+    dayRange: [1, 13],
+    weight: 1,
+    tags: ['chain-queued'],
+    choices: [
+      {
+        text: 'File a proper incident report',
+        effects: [{ type: 'reputation', value: 15 }],
+      },
+      {
+        text: 'Rotate the logs',
+        effects: [{ type: 'reputation', value: -25 }],
+      },
+    ],
+  },
+
+  {
+    id: 'logs-dont-lie',
+    title: "📋 Logs Don't Lie",
+    body: "The audit trail is damning. But also kind of impressive — you really did ship that fast.",
+    category: 'technical',
+    dayRange: [1, 13],
+    weight: 1,
+    tags: ['chain-queued'],
+    choices: [
+      {
+        text: 'Own it publicly',
+        effects: [{ type: 'reputation', value: 10 }, { type: 'budget', value: -20 }],
+      },
+      {
+        text: 'Blame the framework',
+        effects: [{ type: 'reputation', value: -15 }],
+      },
+    ],
+  },
+
+  {
+    id: 'cto-reaches-out',
+    title: '💬 The CTO Reaches Out',
+    body: "Your CTO slides into your DMs. They remember what you did. They're not sure if they're impressed or concerned.",
+    category: 'social',
+    dayRange: [1, 13],
+    weight: 1,
+    tags: ['chain-queued'],
+    choices: [
+      {
+        text: 'Schedule a 1:1',
+        effects: [{ type: 'reputation', value: 20 }],
+      },
+      {
+        text: 'Leave on read',
+        effects: [{ type: 'reputation', value: -10 }, { type: 'budget', value: 50 }],
+      },
+    ],
+  },
+
+  {
+    id: 'client-wants-more',
+    title: '💼 Client Wants More',
+    body: 'The consulting client loved your work. Now they want a full retainer, unlimited scope, and access to your personal cell.',
+    category: 'business',
+    dayRange: [1, 13],
+    weight: 1,
+    tags: ['chain-queued'],
+    choices: [
+      {
+        text: 'Accept the retainer',
+        effects: [{ type: 'budget', value: 150 }, { type: 'hardware', value: -10 }],
+      },
+      {
+        text: 'Politely decline',
+        effects: [{ type: 'reputation', value: 10 }],
+      },
+    ],
+  },
+
   {
     id: 'consulting-followup',
     title: '💼 Client Wants More',
