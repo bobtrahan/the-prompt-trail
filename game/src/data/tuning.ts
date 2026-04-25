@@ -93,7 +93,7 @@ export const TUNING = {
   COPY: {
     START_TYPING_PROMPT: '⌨️  START TYPING TO BUILD  ⌨️',
     PROJECT_COMPLETE_TITLE: '✅ Project Complete!',
-    PROJECT_COMPLETE_BODY: 'You finished early. What now?',
+    PROJECT_COMPLETE_BODY: 'You finished early! Keep typing for bonus rep, or go hunt bugs for cash.',
     OVERTIME_LABEL: 'Production ♙:',
     TIME_EXPIRED_TITLE: "Time's up!",
   }

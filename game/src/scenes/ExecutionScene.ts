@@ -1632,7 +1632,7 @@ export class ExecutionScene extends Phaser.Scene {
     const btn1Y = dy + 130;
     const btn1Bg = this.add.rectangle(dx + 20, btn1Y, dw - 40, 40, COLORS.titleBar).setOrigin(0).setInteractive({ useHandCursor: true });
     this.modalGroup.add(btn1Bg);
-    const btn1Text = this.add.text(dx + 32, btn1Y + 12, '[ 🐛 Bug Hunt Bonus ]', {
+    const btn1Text = this.add.text(dx + 32, btn1Y + 12, '[ 🐛 Bug Hunt ]', {
       fontFamily: 'monospace', fontSize: '13px', color: '#58a6ff',
     });
     this.modalGroup.add(btn1Text);
@@ -1644,7 +1644,7 @@ export class ExecutionScene extends Phaser.Scene {
     const btn2Y = dy + 180;
     const btn2Bg = this.add.rectangle(dx + 20, btn2Y, dw - 40, 40, COLORS.titleBar).setOrigin(0).setInteractive({ useHandCursor: true });
     this.modalGroup.add(btn2Bg);
-    const btn2Text = this.add.text(dx + 32, btn2Y + 12, '[ 🚀 Ship to Production ]', {
+    const btn2Text = this.add.text(dx + 32, btn2Y + 12, '[ ⌨️ Overtime ]', {
       fontFamily: 'monospace', fontSize: '13px', color: '#58a6ff',
     });
     this.modalGroup.add(btn2Text);
