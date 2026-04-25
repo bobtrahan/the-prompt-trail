@@ -71,7 +71,6 @@ export class TokenMarketScene extends Phaser.Scene {
   private scrollOffset = 0;
   private maxScroll = 0; // audit-ok — set in buildItemList()
   private listMask!: Phaser.Display.Masks.GeometryMask;
-  private listClipY = 0; // audit-ok — set in buildItemList()
   private listClipH = 0; // audit-ok — set in buildItemList()
 
   constructor() {
@@ -300,7 +299,6 @@ export class TokenMarketScene extends Phaser.Scene {
     const listStartY = cy + 48; // below tabs
     const rowHeight = 54;
     const listEndY = this.detailPaneY - 4;
-    this.listClipY = listStartY;
     this.listClipH = listEndY - listStartY;
 
     // Calculate scroll bounds

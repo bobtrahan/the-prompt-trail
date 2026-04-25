@@ -19,6 +19,16 @@ export interface FinalScore {
 }
 
 export class ScoringSystem {
+  /**
+   * Calculate reputation earned for a single day from progress, accuracy, strategy, model, and day difficulty.
+   * @param progress Completion percentage (0–100).
+   * @param accuracy Typing accuracy (0–1).
+   * @param strategy Player strategy choice.
+   * @param _classDef Class definition (reserved for future class-specific modifiers).
+   * @param day Current day number (1–13), used to look up maxReputation.
+   * @param model Active model tier; defaults to 'standard'.
+   * @returns Breakdown of baseRep, accuracyBonus, strategyBonus, modelBonus, and total.
+   */
   static calcDayReputation(
     progress: number,
     accuracy: number,
@@ -75,6 +85,12 @@ export class ScoringSystem {
     };
   }
 
+  /**
+   * Compute the final score and rank from accumulated day scores and class multiplier.
+   * @param dayScores Array of per-day reputation totals.
+   * @param classMultiplier Class score multiplier applied to rawTotal.
+   * @returns rawTotal, multiplier, finalScore, and letter rank (S/A/B/C/D/F).
+   */
   static calcFinalScore(dayScores: number[], classMultiplier: number): FinalScore {
     const rawTotal = dayScores.reduce((sum, score) => sum + score, 0);
     const finalScore = Math.floor(rawTotal * classMultiplier);

@@ -13,6 +13,10 @@ export class EventEngine {
     this.firedHistory = new Map();
   }
 
+  /**
+   * Select the next event to fire, respecting queued chain events, day range, class filters, cooldowns, and suppression flags.
+   * @returns The selected EventDef (with class variant applied if applicable), or null if no eligible events exist.
+   */
   selectEvent(): EventDef | null {
     // Queued chain event takes priority over all normal selection logic
     if (this.state.queuedEvent) {
@@ -21,7 +25,7 @@ export class EventEngine {
       if (queued) return queued;
     }
 
-    const { day, playerClass, localSlots, eventFlags, hasDuckProtection } = this.state;
+    const { day, playerClass, localSlots, eventFlags } = this.state;
 
     const eligible: Array<{ event: EventDef; weight: number }> = [];
 
@@ -109,6 +113,12 @@ export class EventEngine {
     return picked;
   }
 
+  /**
+   * Apply all effects from a player's event choice to game state, handling rolls, backup protection, and chain queuing.
+   * @param choice The choice the player made, including its effects array.
+   * @param state Mutable game state modified in place (budget, hardware, reputation, flags, etc.).
+   * @returns Array of human-readable log lines describing what happened.
+   */
   applyEffects(choice: EventChoice, state: GameState): string[] {
     const logs: string[] = [];
 
@@ -274,6 +284,11 @@ export class EventEngine {
     return logs;
   }
 
+  /**
+   * Record that an event fired on a given day, updating cooldown history and setting the event's flag.
+   * @param eventId The id of the event that fired.
+   * @param day The current day number.
+   */
   markFired(eventId: string, day: number): void {
     const history = this.firedHistory.get(eventId) ?? [];
     history.push(day);

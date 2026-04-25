@@ -57,11 +57,6 @@ export class Terminal {
   private cursorBlink!: Phaser.Time.TimerEvent;
   private cursorVisible = true;
 
-  private x: number;
-  private y: number;
-  private width: number;
-  private height: number;
-
   // Current typing state
   private currentPrompt = '';
   private typedSoFar = '';
@@ -77,10 +72,6 @@ export class Terminal {
     const theme = getTheme(state.playerClass ?? undefined);
 
     this.scene = config.scene;
-    this.x = config.x;
-    this.y = config.y;
-    this.width = config.width;
-    this.height = config.height;
     this.terminalTextColor = config.terminalTextColor ?? theme.terminalTextColor;
     this.cursorChar = config.cursorChar ?? theme.cursorChar;
     this.accentColor = theme.accent;

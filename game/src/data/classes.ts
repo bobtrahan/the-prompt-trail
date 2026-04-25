@@ -1,4 +1,4 @@
-import type { PlayerClass, Strategy, ModelTier } from '../utils/playerClass';
+import type { PlayerClass, ModelTier } from '../utils/playerClass';
 
 export interface ClassDef {
   id: PlayerClass;

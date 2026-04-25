@@ -3,7 +3,7 @@ import { TUNING } from '../data/tuning';
 import { GAME_WIDTH, GAME_HEIGHT, COLORS } from '../utils/constants';
 import { DAY_PROMPTS, OVERTIME_PROMPTS } from '../data/prompts';
 import { EVENT_SCHEDULE } from '../data/eventTriggers';
-import { getState, type GameState } from '../systems/GameState';
+import { getState } from '../systems/GameState';
 import { CLASS_DEFS } from '../data/classes';
 import { Telemetry } from '../systems/Telemetry';
 import { getTheme } from '../utils/themes';
@@ -22,33 +22,6 @@ import { buildOutcomeLine, outcomeLineColor } from '../utils/outcomeFormatting';
 import { drawWallpaper } from '../ui/DesktopWallpaper';
 import { AGENT_MESSAGES, EVENT_REACTIONS, SYNERGY_MESSAGES, CLASH_MESSAGES, CONSUMABLE_REACTIONS } from '../data/agentMessages';
 import { SYNERGY_PAIRS, CLASH_PAIRS } from '../data/agents';
-
-function formatEffectHint(effects: EventEffect[]): string {
-  const formatSigned = (value: number): string => `${value >= 0 ? '+' : '−'}${Math.abs(value)}`;
-
-  return effects.flatMap(effect => {
-    switch (effect.type) {
-      case 'budget':
-        return typeof effect.value === 'number' ? `${effect.value >= 0 ? '+' : '−'}$${Math.abs(effect.value)}` : [];
-      case 'time':
-        return typeof effect.value === 'number' ? `${formatSigned(effect.value * 3)}s time cost` : [];
-      case 'hardware':
-        return typeof effect.value === 'number' ? `${formatSigned(effect.value)} HP` : [];
-      case 'reputation':
-        return typeof effect.value === 'number' ? `${formatSigned(effect.value)} rep` : [];
-      case 'agentSpeed': {
-        if (typeof effect.value !== 'number') return [];
-        const secs = Math.round(TUNING.BASE_TIMER_SECONDS * (effect.value / 100)); // preview hint, approximate
-        return `${secs >= 0 ? '+' : '−'}${Math.abs(secs)}s efficiency`;
-      }
-      case 'flag':
-      case 'modelSwitch':
-        return [];
-      default:
-        return [];
-    }
-  }).join(', ');
-}
 
 
 interface AgentPanelState {
@@ -140,29 +113,22 @@ export class ExecutionScene extends Phaser.Scene {
     const toProcess = [...state.activeConsumables];
     
     toProcess.forEach(id => {
-      let msg = "";
-
       switch (id) {
         case 'con-coffee':
           this.typingEngine.speedModifier += 0.05;
-          msg = "";
           break;
         case 'con-energy':
           this.typingEngine.speedModifier += 0.1;
           this.typingEngine.jitterChance = 0.2;
-          msg = "";
           break;
         case 'con-backup':
           state.hasBackupProtection = true;
-          msg = "";
           break;
         case 'con-api':
           state.modelCostDiscount = 0.5;
-          msg = "";
           break;
         case 'con-duck':
           state.hasDuckProtection = true;
-          msg = "";
           break;
       }
 
@@ -936,7 +902,6 @@ export class ExecutionScene extends Phaser.Scene {
   private tickTime(): void {
     if (window.__GOD_MODE) return;
     this.timeSeconds--;
-    const state = getState();
 
     const frac = this.timeSeconds / this.maxTimeSeconds;
     this.timeBar.width = this.timeBg.width * frac;

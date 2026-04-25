@@ -42,7 +42,6 @@ const STRATEGIES: StrategyOption[] = [
 ];
 
 export class PlanningScene extends Phaser.Scene {
-  private taskbar!: Taskbar;
   private selectedStrategy: Strategy | null = null;
   private launchBtn!: Phaser.GameObjects.Text;
   private cards: Phaser.GameObjects.Rectangle[] = [];
@@ -65,8 +64,6 @@ export class PlanningScene extends Phaser.Scene {
 
   // Model picker state
   private modelRowBgs: Map<ModelTier, Phaser.GameObjects.Rectangle> = new Map();
-  private modelWinTitle!: Phaser.GameObjects.Text;
-
   constructor() {
     super({ key: 'Planning' });
   }
@@ -82,7 +79,7 @@ export class PlanningScene extends Phaser.Scene {
     this.agentRowBgs = new Map();
     this.agentCheckmarks = new Map();
 
-    this.taskbar = new Taskbar(this, theme.accent);
+    new Taskbar(this, theme.accent);
 
     // Header
     this.add.text(12, 8, `PromptOS  ·  Day ${state.day}/13  ·  Planning`, {

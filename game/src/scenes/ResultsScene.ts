@@ -1,7 +1,6 @@
 import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT, COLORS } from '../utils/constants';
 import { getState } from '../systems/GameState';
-import { CLASS_DEFS } from '../data/classes';
 import { getTheme } from '../utils/themes';
 import { Window } from '../ui/Window';
 import { Taskbar } from '../ui/Taskbar';
@@ -12,7 +11,6 @@ import { calcRunningGrade, GRADE_FLAVOR, RANK_COLORS } from './resultsGrade';
 
 export class ResultsScene extends Phaser.Scene {
   private window!: Window;
-  private taskbar!: Taskbar;
   private continueBtn!: Phaser.GameObjects.Text;
   
   // Animation state
@@ -35,8 +33,6 @@ export class ResultsScene extends Phaser.Scene {
   private modelBonusText!: Phaser.GameObjects.Text;
   private overtimeBonusText!: Phaser.GameObjects.Text;
   private totalRepText!: Phaser.GameObjects.Text;
-  private budgetDeltaText!: Phaser.GameObjects.Text;
-  private hardwareDeltaText!: Phaser.GameObjects.Text;
   private runningGradeDividerText!: Phaser.GameObjects.Text;
   private runningGradeLabelText!: Phaser.GameObjects.Text;
   private runningGradeText!: Phaser.GameObjects.Text;
@@ -63,7 +59,7 @@ export class ResultsScene extends Phaser.Scene {
 
     this.cameras.main.setBackgroundColor(COLORS.bg);
     drawWallpaper(this, state.playerClass);
-    this.taskbar = new Taskbar(this, theme.accent);
+    new Taskbar(this, theme.accent);
 
     AudioManager.getInstance().playSFX('day-complete');
 
@@ -203,7 +199,7 @@ export class ResultsScene extends Phaser.Scene {
     this.animProgress = 0;
   }
 
-  update(time: number, delta: number): void {
+  update(_time: number, delta: number): void {
     if (!this.isAnimating) return;
 
     this.animProgress += delta;

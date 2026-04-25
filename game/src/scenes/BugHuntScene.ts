@@ -147,7 +147,6 @@ function lerpColor(a: number, b: number, t: number): number {
 export class BugHuntScene extends Phaser.Scene {
   // UI
   private win!: Window;
-  private taskbar!: Taskbar;
   private statsText!: Phaser.GameObjects.Text;
   private timerBar!: Phaser.GameObjects.Rectangle;
   private timerBarBg!: Phaser.GameObjects.Rectangle;
@@ -171,13 +170,10 @@ export class BugHuntScene extends Phaser.Scene {
   private playerGfx!: Phaser.GameObjects.Graphics;
   private facingX = 0;
   private facingY = -1; // facing up by default
-  private walking = false;
 
   // Aiming
   private crosshairGfx!: Phaser.GameObjects.Graphics;
   private aimAngle = -Math.PI / 2;
-  private crosshairX = 0;
-  private crosshairY = 0;
 
   // Input (raw DOM to avoid Phaser keyboard conflicts)
   private keysDown = new Set<string>(); // audit-ok — .clear() in create()
@@ -235,11 +231,8 @@ export class BugHuntScene extends Phaser.Scene {
     this.lastSpawn = 0;
     this.facingX = 0;
     this.facingY = -1;
-    this.walking = false;
     this.keysDown.clear();
     this.aimAngle = -Math.PI / 2;
-    this.crosshairX = 0;
-    this.crosshairY = 0;
     this.shotsHit = 0;
     this.lastCatchTime = 0;
     this.comboCount = 0;
@@ -260,7 +253,7 @@ export class BugHuntScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor(COLORS.bg);
     drawWallpaper(this, state.playerClass);
 
-    this.taskbar = new Taskbar(this, theme.accent);
+    new Taskbar(this, theme.accent);
 
     // Window — centered
     const winX = (GAME_WIDTH - WIN_W) / 2;
@@ -513,8 +506,6 @@ export class BugHuntScene extends Phaser.Scene {
 
     const cx = this.playerX + Math.cos(this.aimAngle) * CROSSHAIR_DIST;
     const cy = this.playerY + Math.sin(this.aimAngle) * CROSSHAIR_DIST;
-    this.crosshairX = cx;
-    this.crosshairY = cy;
     const ARM = 8;
     const GAP = 3;
 
@@ -1172,7 +1163,6 @@ export class BugHuntScene extends Phaser.Scene {
       const len = Math.hypot(mx, my);
       this.facingX = mx / len;
       this.facingY = my / len;
-      this.walking = true;
 
       let newX = this.playerX + this.facingX * PLAYER_SPEED * dt;
       let newY = this.playerY + this.facingY * PLAYER_SPEED * dt;
@@ -1199,8 +1189,6 @@ export class BugHuntScene extends Phaser.Scene {
 
       this.playerX = newX;
       this.playerY = newY;
-    } else {
-      this.walking = false;
     }
 
     this.aimAngle = Math.atan2(this.facingY, this.facingX);

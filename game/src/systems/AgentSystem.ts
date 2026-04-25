@@ -31,7 +31,7 @@ export class AgentSystem {
   /**
    * Return 0 for now (future expansion placeholder)
    */
-  static getQualityModifier(agentIds: string[]): number {
+  static getQualityModifier(_agentIds: string[]): number {
     return 0;
   }
 

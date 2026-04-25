@@ -78,7 +78,6 @@ function drawTokenMarketThumb(
 // ── Scene ────────────────────────────────────────────────────
 
 export class NightScene extends Phaser.Scene {
-  private taskbar!: Taskbar;
   private led!: Phaser.GameObjects.Rectangle;
   private ledTween!: Phaser.Tweens.Tween;
 
@@ -113,7 +112,7 @@ export class NightScene extends Phaser.Scene {
     }).setOrigin(0.5).setDepth(-5);
 
     this.cameras.main.fadeIn(500, 0, 0, 0);
-    this.taskbar = new Taskbar(this, theme.accent);
+    new Taskbar(this, theme.accent);
 
     // ── Main Night Window ──
     const winWidth = 600;

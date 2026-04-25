@@ -74,6 +74,7 @@ export class TypingEngine {
     scene.input.keyboard!.on('keydown', this.handleKey, this);
   }
 
+  /** Begin accepting keystrokes and load the first prompt. */
   start(): void {
     this.active = true;
     this.paused = false;
@@ -81,16 +82,17 @@ export class TypingEngine {
     this.nextPrompt();
   }
 
+  /** Stop accepting keystrokes; does not reset stats. */
   stop(): void {
     this.active = false;
   }
 
-  /** Pause typing (e.g. during event modal) */
+  /** Suspend keystroke processing without resetting state (e.g. during an event modal). */
   pause(): void {
     this.paused = true;
   }
 
-  /** Resume typing after event */
+  /** Resume keystroke processing; advances to next prompt if one completed while paused. */
   resume(): void {
     this.paused = false;
     // If a prompt completed while paused (delayed nextPrompt was skipped), load one now
@@ -103,10 +105,18 @@ export class TypingEngine {
     return this.paused;
   }
 
+  /**
+   * Return a snapshot of cumulative keystroke counts and prompts completed.
+   * @returns Copy of the current TypingStats object.
+   */
   getStats(): TypingStats {
     return { ...this.stats };
   }
 
+  /**
+   * Return live telemetry including streak, recent accuracy, WPM, and perfect-prompt flag.
+   * @returns Current TypingTelemetry snapshot.
+   */
   getTelemetry(): TypingTelemetry {
     const elapsedMinutes = (Date.now() - this.startTime) / 60000;
     const wpm = elapsedMinutes > 0 ? (this.stats.correct / 5) / elapsedMinutes : 0;
@@ -129,12 +139,19 @@ export class TypingEngine {
     return this.dayPrompts?.length ?? 0;
   }
 
+  /**
+   * Return the ratio of correct keystrokes to total keystrokes (0–1); returns 1 if no keys typed yet.
+   * @returns Accuracy value between 0 and 1.
+   */
   getAccuracy(): number {
     const total = this.stats.correct + this.stats.incorrect;
     return total === 0 ? 1 : this.stats.correct / total;
   }
 
-  /** Set ordered day-specific prompts. Iterates sequentially, loops when exhausted. */
+  /**
+   * Set the ordered sequence of day-specific prompts; resets the prompt index and loads the first prompt if already active.
+   * @param prompts Ordered array of prompt strings for the current day.
+   */
   setDayPrompts(prompts: string[]): void {
     this.dayPrompts = prompts;
     this.dayPromptIndex = 0;

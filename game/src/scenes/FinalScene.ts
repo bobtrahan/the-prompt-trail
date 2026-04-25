@@ -29,7 +29,6 @@ const RANK_FLAVOR: Record<string, string> = {
 
 export class FinalScene extends Phaser.Scene {
   private window!: Window;
-  private taskbar!: Taskbar;
 
   // Animation state
   private animProgress = 0;
@@ -73,7 +72,7 @@ export class FinalScene extends Phaser.Scene {
 
     this.cameras.main.setBackgroundColor(COLORS.bg);
     drawWallpaper(this, state.playerClass);
-    this.taskbar = new Taskbar(this);
+    new Taskbar(this);
 
     const winWidth = 700;
     const winHeight = 480;

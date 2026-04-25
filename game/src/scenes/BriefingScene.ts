@@ -1,6 +1,5 @@
 import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT, COLORS } from '../utils/constants';
-import { DAY_PROMPTS } from '../data/prompts';
 import { getState } from '../systems/GameState';
 import { PROJECTS } from '../data/projects';
 import { getTheme } from '../utils/themes';
@@ -213,8 +212,6 @@ function modelLabel(model: string): string {
 
 // ─── Scene ───────────────────────────────────────────────────────────────────
 export class BriefingScene extends Phaser.Scene {
-  private taskbar!: Taskbar;
-
   constructor() {
     super({ key: 'Briefing' });
   }
@@ -235,7 +232,7 @@ export class BriefingScene extends Phaser.Scene {
     AudioManager.getInstance().playVoice(`day-${state.day}`);
 
     // ── Taskbar ──────────────────────────────────────────────────────────────
-    this.taskbar = new Taskbar(this, theme.accent);
+    new Taskbar(this, theme.accent);
 
     // ── Header breadcrumb ────────────────────────────────────────────────────
     this.add.text(12, 8, `PromptOS  ·  Day ${state.day}/13  ·  Morning Briefing`, {

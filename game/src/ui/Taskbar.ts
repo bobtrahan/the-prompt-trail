@@ -2,7 +2,6 @@ import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT, COLORS } from '../utils/constants';
 import { getState } from '../systems/GameState';
 import { DebugMenu } from './DebugMenu';
-import AudioManager from '../systems/AudioManager';
 import { getTheme } from '../utils/themes';
 
 const TASKBAR_HEIGHT = 32;

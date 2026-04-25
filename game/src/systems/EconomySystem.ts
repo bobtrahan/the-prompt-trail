@@ -2,6 +2,11 @@ import type { GameState, ModelTier, Strategy } from './GameState';
 import type { ItemDef } from '../data/items';
 
 export class EconomySystem {
+  /**
+   * Return the reputation modifier (−0.15 to +0.15) for a given model tier.
+   * @param model The active model tier.
+   * @returns Decimal multiplier applied to baseRep as a bonus.
+   */
   static getModelQualityMod(model: ModelTier): number {
     switch (model) {
       case 'free':
@@ -23,6 +28,11 @@ export class EconomySystem {
     }
   }
 
+  /**
+   * Return the daily budget cost in dollars for a given model tier.
+   * @param model The active model tier.
+   * @returns Cost in dollars deducted at the end of each day.
+   */
   static getModelDayCost(model: ModelTier): number {
     switch (model) {
       case 'free':
@@ -44,6 +54,11 @@ export class EconomySystem {
     }
   }
 
+  /**
+   * Return time/cost/quality modifiers and risk label for a given strategy.
+   * @param strategy The chosen strategy.
+   * @returns Object with timeBonus (seconds), costMult, qualityMult, strategyCost, and riskLabel.
+   */
   static getStrategyModifier(strategy: Strategy): {
     timeBonus: number;
     costMult: number;
@@ -73,6 +88,10 @@ export class EconomySystem {
     }
   }
 
+  /**
+   * Deduct model and strategy costs from state.budget; set 'broke' flag and force free tier if bankrupt.
+   * @param state Mutable game state; budget, model, and eventFlags are modified in place.
+   */
   static applyDayCosts(state: GameState): void {
     // Skip cost deduction if Corporate Dev (Company Card)
     if (state.playerClass === 'corporateDev') {
@@ -99,6 +118,12 @@ export class EconomySystem {
     }
   }
 
+  /**
+   * Generate a seeded price map for shop items with ±20% fluctuation based on day.
+   * @param items Array of item definitions with baseCost.
+   * @param day Current day number used as part of the price seed.
+   * @returns Map of item id → price in dollars.
+   */
   static getShopPrices(items: ItemDef[], day: number): Map<string, number> {
     const prices = new Map<string, number>();
 

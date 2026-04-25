@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { ShopSystem } from './ShopSystem';
-import { createInitialState, resetState, initClassState, getState } from './GameState';
+import { createInitialState, resetState } from './GameState';
 import type { ItemDef } from '../data/items';
 import { SHOP_ITEMS } from '../data/items';
 

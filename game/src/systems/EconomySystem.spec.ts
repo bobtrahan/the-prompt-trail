@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { EconomySystem } from './EconomySystem';
 import { createInitialState, resetState } from './GameState';
-import type { GameState, ModelTier, Strategy } from './GameState';
 import { SHOP_ITEMS } from '../data/items';
 
 // Tests for EconomySystem.getModelQualityMod — maps model tier to quality modifier

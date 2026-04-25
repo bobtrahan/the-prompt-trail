@@ -95,7 +95,6 @@ const DESPAWN_WARN_MS = TUNING.BUG_BOUNTY.DESPAWN_WARN_MS;
 export class BugBountyScene extends Phaser.Scene {
   // UI
   private win!: Window;
-  private taskbar!: Taskbar;
   private statsText!: Phaser.GameObjects.Text;
   private timerBar!: Phaser.GameObjects.Rectangle;
   private timerBarBg!: Phaser.GameObjects.Rectangle;
@@ -151,7 +150,7 @@ export class BugBountyScene extends Phaser.Scene {
     drawWallpaper(this, state.playerClass);
 
     // Taskbar
-    this.taskbar = new Taskbar(this, theme.accent);
+    new Taskbar(this, theme.accent);
 
     // Window — centered
     const winX = (GAME_WIDTH - WIN_W) / 2;
@@ -449,7 +448,6 @@ export class BugBountyScene extends Phaser.Scene {
 
   private spawnBug(time: number): void {
     const type = pickBugType();
-    const def = BUG_DEFS[type];
 
     const x = this.gridX + CHIP_W / 2 + Math.random() * (this.gridW - CHIP_W);
     const y = this.gridY + CHIP_H / 2 + Math.random() * (this.gridH - CHIP_H);

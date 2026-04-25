@@ -48,8 +48,6 @@ const MODE_OPTIONS: ModeOption[] = [
 ];
 
 export class BugBountySelectScene extends Phaser.Scene {
-  private taskbar!: Taskbar;
-
   constructor() {
     super({ key: 'BugBountySelect' });
   }
@@ -62,7 +60,7 @@ export class BugBountySelectScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor(COLORS.bg);
     drawWallpaper(this, state.playerClass);
 
-    this.taskbar = new Taskbar(this, theme.accent);
+    new Taskbar(this, theme.accent);
 
     const winX = (GAME_WIDTH - WIN_W) / 2;
     const winY = (GAME_HEIGHT - WIN_H) / 2 - 12;
