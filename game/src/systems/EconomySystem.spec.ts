@@ -5,12 +5,12 @@ import { SHOP_ITEMS } from '../data/items';
 
 // Tests for EconomySystem.getModelQualityMod — maps model tier to quality modifier
 describe('EconomySystem.getModelQualityMod', () => {
-  it('free → -0.15', () => expect(EconomySystem.getModelQualityMod('free')).toBe(-0.15));
-  it('sketchy → -0.10', () => expect(EconomySystem.getModelQualityMod('sketchy')).toBe(-0.10));
+  it('free → -0.20', () => expect(EconomySystem.getModelQualityMod('free')).toBe(-0.20));
+  it('sketchy → -0.12', () => expect(EconomySystem.getModelQualityMod('sketchy')).toBe(-0.12));
   it('local → -0.05', () => expect(EconomySystem.getModelQualityMod('local')).toBe(-0.05));
   it('openSource → 0', () => expect(EconomySystem.getModelQualityMod('openSource')).toBe(0));
-  it('standard → 0.05', () => expect(EconomySystem.getModelQualityMod('standard')).toBe(0.05));
-  it('frontier → 0.15', () => expect(EconomySystem.getModelQualityMod('frontier')).toBe(0.15));
+  it('standard → 0.10', () => expect(EconomySystem.getModelQualityMod('standard')).toBe(0.10));
+  it('frontier → 0.20', () => expect(EconomySystem.getModelQualityMod('frontier')).toBe(0.20));
 });
 
 // Tests for EconomySystem.getModelDayCost — maps model tier to daily cost
@@ -19,31 +19,31 @@ describe('EconomySystem.getModelDayCost', () => {
   it('sketchy → 5', () => expect(EconomySystem.getModelDayCost('sketchy')).toBe(5));
   it('local → 0', () => expect(EconomySystem.getModelDayCost('local')).toBe(0));
   it('openSource → 10', () => expect(EconomySystem.getModelDayCost('openSource')).toBe(10));
-  it('standard → 30', () => expect(EconomySystem.getModelDayCost('standard')).toBe(30));
-  it('frontier → 100', () => expect(EconomySystem.getModelDayCost('frontier')).toBe(100));
+  it('standard → 40', () => expect(EconomySystem.getModelDayCost('standard')).toBe(40));
+  it('frontier → 120', () => expect(EconomySystem.getModelDayCost('frontier')).toBe(120));
 });
 
 // Tests for EconomySystem.getStrategyModifier — returns cost/quality/time data per strategy
 describe('EconomySystem.getStrategyModifier', () => {
-  it('planThenBuild → strategyCost 60, qualityMult 1.2, timeBonus 2', () => {
+  it('planThenBuild → strategyCost 80, qualityMult 1.2, timeBonus 6', () => {
     const mod = EconomySystem.getStrategyModifier('planThenBuild');
-    expect(mod.strategyCost).toBe(60);
+    expect(mod.strategyCost).toBe(80);
     expect(mod.qualityMult).toBe(1.2);
-    expect(mod.timeBonus).toBe(2);
+    expect(mod.timeBonus).toBe(6);
   });
 
-  it('justStart → strategyCost 30, qualityMult 1.0, timeBonus 0', () => {
+  it('justStart → strategyCost 20, qualityMult 1.05, timeBonus 0', () => {
     const mod = EconomySystem.getStrategyModifier('justStart');
-    expect(mod.strategyCost).toBe(30);
-    expect(mod.qualityMult).toBe(1.0);
+    expect(mod.strategyCost).toBe(20);
+    expect(mod.qualityMult).toBe(1.05);
     expect(mod.timeBonus).toBe(0);
   });
 
-  it('oneShot → strategyCost 10, qualityMult 0.7, timeBonus -2', () => {
+  it('oneShot → strategyCost 0, qualityMult 0.9, timeBonus -6', () => {
     const mod = EconomySystem.getStrategyModifier('oneShot');
-    expect(mod.strategyCost).toBe(10);
-    expect(mod.qualityMult).toBe(0.7);
-    expect(mod.timeBonus).toBe(-2);
+    expect(mod.strategyCost).toBe(0);
+    expect(mod.qualityMult).toBe(0.9);
+    expect(mod.timeBonus).toBe(-6);
   });
 
   it('vibeCode → qualityMult >= 0.5 and < 1.5 every time (10 runs)', () => {
@@ -60,7 +60,7 @@ describe('EconomySystem.getStrategyModifier', () => {
 describe('EconomySystem.applyDayCosts', () => {
   beforeEach(() => resetState());
 
-  it('deducts model + strategy cost — standard ($30) + justStart ($30) → 440', () => {
+  it('deducts model + strategy cost — standard ($40) + justStart ($20) → 440', () => {
     const state = createInitialState();
     state.budget = 500;
     state.model = 'standard';
@@ -90,7 +90,7 @@ describe('EconomySystem.applyDayCosts', () => {
     expect(state.budget).toBe(0);
   });
 
-  it('applies modelCostDiscount=0.5 — frontier becomes $50, total=80 (50+30), budget 420', () => {
+  it('applies modelCostDiscount=0.5 — frontier becomes $60, total=80 (60+20), budget 420', () => {
     const state = createInitialState();
     state.budget = 500;
     state.model = 'frontier';
@@ -101,18 +101,18 @@ describe('EconomySystem.applyDayCosts', () => {
     expect(state.budget).toBe(420);
   });
 
-  it('zero cost — free + oneShot → budget decreases by exactly 10', () => {
+  it('zero cost — free + oneShot → budget unchanged (both $0)', () => {
     const state = createInitialState();
     state.budget = 200;
     state.model = 'free';
     state.strategy = 'oneShot';
     EconomySystem.applyDayCosts(state);
-    expect(state.budget).toBe(190);
+    expect(state.budget).toBe(200);
   });
 
   it('broke flag NOT set when budget exactly covers costs', () => {
     const state = createInitialState();
-    state.budget = 40; // standard $30 + oneShot $10 = $40
+    state.budget = 40; // standard $40 + oneShot $0 = $40
     state.model = 'standard';
     state.strategy = 'oneShot';
     EconomySystem.applyDayCosts(state);
@@ -122,7 +122,7 @@ describe('EconomySystem.applyDayCosts', () => {
 
   it('broke flag set when 1 short', () => {
     const state = createInitialState();
-    state.budget = 39; // standard $30 + oneShot $10 = $40, 1 short
+    state.budget = 39; // standard $40 + oneShot $0 = $40, 1 short
     state.model = 'standard';
     state.strategy = 'oneShot';
     EconomySystem.applyDayCosts(state);
@@ -135,7 +135,7 @@ describe('EconomySystem.applyDayCosts', () => {
     state.model = 'standard';
     state.strategy = null;
     EconomySystem.applyDayCosts(state);
-    expect(state.budget).toBe(470); // only $30 model cost
+    expect(state.budget).toBe(460); // only $40 model cost
   });
 });
 

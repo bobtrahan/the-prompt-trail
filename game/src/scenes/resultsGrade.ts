@@ -36,10 +36,10 @@ export function calcRunningGrade(dayScores: number[], day: number): RunningGrade
   const percentage = cumulativePossible > 0 ? cumulativeEarned / cumulativePossible : 0;
 
   let rank: Rank = 'F';
-  if (percentage >= 0.90) rank = 'S';
-  else if (percentage >= 0.75) rank = 'A';
-  else if (percentage >= 0.60) rank = 'B';
-  else if (percentage >= 0.45) rank = 'C';
+  if (percentage >= 1.15) rank = 'S';
+  else if (percentage >= 0.90) rank = 'A';
+  else if (percentage >= 0.70) rank = 'B';
+  else if (percentage >= 0.50) rank = 'C';
   else if (percentage >= 0.30) rank = 'D';
 
   return {

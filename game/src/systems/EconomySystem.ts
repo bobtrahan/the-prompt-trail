@@ -10,17 +10,17 @@ export class EconomySystem {
   static getModelQualityMod(model: ModelTier): number {
     switch (model) {
       case 'free':
-        return -0.15;
+        return -0.20;
       case 'sketchy':
-        return -0.10;
+        return -0.12;
       case 'local':
         return -0.05;
       case 'openSource':
         return 0;
       case 'standard':
-        return 0.05;
+        return 0.10;
       case 'frontier':
-        return 0.15;
+        return 0.20;
       default: {
         const _exhaustive: never = model;
         return _exhaustive;
@@ -38,9 +38,9 @@ export class EconomySystem {
       case 'free':
         return 0;
       case 'standard':
-        return 30;
+        return 40;
       case 'frontier':
-        return 100;
+        return 120;
       case 'local':
         return 0;
       case 'sketchy':
@@ -68,18 +68,18 @@ export class EconomySystem {
   } {
     switch (strategy) {
       case 'planThenBuild':
-        return { timeBonus: 2, costMult: 1.0, qualityMult: 1.2, strategyCost: 60, riskLabel: 'Low Risk · $60' };
+        return { timeBonus: 6, costMult: 1.0, qualityMult: 1.2, strategyCost: 80, riskLabel: 'Low Risk · $80' };
       case 'justStart':
-        return { timeBonus: 0, costMult: 1.0, qualityMult: 1.0, strategyCost: 30, riskLabel: 'Medium Risk · $30' };
+        return { timeBonus: 0, costMult: 1.0, qualityMult: 1.05, strategyCost: 20, riskLabel: 'Standard · $20' };
       case 'oneShot':
-        return { timeBonus: -2, costMult: 0.7, qualityMult: 0.7, strategyCost: 10, riskLabel: 'High Risk · $10' };
+        return { timeBonus: -6, costMult: 0.7, qualityMult: 0.9, strategyCost: 0, riskLabel: 'High Risk · $0' };
       case 'vibeCode':
-        return { 
-          timeBonus: 1, 
-          costMult: 1.5, 
+        return {
+          timeBonus: 3,
+          costMult: 1.5,
           qualityMult: 0.5 + Math.random(),
-          strategyCost: 45,
-          riskLabel: '??? · $45',
+          strategyCost: 40,
+          riskLabel: '??? · $40',
         };
       default: {
         const _exhaustive: never = strategy;

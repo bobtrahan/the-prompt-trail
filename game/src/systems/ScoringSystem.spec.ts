@@ -39,9 +39,9 @@ describe('ScoringSystem.calcDayReputation', () => {
     expect(result.strategyBonus).toBe(Math.floor(50 * 0.15)); // 7
   });
 
-  it('justStart gives 0 strategy bonus', () => {
+  it('justStart gives +5% strategy bonus — floor(50*0.05)===2', () => {
     const result = ScoringSystem.calcDayReputation(100, 0, 'justStart', dummyClass, 1);
-    expect(result.strategyBonus).toBe(0);
+    expect(result.strategyBonus).toBe(Math.floor(50 * 0.05)); // 2
   });
 
   it('oneShot gives -10% — floor(50*-0.10)===-5', () => {
@@ -65,26 +65,28 @@ describe('ScoringSystem.calcDayReputation', () => {
     // baseRep = floor(80/100 * 120) = 96
     // accuracyBonus = floor(0.75 * 0.3 * 96) = floor(21.6) = 21
     // strategyBonus = floor(96 * 0.15) = floor(14.4) = 14
-    // modelBonus = floor(96 * 0.05) = 4  (standard = +5%)
-    // total = 96 + 21 + 14 + 4 = 135
+    // modelBonus = floor(96 * 0.10) = 9  (standard = +10%)
+    // total = 96 + 21 + 14 + 9 = 140
     const result = ScoringSystem.calcDayReputation(80, 0.75, 'planThenBuild', dummyClass, 5, 'standard');
     expect(result.baseRep).toBe(96);
     expect(result.accuracyBonus).toBe(21);
     expect(result.strategyBonus).toBe(14);
-    expect(result.modelBonus).toBe(4);
-    expect(result.total).toBe(135);
+    expect(result.modelBonus).toBe(9);
+    expect(result.total).toBe(140);
   });
 
-  it('free model gives -15% modelBonus — baseRep=50 → modelBonus=-8', () => {
+  it('free model gives -20% modelBonus — baseRep=50 → modelBonus=-10', () => {
     const result = ScoringSystem.calcDayReputation(100, 0, 'justStart', dummyClass, 1, 'free');
-    expect(result.modelBonus).toBe(Math.floor(50 * -0.15)); // -8
-    expect(result.total).toBe(50 + 0 + 0 + Math.floor(50 * -0.15)); // 42
+    expect(result.modelBonus).toBe(Math.floor(50 * -0.20)); // -10
+    // total = 50 + 0 + floor(50*0.05) + floor(50*-0.20) = 50 + 2 - 10 = 42
+    expect(result.total).toBe(42);
   });
 
-  it('frontier model gives +15% modelBonus — baseRep=50 → modelBonus=7', () => {
+  it('frontier model gives +20% modelBonus — baseRep=50 → modelBonus=10', () => {
     const result = ScoringSystem.calcDayReputation(100, 0, 'justStart', dummyClass, 1, 'frontier');
-    expect(result.modelBonus).toBe(Math.floor(50 * 0.15)); // 7
-    expect(result.total).toBe(50 + 0 + 0 + 7); // 57
+    expect(result.modelBonus).toBe(Math.floor(50 * 0.20)); // 10
+    // total = 50 + 0 + floor(50*0.05) + 10 = 50 + 2 + 10 = 62
+    expect(result.total).toBe(62);
   });
 
   it('day 13 uses maxReputation 500', () => {
@@ -111,16 +113,16 @@ describe('ScoringSystem.calcFinalScore', () => {
     expect(result.finalScore).toBe(49);
   });
 
-  it('rank S for >= 90% of maxPossibleRaw (2730) — dayScores summing to >= 2457', () => {
+  it('rank S for >= 115% of maxPossibleRaw (2730) — dayScores summing to >= 3140', () => {
     // maxPossibleRaw = sum of all project maxReputation = 2730
-    // 90% = 2457
-    const result = ScoringSystem.calcFinalScore([2457], 1.0);
+    // 115% = 3139.5 → need 3140
+    const result = ScoringSystem.calcFinalScore([3140], 1.0);
     expect(result.rank).toBe('S');
   });
 
-  it('rank A for >= 75% but < 90%', () => {
-    // 75% of 2730 = 2047.5, 90% = 2457
-    const result = ScoringSystem.calcFinalScore([2100], 1.0);
+  it('rank A for >= 90% but < 115%', () => {
+    // 90% of 2730 = 2457, 115% = 3139.5
+    const result = ScoringSystem.calcFinalScore([2600], 1.0);
     expect(result.rank).toBe('A');
   });
 
@@ -136,8 +138,9 @@ describe('ScoringSystem.calcFinalScore', () => {
     expect(result.rank).toBe('F');
   });
 
-  it('rank based on rawTotal not finalScore — dayScores summing to 2500 → S regardless of multiplier', () => {
+  it('rank based on rawTotal not finalScore — dayScores summing to 2500 → A regardless of multiplier', () => {
+    // 2500/2730 = 0.916 — above A threshold (0.90), below S threshold (1.15)
     const result = ScoringSystem.calcFinalScore([2500], 0.1);
-    expect(result.rank).toBe('S');
+    expect(result.rank).toBe('A');
   });
 });

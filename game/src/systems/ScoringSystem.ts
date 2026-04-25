@@ -53,7 +53,7 @@ export class ScoringSystem {
         strategyMod = 0.15;
         break;
       case 'justStart':
-        strategyMod = 0;
+        strategyMod = 0.05;
         break;
       case 'oneShot':
         strategyMod = -0.10;
@@ -104,10 +104,10 @@ export class ScoringSystem {
     const percentage = rawTotal / maxPossibleRaw;
 
     let rank: 'S' | 'A' | 'B' | 'C' | 'D' | 'F' = 'F';
-    if (percentage >= 0.90) rank = 'S';
-    else if (percentage >= 0.75) rank = 'A';
-    else if (percentage >= 0.60) rank = 'B';
-    else if (percentage >= 0.45) rank = 'C';
+    if (percentage >= 1.15) rank = 'S';
+    else if (percentage >= 0.90) rank = 'A';
+    else if (percentage >= 0.70) rank = 'B';
+    else if (percentage >= 0.50) rank = 'C';
     else if (percentage >= 0.30) rank = 'D';
 
     return {
