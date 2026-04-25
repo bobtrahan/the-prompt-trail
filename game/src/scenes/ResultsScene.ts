@@ -8,6 +8,7 @@ import { Taskbar } from '../ui/Taskbar';
 import { PROJECTS } from '../data/projects';
 import AudioManager from '../systems/AudioManager';
 import { drawWallpaper } from '../ui/DesktopWallpaper';
+import { calcRunningGrade, GRADE_FLAVOR, RANK_COLORS } from './resultsGrade';
 
 export class ResultsScene extends Phaser.Scene {
   private window!: Window;
@@ -21,7 +22,7 @@ export class ResultsScene extends Phaser.Scene {
 
   // Cached layout values needed in update()
   private winWidth = 500; // audit-ok — constant, never mutated
-  private winHeight = 460; // audit-ok — constant, never mutated
+  private winHeight = 540; // audit-ok — constant, never mutated
   private themeAccent = 0x00ffcc;
   private yShift = 0;
 
@@ -36,6 +37,10 @@ export class ResultsScene extends Phaser.Scene {
   private totalRepText!: Phaser.GameObjects.Text;
   private budgetDeltaText!: Phaser.GameObjects.Text;
   private hardwareDeltaText!: Phaser.GameObjects.Text;
+  private runningGradeDividerText!: Phaser.GameObjects.Text;
+  private runningGradeLabelText!: Phaser.GameObjects.Text;
+  private runningGradeText!: Phaser.GameObjects.Text;
+  private runningGradeFlavorText!: Phaser.GameObjects.Text;
 
   constructor() {
     super({ key: 'Results' });
@@ -63,8 +68,8 @@ export class ResultsScene extends Phaser.Scene {
     AudioManager.getInstance().playSFX('day-complete');
 
     // Create Results Window
-    const winWidth = 500;
-    const winHeight = 460;
+    const winWidth = this.winWidth;
+    const winHeight = this.winHeight;
     this.window = new Window({
       scene: this,
       x: (GAME_WIDTH - winWidth) / 2,
@@ -158,9 +163,32 @@ export class ResultsScene extends Phaser.Scene {
     const hwEnd = Math.round(state.hardwareHp);
     this.window.add(this.add.text(x + width - 20, deltaY, `Hardware: ${hwStart}% → ${hwEnd}%`, labelStyle).setOrigin(1, 0));
 
+    const runningGrade = calcRunningGrade(state.dayScores, state.day);
+    const runningGradeColor = RANK_COLORS[runningGrade.rank] ?? '#e6edf3';
+    const runningGradeFlavor = GRADE_FLAVOR[runningGrade.rank] ?? '';
+
+    this.runningGradeDividerText = this.add.text(x + width / 2, deltaY + 35, '── RUNNING GRADE ──', {
+      fontFamily: 'monospace', fontSize: '12px', color: '#9da5b0'
+    }).setOrigin(0.5).setAlpha(0);
+    this.window.add(this.runningGradeDividerText);
+
+    this.runningGradeLabelText = this.add.text(x + 20, deltaY + 62, `Day ${state.day} Grade:`, labelStyle).setAlpha(0);
+    this.window.add(this.runningGradeLabelText);
+
+    this.runningGradeText = this.add.text(x + width - 20, deltaY + 50, runningGrade.rank, {
+      fontFamily: 'monospace', fontSize: '32px', color: runningGradeColor, fontStyle: 'bold'
+    }).setOrigin(1, 0).setAlpha(0);
+    this.window.add(this.runningGradeText);
+
+    this.runningGradeFlavorText = this.add.text(x + width / 2, deltaY + 102, runningGradeFlavor, {
+      fontFamily: 'monospace', fontSize: '12px', color: '#9da5b0',
+      wordWrap: { width: width - 40 }, align: 'center',
+    }).setOrigin(0.5, 0).setAlpha(0);
+    this.window.add(this.runningGradeFlavorText);
+
     // Continue Button (hidden until animation ends)
     const btnText = state.day === 13 ? '[ Final Score → ]' : '[ Continue to Night → ]';
-    this.continueBtn = this.add.text(x + width/2, y + 370 + yShift, btnText, {
+    this.continueBtn = this.add.text(x + width/2, y + 450 + yShift, btnText, {
       fontFamily: 'monospace', fontSize: '14px', color: '#e6edf3',
       backgroundColor: '#238636', padding: { x: 14, y: 8 },
     }).setOrigin(0.5).setInteractive({ useHandCursor: true }).setAlpha(0);
@@ -278,11 +306,11 @@ export class ResultsScene extends Phaser.Scene {
         this.tweens.add({ targets: vibeText, alpha: 1, duration: 200, delay: 200 });
       }
 
-      this.tweens.add({
-        targets: this.continueBtn,
-        alpha: 1,
-        duration: 200
-      });
+      this.runningGradeDividerText.setAlpha(1);
+      this.runningGradeLabelText.setAlpha(1);
+      this.runningGradeText.setAlpha(1);
+      this.runningGradeFlavorText.setAlpha(1);
+      this.continueBtn.setAlpha(1);
     }
   }
 
