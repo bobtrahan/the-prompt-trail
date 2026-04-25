@@ -3,3 +3,13 @@ dist/
 .DS_Store
 *.log
 .obsidian/
+
+# Planning, agent context, internal docs
+AGENTS.md
+docs/DEPLOY.md
+docs/playtest-notes.md
+docs/codex-game-audit-4-16.md
+audit-screenshots/
+gen-music*.log
+scripts/
+
