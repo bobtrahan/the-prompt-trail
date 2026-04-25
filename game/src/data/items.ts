@@ -84,7 +84,7 @@ export const SHOP_ITEMS: ItemDef[] = [
     id: 'hw-ups',
     name: 'UPS Battery',
     category: 'hardware',
-    baseCost: 150,
+    baseCost: 30,
     description: 'Uninterruptible Power Supply for your rig.',
     effect: 'Immune to power-related events.',
     mechanical: { type: 'immuneTo', value: 'power_outage' }
@@ -169,7 +169,7 @@ export const SHOP_ITEMS: ItemDef[] = [
     id: 'con-backup',
     name: 'Cloud Backup',
     category: 'consumable',
-    baseCost: 30,
+    baseCost: 40,
     description: 'Insurance for your digital life.',
     effect: 'Next power or crash event results in no data loss.',
     mechanical: { type: 'oneTimeProtection', value: 'data_loss' }

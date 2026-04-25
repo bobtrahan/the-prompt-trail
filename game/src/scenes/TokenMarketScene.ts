@@ -40,6 +40,8 @@ const TAB_DEFS: { label: string; category: TabCategory }[] = [
   { label: 'Specials', category: 'joke' },
 ];
 
+const JOKE_TRIO = ['joke-quantum', 'joke-egpu', 'joke-agi'] as const;
+
 function categoryEmoji(category: ItemDef['category']): string {
   switch (category) {
     case 'model': return '🤖';
@@ -475,6 +477,12 @@ export class TokenMarketScene extends Phaser.Scene {
     this.taskbar.refresh();
 
     if (item.category === 'joke') {
+      const allJokesOwned = JOKE_TRIO.every(id => state.ownedUpgrades.includes(id));
+      if (allJokesOwned && !state.eventFlags['joke-trio-triggered']) {
+        state.eventFlags['joke-trio-triggered'] = true;
+        AudioManager.getInstance().playVoice('joke-trio');
+        this.showJokeTrioToast();
+      }
       this.showJokeModal(result.message);
     } else {
       this.showPurchasedFeedback();
@@ -534,6 +542,30 @@ export class TokenMarketScene extends Phaser.Scene {
       overlay.destroy(); box.destroy(); border.destroy();
       msgText.destroy(); okBtn.destroy();
       this.renderItems();
+    });
+  }
+
+  private showJokeTrioToast(): void {
+    const toast = this.add.text(
+      GAME_WIDTH / 2,
+      60,
+      '🏆 Achievement Unlocked: Full Idiot Starter Pack™',
+      {
+        fontFamily: 'monospace',
+        fontSize: '14px',
+        color: '#f2cc60',
+        backgroundColor: '#1c2128',
+        padding: { x: 16, y: 8 },
+      },
+    ).setOrigin(0.5).setDepth(500).setAlpha(0);
+
+    this.tweens.add({
+      targets: toast,
+      alpha: 1,
+      duration: 300,
+      hold: 3000,
+      yoyo: true,
+      onComplete: () => toast.destroy(),
     });
   }
 }

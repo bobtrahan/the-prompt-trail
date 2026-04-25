@@ -23,6 +23,21 @@ import { drawWallpaper } from '../ui/DesktopWallpaper';
 import { AGENT_MESSAGES, EVENT_REACTIONS, SYNERGY_MESSAGES, CLASH_MESSAGES, CONSUMABLE_REACTIONS } from '../data/agentMessages';
 import { SYNERGY_PAIRS, CLASH_PAIRS } from '../data/agents';
 
+const VIBE_LINES_GOOD = [
+  '🧠 The vibes are immaculate. Something beautiful is happening.',
+  '🧠 Flow state achieved. The code writes itself.',
+  '🧠 This is going suspiciously well.',
+  '🧠 The AI is vibing. You are vibing. We are all vibing.',
+  '🧠 Vibe check: passed. Surprisingly.',
+];
+
+const VIBE_LINES_BAD = [
+  '🧠 The vibes are... concerning. This might not end well.',
+  '🧠 Something feels wrong. Probably fine. Probably.',
+  '🧠 The AI just sighed. Can AIs sigh? This one did.',
+  '🧠 Vibe check: failed. Rescheduling for Thursday.',
+  '🧠 The energy in this codebase is chaotic neutral at best.',
+];
 
 interface AgentPanelState {
   id: string;
@@ -593,14 +608,14 @@ export class ExecutionScene extends Phaser.Scene {
     this.traitResults.forEach(res => {
       if (res.fired) {
         if (res.trait === 'architecture_debates') {
-          state.timerBonusSeconds -= 3; // costs 1 time unit = 3s
+          state.timerBonusSeconds -= 2;
           this.terminal.addLine("🤖 Linter: 'We need to discuss the architecture first.'");
         } else if (res.trait === 'deploy_unapproved') {
           this.progress = Math.min(100, this.progress + 10);
           state.eventFlags['turbo_deployed'] = true;
           this.terminal.addLine("🤖 Turbo: 'Already deployed. You're welcome.'");
         } else if (res.trait === 'feature_creep') {
-          state.timerBonusSeconds -= 6; // costs 2 time units = 6s
+          state.timerBonusSeconds -= 4;
           this.terminal.addLine("🤖 Scope: 'I added dark mode and a settings page! You're welcome!'");
         } else if (res.trait === 'low_hallucination') {
           // Oracle: +5 rep (fewer hallucinations = better output)
@@ -895,6 +910,11 @@ export class ExecutionScene extends Phaser.Scene {
     if (!this.inOvertime) {
       const state = getState();
       const count = this.typingEngine.getStats().promptsCompleted;
+      if (state.strategy === 'vibeCode' && [2, 4, 6, 8, 10].includes(count)) {
+        const pool = Math.random() > 0.5 ? VIBE_LINES_GOOD : VIBE_LINES_BAD;
+        const line = pool[Math.floor(Math.random() * pool.length)];
+        this.terminal.addLine(line);
+      }
       const schedule = EVENT_SCHEDULE.find(e => e.day === state.day);
       if (schedule && schedule.afterPrompts.includes(count)) {
         this.fireEvent();
