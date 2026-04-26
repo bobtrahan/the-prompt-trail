@@ -2,7 +2,6 @@ import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT, COLORS } from '../utils/constants';
 import { getState } from '../systems/GameState';
 import { DebugMenu } from './DebugMenu';
-import { DEV_CONFIG } from '../utils/devConfig';
 import { getTheme } from '../utils/themes';
 
 const TASKBAR_HEIGHT = 32;
@@ -50,7 +49,7 @@ export class Taskbar {
       ...style, color: Phaser.Display.Color.IntegerToColor(this.accentColor).rgba,
     }).setInteractive({ useHandCursor: true });
     
-    if (DEV_CONFIG.debugMenu) startBtn.on('pointerdown', () => this._openMenu());
+    startBtn.on('pointerdown', () => this._openMenu());
     startBtn.on('pointerover', () => startBtn.setColor('#e6edf3'));
     startBtn.on('pointerout', () => startBtn.setColor(Phaser.Display.Color.IntegerToColor(this.accentColor).rgba));
     
