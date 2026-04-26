@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import type { WavedashSDK } from '@wvdsh/sdk-js';
 import { MIN_VIEWPORT_WIDTH } from './utils/constants';
 import { BootScene } from './scenes/BootScene';
 import { TitleScene } from './scenes/TitleScene';
@@ -112,6 +113,9 @@ if (checkViewportWidth()) {
       postBoot: (game) => {
         game.canvas.setAttribute('tabindex', '1');
         game.canvas.focus();
+        // Required by Wavedash — dismisses loading screen
+        const wd = (window as unknown as { Wavedash?: WavedashSDK }).Wavedash;
+        wd?.init();
       },
     },
     scene: [
