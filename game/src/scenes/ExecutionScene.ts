@@ -1677,7 +1677,7 @@ export class ExecutionScene extends Phaser.Scene {
     this.modalGroup = undefined;
 
     this.inOvertime = true;
-    this.typingEngine.resume();
+    this.typingEngine.reactivate();
 
     // Restart countdown using the time remaining when completion was shown
     this.timeSeconds = this.overtimeWindowSeconds;

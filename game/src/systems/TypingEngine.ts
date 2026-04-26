@@ -102,6 +102,12 @@ export class TypingEngine {
     }
   }
 
+  /** Re-enable the engine after completion without resetting stats. Used for overtime. */
+  reactivate(): void {
+    this.active = true;
+    this.paused = false;
+  }
+
   isPaused(): boolean {
     return this.paused;
   }
