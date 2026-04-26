@@ -8,7 +8,8 @@ Oregon Trail meets AI development. Manage your budget, hardware, and sanity acro
 
 ## Play
 
-🎮 [Play on itch.io](#) *(coming soon)*
+🎮 [Play on itch.io](https://bobtrahan.itch.io/the-prompt-trail)
+🌐 [Play on GitHub Pages](https://bobtrahan.github.io/the-prompt-trail/)
 
 ## Tech
 
