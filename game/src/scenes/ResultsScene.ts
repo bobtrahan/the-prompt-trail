@@ -121,7 +121,7 @@ export class ResultsScene extends Phaser.Scene {
 
     const strategyLabel = this.getStrategyLabel(state.strategy || 'justStart');
     const hasOvertime = state.overtimeBonus > 0;
-    const hasAgentBonus = state.agentBonus > 0;
+    const hasAgentBonus = state.agentBonus !== 0;
     const hasEventRep = state.eventRepDelta !== 0;
     this.yShift = 25; // model bonus row always present
 
