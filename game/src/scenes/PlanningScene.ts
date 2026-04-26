@@ -89,7 +89,7 @@ export class PlanningScene extends Phaser.Scene {
     const STRAT_Y = 28;
     const stratWin = new Window({
       scene: this, x: 40, y: STRAT_Y,
-      width: 700, height: 360,
+      width: 700, height: 352,
       title: 'Strategy Picker',
       titleIcon: '⚙️',
       accentColor: theme.accent,
@@ -316,7 +316,7 @@ export class PlanningScene extends Phaser.Scene {
     });
 
     // ── Effects Preview window ─────────────────────────────────────────
-    const EFFECTS_Y = 396;
+    const EFFECTS_Y = 388;
     const EFFECTS_H = 242;
     const effectsWin = new Window({
       scene: this, x: 40, y: EFFECTS_Y,
@@ -363,7 +363,7 @@ export class PlanningScene extends Phaser.Scene {
     this.effectRepEstText = this.add.text(ex + eW - 4, ey + EROW * 4 + 8, '—', valStyle).setOrigin(1, 0);
 
     // ── Launch button ───────────────────────────────────────────────────
-    this.launchBtn = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 70, '[ Select a strategy to continue ]', {
+    this.launchBtn = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 62, '[ Select a strategy to continue ]', {
       fontFamily: 'monospace', fontSize: '16px', color: '#30363d',
     }).setOrigin(0.5);
   }
