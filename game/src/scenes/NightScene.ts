@@ -80,6 +80,7 @@ function drawTokenMarketThumb(
 export class NightScene extends Phaser.Scene {
   private led!: Phaser.GameObjects.Rectangle;
   private ledTween!: Phaser.Tweens.Tween;
+  private advancing = false;
 
   constructor() {
     super({ key: 'Night' });
@@ -333,6 +334,9 @@ export class NightScene extends Phaser.Scene {
   }
 
   private advance(): void {
+    if (this.advancing) return;
+    this.advancing = true;
+
     const state = getState();
     state.bountyPlayedTonight = false;
     state.day++;

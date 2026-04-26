@@ -212,7 +212,10 @@ export class ResultsScene extends Phaser.Scene {
       backgroundColor: '#238636', padding: { x: 14, y: 8 },
     }).setOrigin(0.5).setInteractive({ useHandCursor: true }).setAlpha(0);
     
-    this.continueBtn.on('pointerdown', () => this.advance());
+    this.continueBtn.on('pointerdown', () => {
+      this.continueBtn.disableInteractive();
+      this.advance();
+    });
     this.continueBtn.on('pointerover', () => this.continueBtn.setBackgroundColor('#2ea043'));
     this.continueBtn.on('pointerout', () => this.continueBtn.setBackgroundColor('#238636'));
     this.window.add(this.continueBtn);
