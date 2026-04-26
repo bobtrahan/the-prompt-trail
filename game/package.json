@@ -8,6 +8,8 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "deploy:itch": "npm run build && ~/bin/butler push dist bobtrahan/the-prompt-trail:html5 --ignore '*.DS_Store'",
+    "deploy:wavedash": "npm run build && source $HOME/.cargo/env && cd .. && wavedash build push",
+    "deploy": "npm run build && ~/bin/butler push dist bobtrahan/the-prompt-trail:html5 --ignore '*.DS_Store' && source $HOME/.cargo/env && cd .. && wavedash build push",
     "test": "vitest run",
     "test:watch": "vitest"
   },
