@@ -87,6 +87,7 @@ export class NightScene extends Phaser.Scene {
   }
 
   create(): void {
+    this.advancing = false;
     const state = getState();
     const theme = getTheme(state.playerClass ?? undefined);
     this.cameras.main.setBackgroundColor(COLORS.bg);
