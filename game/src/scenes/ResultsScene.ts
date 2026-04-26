@@ -21,7 +21,7 @@ export class ResultsScene extends Phaser.Scene {
 
   // Cached layout values needed in update()
   private winWidth = 500; // audit-ok — constant, never mutated
-  private winHeight = 540; // audit-ok — constant, never mutated
+  private winHeight!: number;
   private themeAccent = 0x00ffcc;
   private yShift = 0;
 
@@ -66,9 +66,15 @@ export class ResultsScene extends Phaser.Scene {
 
     AudioManager.getInstance().playSFX('day-complete');
 
+    const hasOvertime = state.overtimeBonus > 0;
+    const hasAgentBonus = state.agentBonus !== 0;
+    const hasEventRep = state.eventRepDelta !== 0;
+    const extraRows = [hasAgentBonus, hasEventRep, hasOvertime].filter(Boolean).length;
+
     // Create Results Window
     const winWidth = this.winWidth;
-    const winHeight = this.winHeight;
+    const winHeight = 515 + extraRows * 25;
+    this.winHeight = winHeight;
     this.window = new Window({
       scene: this,
       x: (GAME_WIDTH - winWidth) / 2,
@@ -120,9 +126,6 @@ export class ResultsScene extends Phaser.Scene {
     this.window.add(this.accuracyBonusText);
 
     const strategyLabel = this.getStrategyLabel(state.strategy || 'justStart');
-    const hasOvertime = state.overtimeBonus > 0;
-    const hasAgentBonus = state.agentBonus !== 0;
-    const hasEventRep = state.eventRepDelta !== 0;
     this.yShift = 25; // model bonus row always present
 
     this.window.add(this.add.text(x + 20, y + 163, 'Strategy ♙:', labelStyle));
