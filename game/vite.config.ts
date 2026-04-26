@@ -12,6 +12,7 @@ export default defineConfig({
       renderLegacyChunks: false,
     }),
   ],
+  base: './',
   server: {
     host: true
   },
