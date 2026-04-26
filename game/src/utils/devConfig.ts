@@ -1,4 +1,4 @@
 export const DEV_CONFIG = {
   telemetry: true,
-  debugMenu: false,
+  debugMenu: import.meta.env.DEV,
 };

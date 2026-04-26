@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "tsc && vite build && sed -i '' 's/<script type=\"module\" crossorigin/<script/g' dist/index.html",
     "preview": "vite preview",
+    "deploy:itch": "npm run build && ~/bin/butler push dist bobtrahan/the-prompt-trail:html5 --ignore '*.DS_Store'",
     "test": "vitest run",
     "test:watch": "vitest"
   },

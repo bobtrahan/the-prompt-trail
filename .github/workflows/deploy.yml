@@ -1,4 +1,4 @@
-name: Deploy to GitHub Pages
+name: Deploy to GitHub Pages + itch.io
 
 on:
   push:
@@ -37,6 +37,18 @@ jobs:
       - uses: actions/upload-pages-artifact@v3
         with:
           path: game/dist
+
+      - name: Install butler
+        run: |
+          curl -L -o butler.zip https://broth.itch.zone/butler/linux-amd64/LATEST/archive/default
+          unzip butler.zip
+          chmod +x butler
+          sudo mv butler /usr/local/bin/butler
+
+      - name: Deploy to itch.io
+        env:
+          BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
+        run: butler push game/dist bobtrahan/the-prompt-trail:html5 --ignore '*.DS_Store'
 
   deploy:
     needs: build
