@@ -133,10 +133,10 @@ export class ExecutionScene extends Phaser.Scene {
     toProcess.forEach(id => {
       switch (id) {
         case 'con-coffee':
-          this.typingEngine.speedModifier += 0.05;
+          state.timerBonusSeconds += 5;
           break;
         case 'con-energy':
-          this.typingEngine.speedModifier += 0.1;
+          state.timerBonusSeconds += 15;
           this.typingEngine.jitterChance = 0.2;
           break;
         case 'con-backup':
@@ -166,8 +166,8 @@ export class ExecutionScene extends Phaser.Scene {
 
     // Map consumable IDs to their display text
     const consumableTexts: Record<string, string> = {
-      'con-coffee': '☕ Coffee Boost — +5% Speed',
-      'con-energy': '⚡ Energy Drink — +10% Speed, Jitters Active',
+      'con-coffee': '☕ Coffee Boost — +5s Timer',
+      'con-energy': '⚡ Energy Drink — +15s Timer, 20% keystroke fumble chance',
       'con-backup': '☁️ Cloud Backup — Protection Active',
       'con-api': '💳 API Credits — Model Costs -50%',
       'con-duck': '🦆 Rubber Duck — Auto-Resolve Ready',
