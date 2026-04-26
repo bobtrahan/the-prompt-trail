@@ -93,6 +93,7 @@ export class ExecutionScene extends Phaser.Scene {
   // Completion / Overtime
   private inOvertime: boolean = false;
   private overtimeBonus: number = 0;
+  private agentTraitRep: number = 0;
   private overtimePromptsCompleted: number = 0;
   private overtimeWindowSeconds: number = 0;
   private completionShown: boolean = false;
@@ -335,6 +336,7 @@ export class ExecutionScene extends Phaser.Scene {
     this.completionShown = false;
     this.inOvertime = false;
     this.overtimeBonus = 0;
+    this.agentTraitRep = 0;
     this.overtimePromptsCompleted = 0;
     this.overtimeWindowSeconds = 0;
     this.lastStreakMilestone = 0;
@@ -622,6 +624,7 @@ export class ExecutionScene extends Phaser.Scene {
         } else if (res.trait === 'low_hallucination') {
           // Oracle: +5 rep (fewer hallucinations = better output)
           state.reputation += 5;
+          this.agentTraitRep += 5;
           this.terminal.addLine("🤖 Oracle: 'I have seen the future. It is... mostly fine.' (+5 rep)");
         } else if (res.trait === 'agreeable') {
           // Parrot: +3s timer (goes along with everything, fast)
@@ -1720,6 +1723,10 @@ export class ExecutionScene extends Phaser.Scene {
 
     // Add overtime bonus to total
     dayScore.total += this.overtimeBonus;
+
+    // agentTraitRep was already added to state.reputation live — record in dayScore for display only, do NOT add to total again
+    dayScore.agentBonus = this.agentTraitRep;
+    state.agentBonus = this.agentTraitRep;
 
     state.lastDayResult = {
       progress: this.progress,

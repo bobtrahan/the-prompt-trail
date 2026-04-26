@@ -32,7 +32,8 @@ export class ResultsScene extends Phaser.Scene {
   private accuracyBonusText!: Phaser.GameObjects.Text;
   private strategyBonusText!: Phaser.GameObjects.Text;
   private modelBonusText!: Phaser.GameObjects.Text;
-  private overtimeBonusText!: Phaser.GameObjects.Text;
+  private overtimeBonusText?: Phaser.GameObjects.Text;
+  private agentBonusText?: Phaser.GameObjects.Text;
   private totalRepText!: Phaser.GameObjects.Text;
   private runningGradeDividerText!: Phaser.GameObjects.Text;
   private runningGradeLabelText!: Phaser.GameObjects.Text;
@@ -119,6 +120,7 @@ export class ResultsScene extends Phaser.Scene {
 
     const strategyLabel = this.getStrategyLabel(state.strategy || 'justStart');
     const hasOvertime = state.overtimeBonus > 0;
+    const hasAgentBonus = state.agentBonus > 0;
     this.yShift = 25; // model bonus row always present
 
     this.window.add(this.add.text(x + 20, y + 175, 'Strategy ♙:', labelStyle));
@@ -129,10 +131,20 @@ export class ResultsScene extends Phaser.Scene {
     this.modelBonusText = this.add.text(x + 140, y + 200, '+0', valueStyle);
     this.window.add(this.modelBonusText);
 
+    let nextBonusY = y + 225;
+
+    if (hasAgentBonus) {
+      this.yShift += 25;
+      this.window.add(this.add.text(x + 20, nextBonusY, 'Agent ✨:', labelStyle));
+      this.agentBonusText = this.add.text(x + 140, nextBonusY, '+0', valueStyle);
+      this.window.add(this.agentBonusText);
+      nextBonusY += 25;
+    }
+
     if (hasOvertime) {
       this.yShift += 25;
-      this.window.add(this.add.text(x + 20, y + 225, TUNING.COPY.OVERTIME_LABEL, labelStyle));
-      this.overtimeBonusText = this.add.text(x + 140, y + 225, '+0', valueStyle);
+      this.window.add(this.add.text(x + 20, nextBonusY, TUNING.COPY.OVERTIME_LABEL, labelStyle));
+      this.overtimeBonusText = this.add.text(x + 140, nextBonusY, '+0', valueStyle);
       this.window.add(this.overtimeBonusText);
     }
 
@@ -215,6 +227,7 @@ export class ResultsScene extends Phaser.Scene {
     const curAccBonus = Math.floor(result.score.accuracyBonus * factor);
     const curStratBonus = Math.floor(result.score.strategyBonus * factor);
     const curOvertime = Math.floor(state.overtimeBonus * factor);
+    const curAgentBonus = Math.floor(state.agentBonus * factor);
     const curTotal = Math.floor(result.score.total * factor);
 
     this.progressText.setText(`${curProgress}%`);
@@ -230,6 +243,9 @@ export class ResultsScene extends Phaser.Scene {
 
     if (this.overtimeBonusText) {
       this.overtimeBonusText.setText(`+${curOvertime}`);
+    }
+    if (this.agentBonusText) {
+      this.agentBonusText.setText(`+${curAgentBonus}`);
     }
     
     this.totalRepText.setText(`+${curTotal} ⭐`);
