@@ -103,20 +103,20 @@ export class ResultsScene extends Phaser.Scene {
     const labelStyle = { fontFamily: 'monospace', fontSize: '14px', color: '#9da5b0' };
     const valueStyle = { fontFamily: 'monospace', fontSize: '14px', color: '#e6edf3' };
 
-    this.window.add(this.add.text(x + 20, y + 75, 'Progress:', labelStyle));
-    this.progressText = this.add.text(x + 140, y + 75, '0%', valueStyle);
+    this.window.add(this.add.text(x + 20, y + 63, 'Progress:', labelStyle));
+    this.progressText = this.add.text(x + 140, y + 63, '0%', valueStyle);
     this.window.add(this.progressText);
 
-    this.window.add(this.add.text(x + 20, y + 100, 'Accuracy:', labelStyle));
-    this.accuracyText = this.add.text(x + 140, y + 100, '0%', valueStyle);
+    this.window.add(this.add.text(x + 20, y + 88, 'Accuracy:', labelStyle));
+    this.accuracyText = this.add.text(x + 140, y + 88, '0%', valueStyle);
     this.window.add(this.accuracyText);
 
-    this.window.add(this.add.text(x + 20, y + 125, 'Base Rep:', labelStyle));
-    this.baseRepText = this.add.text(x + 140, y + 125, '+0', valueStyle);
+    this.window.add(this.add.text(x + 20, y + 113, 'Base Rep:', labelStyle));
+    this.baseRepText = this.add.text(x + 140, y + 113, '+0', valueStyle);
     this.window.add(this.baseRepText);
 
-    this.window.add(this.add.text(x + 20, y + 150, 'Accuracy ♙:', labelStyle));
-    this.accuracyBonusText = this.add.text(x + 140, y + 150, '+0', valueStyle);
+    this.window.add(this.add.text(x + 20, y + 138, 'Accuracy ♙:', labelStyle));
+    this.accuracyBonusText = this.add.text(x + 140, y + 138, '+0', valueStyle);
     this.window.add(this.accuracyBonusText);
 
     const strategyLabel = this.getStrategyLabel(state.strategy || 'justStart');
@@ -125,15 +125,15 @@ export class ResultsScene extends Phaser.Scene {
     const hasEventRep = state.eventRepDelta !== 0;
     this.yShift = 25; // model bonus row always present
 
-    this.window.add(this.add.text(x + 20, y + 175, 'Strategy ♙:', labelStyle));
-    this.strategyBonusText = this.add.text(x + 140, y + 175, `+0  (${strategyLabel})`, valueStyle);
+    this.window.add(this.add.text(x + 20, y + 163, 'Strategy ♙:', labelStyle));
+    this.strategyBonusText = this.add.text(x + 140, y + 163, `+0  (${strategyLabel})`, valueStyle);
     this.window.add(this.strategyBonusText);
 
-    this.window.add(this.add.text(x + 20, y + 200, 'Model ♙:', labelStyle));
-    this.modelBonusText = this.add.text(x + 140, y + 200, '+0', valueStyle);
+    this.window.add(this.add.text(x + 20, y + 188, 'Model ♙:', labelStyle));
+    this.modelBonusText = this.add.text(x + 140, y + 188, '+0', valueStyle);
     this.window.add(this.modelBonusText);
 
-    let nextBonusY = y + 225;
+    let nextBonusY = y + 213;
 
     if (hasAgentBonus) {
       this.yShift += 25;
@@ -161,21 +161,21 @@ export class ResultsScene extends Phaser.Scene {
     const yShift = this.yShift;
 
     // Footer Divider
-    this.window.add(this.add.text(x + width/2, y + 205 + yShift, '───────────', {
+    this.window.add(this.add.text(x + width/2, y + 193 + yShift, '───────────', {
       fontFamily: 'monospace', fontSize: '12px', color: '#9da5b0'
     }).setOrigin(0.5));
 
     // Total
-    this.window.add(this.add.text(x + 20, y + 230 + yShift, 'Day Total:', {
+    this.window.add(this.add.text(x + 20, y + 218 + yShift, 'Day Total:', {
       fontFamily: 'monospace', fontSize: '18px', color: '#e6edf3', fontStyle: 'bold'
     }));
-    this.totalRepText = this.add.text(x + 140, y + 230 + yShift, '+0 ⭐', {
+    this.totalRepText = this.add.text(x + 140, y + 218 + yShift, '+0 ⭐', {
       fontFamily: 'monospace', fontSize: '18px', color: '#e6edf3', fontStyle: 'bold'
     });
     this.window.add(this.totalRepText);
 
     // Delta Stats
-    const deltaY = y + 280 + yShift;
+    const deltaY = y + 256 + yShift;
     this.window.add(this.add.text(x + 20, deltaY, `Budget Spent: $${result.budgetSpent}`, labelStyle));
     
     const hwStart = Math.round(state.dayStartHardware);
@@ -191,15 +191,15 @@ export class ResultsScene extends Phaser.Scene {
     }).setOrigin(0.5).setAlpha(0);
     this.window.add(this.runningGradeDividerText);
 
-    this.runningGradeLabelText = this.add.text(x + 20, deltaY + 62, `Day ${state.day} Grade:`, labelStyle).setAlpha(0);
+    this.runningGradeLabelText = this.add.text(x + 20, deltaY + 58, `Day ${state.day} Grade:`, labelStyle).setAlpha(0);
     this.window.add(this.runningGradeLabelText);
 
-    this.runningGradeText = this.add.text(x + width - 20, deltaY + 50, runningGrade.rank, {
+    this.runningGradeText = this.add.text(x + width - 20, deltaY + 46, runningGrade.rank, {
       fontFamily: 'monospace', fontSize: '32px', color: runningGradeColor, fontStyle: 'bold'
     }).setOrigin(1, 0).setAlpha(0);
     this.window.add(this.runningGradeText);
 
-    this.runningGradeFlavorText = this.add.text(x + width / 2, deltaY + 102, runningGradeFlavor, {
+    this.runningGradeFlavorText = this.add.text(x + width / 2, deltaY + 94, runningGradeFlavor, {
       fontFamily: 'monospace', fontSize: '12px', color: '#9da5b0',
       wordWrap: { width: width - 40 }, align: 'center',
     }).setOrigin(0.5, 0).setAlpha(0);
@@ -207,7 +207,7 @@ export class ResultsScene extends Phaser.Scene {
 
     // Continue Button (hidden until animation ends)
     const btnText = state.day === 13 ? '[ Final Score → ]' : '[ Continue to Night → ]';
-    this.continueBtn = this.add.text(x + width/2, y + 450 + yShift, btnText, {
+    this.continueBtn = this.add.text(x + width/2, deltaY + 140, btnText, {
       fontFamily: 'monospace', fontSize: '14px', color: '#e6edf3',
       backgroundColor: '#238636', padding: { x: 14, y: 8 },
     }).setOrigin(0.5).setInteractive({ useHandCursor: true }).setAlpha(0);
