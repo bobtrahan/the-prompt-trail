@@ -615,14 +615,19 @@ export class ExecutionScene extends Phaser.Scene {
       if (res.fired) {
         if (res.trait === 'architecture_debates') {
           state.timerBonusSeconds -= 2;
-          this.terminal.addLine("🤖 Linter: 'We need to discuss the architecture first.'");
+          state.reputation += 8;
+          this.agentTraitRep += 8;
+          this.terminal.addLine("🤖 Linter: 'We need to discuss the architecture.' (-2s / +8 rep)");
         } else if (res.trait === 'deploy_unapproved') {
-          this.progress = Math.min(100, this.progress + 10);
-          state.eventFlags['turbo_deployed'] = true;
-          this.terminal.addLine("🤖 Turbo: 'Already deployed. You're welcome.'");
+          state.timerBonusSeconds += 8;
+          state.reputation -= 32;
+          this.agentTraitRep -= 32;
+          this.terminal.addLine("🤖 Turbo: 'Already deployed. You're welcome.' (+8s / -32 rep)");
         } else if (res.trait === 'feature_creep') {
           state.timerBonusSeconds -= 4;
-          this.terminal.addLine("🤖 Scope: 'I added dark mode and a settings page! You're welcome!'");
+          state.reputation += 16;
+          this.agentTraitRep += 16;
+          this.terminal.addLine("🤖 Scope: 'I added dark mode and a settings page! You're welcome!' (-4s / +16 rep)");
         } else if (res.trait === 'low_hallucination') {
           // Oracle: +5 rep (fewer hallucinations = better output)
           state.reputation += 5;

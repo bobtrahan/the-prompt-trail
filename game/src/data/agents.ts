@@ -23,7 +23,7 @@ export const AGENT_ROSTER: AgentDef[] = [
     quality: 2,
     trait: 'deploy_unapproved',
     traitChance: 0.2,
-    traitEffect: '20% chance: Ships fast, asks questions never. "Deployed before you approved."'
+    traitEffect: '20% chance: Ships fast, reputation takes the hit. "+8s but -32 rep. You\'re welcome."'
   },
   {
     id: 'oracle',
@@ -63,7 +63,7 @@ export const AGENT_ROSTER: AgentDef[] = [
     quality: 4,
     trait: 'architecture_debates',
     traitChance: 1.0,
-    traitEffect: '-1 time unit/day to "architecture debates." But the code is bulletproof.'
+    traitEffect: 'Always: -2s to architecture debates, but the quality shows. +8 rep/day.'
   },
   {
     id: 'scope',
@@ -73,7 +73,7 @@ export const AGENT_ROSTER: AgentDef[] = [
     quality: 4,
     trait: 'feature_creep',
     traitChance: 0.25,
-    traitEffect: '25% chance project takes 20% longer from unrequested features.'
+    traitEffect: '25% chance: Unrequested features cost time but impress the client. -4s / +16 rep.'
   }
 ];
 
