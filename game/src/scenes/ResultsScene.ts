@@ -34,6 +34,7 @@ export class ResultsScene extends Phaser.Scene {
   private modelBonusText!: Phaser.GameObjects.Text;
   private overtimeBonusText?: Phaser.GameObjects.Text;
   private agentBonusText?: Phaser.GameObjects.Text;
+  private eventRepText?: Phaser.GameObjects.Text;
   private totalRepText!: Phaser.GameObjects.Text;
   private runningGradeDividerText!: Phaser.GameObjects.Text;
   private runningGradeLabelText!: Phaser.GameObjects.Text;
@@ -121,6 +122,7 @@ export class ResultsScene extends Phaser.Scene {
     const strategyLabel = this.getStrategyLabel(state.strategy || 'justStart');
     const hasOvertime = state.overtimeBonus > 0;
     const hasAgentBonus = state.agentBonus > 0;
+    const hasEventRep = state.eventRepDelta !== 0;
     this.yShift = 25; // model bonus row always present
 
     this.window.add(this.add.text(x + 20, y + 175, 'Strategy ♙:', labelStyle));
@@ -138,6 +140,14 @@ export class ResultsScene extends Phaser.Scene {
       this.window.add(this.add.text(x + 20, nextBonusY, 'Agent ✨:', labelStyle));
       this.agentBonusText = this.add.text(x + 140, nextBonusY, '+0', valueStyle);
       this.window.add(this.agentBonusText);
+      nextBonusY += 25;
+    }
+
+    if (hasEventRep) {
+      this.yShift += 25;
+      this.window.add(this.add.text(x + 20, nextBonusY, 'Events ⚡:', labelStyle));
+      this.eventRepText = this.add.text(x + 140, nextBonusY, '+0', valueStyle);
+      this.window.add(this.eventRepText);
       nextBonusY += 25;
     }
 
@@ -247,7 +257,12 @@ export class ResultsScene extends Phaser.Scene {
     if (this.agentBonusText) {
       this.agentBonusText.setText(`+${curAgentBonus}`);
     }
-    
+
+    const curEventRep = Math.floor(state.eventRepDelta * factor);
+    if (this.eventRepText) {
+      this.eventRepText.setText(curEventRep >= 0 ? `+${curEventRep}` : `${curEventRep}`);
+    }
+
     this.totalRepText.setText(`+${curTotal} ⭐`);
 
     // Tick SFX

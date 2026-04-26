@@ -94,6 +94,7 @@ export class ExecutionScene extends Phaser.Scene {
   private inOvertime: boolean = false;
   private overtimeBonus: number = 0;
   private agentTraitRep: number = 0;
+  private eventRepDelta: number = 0;
   private overtimePromptsCompleted: number = 0;
   private overtimeWindowSeconds: number = 0;
   private completionShown: boolean = false;
@@ -337,6 +338,7 @@ export class ExecutionScene extends Phaser.Scene {
     this.inOvertime = false;
     this.overtimeBonus = 0;
     this.agentTraitRep = 0;
+    this.eventRepDelta = 0;
     this.overtimePromptsCompleted = 0;
     this.overtimeWindowSeconds = 0;
     this.lastStreakMilestone = 0;
@@ -363,8 +365,8 @@ export class ExecutionScene extends Phaser.Scene {
     }
 
     this.traitResults = AgentSystem.checkTraits(state.activeAgents, state.day);
-    EconomySystem.applyDayCosts(state);
     state.dayStartBudget = state.budget;
+    EconomySystem.applyDayCosts(state);
     Telemetry.logDayStart(state);
     state.dayStartHardware = state.hardwareHp;
 
@@ -1316,7 +1318,9 @@ export class ExecutionScene extends Phaser.Scene {
     const state = getState();
     const resolvedEventId = this.currentEvent?.id;
     const timerBefore = state.timerBonusSeconds;
+    const repBefore = state.reputation;
     const logs = this.eventEngine.applyEffects(choice, state);
+    this.eventRepDelta += state.reputation - repBefore;
     Telemetry.logEvent(this.currentEvent?.id ?? 'auto-resolve', choiceIndex, logs);
     for (const line of logs) {
       this.terminal.addLine(line);
@@ -1727,6 +1731,8 @@ export class ExecutionScene extends Phaser.Scene {
     // agentTraitRep was already added to state.reputation live — record in dayScore for display only, do NOT add to total again
     dayScore.agentBonus = this.agentTraitRep;
     state.agentBonus = this.agentTraitRep;
+    dayScore.eventRepDelta = this.eventRepDelta;
+    state.eventRepDelta = this.eventRepDelta;
 
     state.lastDayResult = {
       progress: this.progress,

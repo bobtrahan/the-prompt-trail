@@ -9,6 +9,7 @@ export interface DayScore {
   strategyBonus: number;
   modelBonus: number;
   agentBonus: number;
+  eventRepDelta: number;
   total: number;
 }
 
@@ -83,6 +84,7 @@ export class ScoringSystem {
       strategyBonus,
       modelBonus,
       agentBonus: 0, // populated by ExecutionScene after the fact
+      eventRepDelta: 0, // populated by ExecutionScene after the fact
       total,
     };
   }

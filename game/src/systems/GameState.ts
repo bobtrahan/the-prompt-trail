@@ -72,6 +72,7 @@ export interface GameState {
   };
   overtimeBonus: number;
   agentBonus: number;
+  eventRepDelta: number;
   bugHuntReturnScene: string;
   dayStartBudget: number;
   dayStartHardware: number;
@@ -112,6 +113,7 @@ export function createInitialState(): GameState {
     consumablesUsedToday: [],
     overtimeBonus: 0,
     agentBonus: 0,
+    eventRepDelta: 0,
     bugHuntReturnScene: 'Night',
     dayStartBudget: 0,
     dayStartHardware: 100,
