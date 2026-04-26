@@ -238,7 +238,8 @@ export class ResultsScene extends Phaser.Scene {
     const curStratBonus = Math.floor(result.score.strategyBonus * factor);
     const curOvertime = Math.floor(state.overtimeBonus * factor);
     const curAgentBonus = Math.floor(state.agentBonus * factor);
-    const curTotal = Math.floor(result.score.total * factor);
+    const trueTotal = result.score.total + state.agentBonus + state.eventRepDelta;
+    const curTotal = Math.floor(trueTotal * factor);
 
     this.progressText.setText(`${curProgress}%`);
     this.accuracyText.setText(`${curAccuracy}%`);
@@ -271,7 +272,7 @@ export class ResultsScene extends Phaser.Scene {
     }
 
     // Update total color dynamically
-    const curTotalForColor = Math.floor(result.score.total * factor);
+    const curTotalForColor = Math.floor(trueTotal * factor);
     if (curTotalForColor >= 40) {
       this.totalRepText.setColor('#f2cc60');
     } else if (curTotalForColor >= 20) {
