@@ -108,6 +108,12 @@ if (checkViewportWidth()) {
       autoCenter: Phaser.Scale.CENTER_BOTH,
     },
     audio: { disableWebAudio: false },
+    callbacks: {
+      postBoot: (game) => {
+        game.canvas.setAttribute('tabindex', '1');
+        game.canvas.focus();
+      },
+    },
     scene: [
       BootScene,
       TitleScene,
