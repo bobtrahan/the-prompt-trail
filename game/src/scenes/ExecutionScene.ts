@@ -817,7 +817,7 @@ export class ExecutionScene extends Phaser.Scene {
 
     this.dayTimer = this.time.addEvent({
       delay: 1000,
-      repeat: this.timeSeconds - 1,
+      repeat: -1,
       callback: () => this.tickTime(),
     });
 
@@ -949,6 +949,7 @@ export class ExecutionScene extends Phaser.Scene {
     this.taskbar.refresh();
 
     if (this.timeSeconds <= 0) {
+      this.dayTimer?.destroy();
       // If completion modal is still open when time runs out, dismiss and end normally
       if (this.completionShown && this.modalGroup) {
         this.modalGroup.destroy();
@@ -1296,6 +1297,10 @@ export class ExecutionScene extends Phaser.Scene {
       this.eventEngine.markFired(this.currentEvent.id, getState().day);
       this.currentEvent = undefined;
     }
+    // Resume immediately — don't make player wait for fade
+    if (this.dayTimer) this.dayTimer.paused = false;
+    this.typingEngine.resume();
+
     this.tweens.add({
       targets: this.modalGroup,
       alpha: 0,
@@ -1303,8 +1308,6 @@ export class ExecutionScene extends Phaser.Scene {
       onComplete: () => {
         this.modalGroup?.destroy();
         this.modalGroup = undefined;
-        if (this.dayTimer) this.dayTimer.paused = false;
-        this.typingEngine.resume();
         this.taskbar.refresh();
       },
     });
@@ -1407,6 +1410,10 @@ export class ExecutionScene extends Phaser.Scene {
 
     // Close modal
     if (this.modalGroup) {
+      // Resume immediately — don't make player wait for fade
+      if (this.dayTimer) this.dayTimer.paused = false;
+      this.typingEngine.resume();
+
       this.tweens.add({
         targets: this.modalGroup,
         alpha: 0,
@@ -1414,8 +1421,6 @@ export class ExecutionScene extends Phaser.Scene {
         onComplete: () => {
           this.modalGroup?.destroy();
           this.modalGroup = undefined;
-          if (this.dayTimer) this.dayTimer.paused = false;
-          this.typingEngine.resume();
           this.taskbar.refresh();
 
           // Resume dramatic beat: zoom terminal back
@@ -1696,7 +1701,7 @@ export class ExecutionScene extends Phaser.Scene {
     this.maxTimeSeconds = this.overtimeWindowSeconds;
     this.dayTimer = this.time.addEvent({
       delay: 1000,
-      repeat: this.overtimeWindowSeconds - 1,
+      repeat: -1,
       callback: () => this.tickTime(),
     });
 
