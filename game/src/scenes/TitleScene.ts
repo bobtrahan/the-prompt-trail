@@ -50,7 +50,7 @@ export class TitleScene extends Phaser.Scene {
     this.add.rectangle(cx, GAME_HEIGHT - 50, GAME_WIDTH - 100, 1, 0x21262d).setAlpha(0.5);
 
     // Credits
-    const credits = this.add.text(cx, GAME_HEIGHT - 40, 'Gamedev.js Jam 2026 · Theme: Machines', {
+    const credits = this.add.text(cx, GAME_HEIGHT - 26, 'Gamedev.js Jam 2026 · Theme: Machines', {
       fontFamily: 'monospace',
       fontSize: '12px',
       color: '#6e7681',
