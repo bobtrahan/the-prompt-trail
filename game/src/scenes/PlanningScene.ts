@@ -427,6 +427,14 @@ export class PlanningScene extends Phaser.Scene {
       : dayBase;
     const agentSpeedMod = AgentSystem.getSpeedModifier(this.selectedAgentIds);
     const agentSpeedSec = Math.round(baseTimer * agentSpeedMod);
+    let agentTraitTimerDelta = 0;
+    for (const id of this.selectedAgentIds) {
+      const agent = AGENT_ROSTER.find(a => a.id === id);
+      if (!agent) continue;
+      if (agent.trait === 'agreeable') agentTraitTimerDelta += 3;       // always fires
+      if (agent.trait === 'architecture_debates') agentTraitTimerDelta -= 2; // always fires
+      // probabilistic traits (Turbo, Scope, Gremlin): annotate only, don't add to total
+    }
     const strategyBonus = this.lastStrategyTimeBonus;
     let gpuBonus = 0;
     if (state.ownedUpgrades.includes('hw-gpu') && ['local', 'openSource'].includes(state.model)) {
@@ -436,7 +444,7 @@ export class PlanningScene extends Phaser.Scene {
     if (state.ownedUpgrades.includes('hw-monitor')) {
       monitorBonus = Math.round(baseTimer * 0.05);
     }
-    const totalTimer = Math.max(10, baseTimer + agentSpeedSec + strategyBonus + gpuBonus + monitorBonus);
+    const totalTimer = Math.max(10, baseTimer + agentSpeedSec + agentTraitTimerDelta + strategyBonus + gpuBonus + monitorBonus);
     const maxTimer = baseTimer + 10; // rough ceiling for bar
     const timerFrac = Math.min(1, totalTimer / maxTimer);
     const timerColor = totalTimer >= baseTimer ? 0x3fb950 : totalTimer >= baseTimer * 0.7 ? 0xd29922 : 0xf85149;
@@ -446,6 +454,7 @@ export class PlanningScene extends Phaser.Scene {
     const timerParts = [`${totalTimer}s`];
     if (strategyBonus !== 0) timerParts.push(`strategy ${strategyBonus > 0 ? '+' : ''}${strategyBonus}s`);
     if (agentSpeedSec !== 0) timerParts.push(`agents ${agentSpeedSec > 0 ? '+' : ''}${agentSpeedSec}s`);
+    if (agentTraitTimerDelta !== 0) timerParts.push(`traits ${agentTraitTimerDelta > 0 ? '+' : ''}${agentTraitTimerDelta}s`);
     if (gpuBonus) timerParts.push(`gpu +${gpuBonus}s`);
     if (monitorBonus) timerParts.push(`monitor +${monitorBonus}s`);
     this.effectTimerText.setText(timerParts.join('  ·  ')).setColor(
@@ -509,10 +518,37 @@ export class PlanningScene extends Phaser.Scene {
       if (stratForEst === 'vibeCode') {
         this.effectRepEstText.setText('+?? – +?? rep est.  (variable)').setColor('#d29922');
       } else {
-        const lo = floorScore.total;
-        const hi = ceilScore.total;
-        const suffix = noStrat ? '  (no strategy)' : '';
-        const txt = `${lo >= 0 ? '+' : ''}${lo} – ${hi >= 0 ? '+' : ''}${hi} rep est.${suffix}`;
+        let traitRepBonus = 0;
+        for (const id of this.selectedAgentIds) {
+          const agent = AGENT_ROSTER.find(a => a.id === id);
+          if (!agent) continue;
+          if (agent.trait === 'low_hallucination') traitRepBonus += 5;  // Oracle, always
+          if (agent.trait === 'architecture_debates') traitRepBonus += 8; // Linter, always
+        }
+        const lo = floorScore.total + traitRepBonus;
+        const hi = ceilScore.total + traitRepBonus;
+        const chanceNotes: string[] = [];
+        for (const id of this.selectedAgentIds) {
+          const agent = AGENT_ROSTER.find(a => a.id === id);
+          if (!agent) continue;
+          if (agent.trait === 'feature_creep') chanceNotes.push('25% +16 rep');
+          if (agent.trait === 'deploy_unapproved') chanceNotes.push('20% -32 rep');
+        }
+        let synergyNote = '';
+        for (const pair of SYNERGY_PAIRS) {
+          if (pair.agents.every(id => this.selectedAgentIds.includes(id))) {
+            synergyNote = `  ✨ +${Math.round(pair.effect * 100)}% speed synergy`;
+            break;
+          }
+        }
+        for (const pair of CLASH_PAIRS) {
+          if (pair.agents.every(id => this.selectedAgentIds.includes(id))) {
+            synergyNote = `  ⚡ ${Math.round(pair.effect * 100)}% speed clash`;
+            break;
+          }
+        }
+        const suffix = chanceNotes.length > 0 ? `  (${chanceNotes.join(', ')})` : (noStrat ? '  (no strategy)' : '');
+        const txt = `${lo >= 0 ? '+' : ''}${lo} – ${hi >= 0 ? '+' : ''}${hi} rep est.${suffix}${synergyNote}`;
         const color = hi < 0 ? '#f85149' : lo < 0 ? '#d29922' : '#3fb950';
         this.effectRepEstText.setText(txt).setColor(color);
       }
@@ -527,12 +563,12 @@ export class PlanningScene extends Phaser.Scene {
         const agent = AGENT_ROSTER.find(a => a.id === id);
         if (!agent) continue;
         const emoji = AGENT_EMOJI[id] ?? '🤖';
-        if (agent.trait === 'low_hallucination') traitNotes.push(`${emoji} +5 rep/day`);
+        if (agent.trait === 'low_hallucination') traitNotes.push(`${emoji} +5 rep`);
         else if (agent.trait === 'agreeable') traitNotes.push(`${emoji} +3s`);
-        else if (agent.trait === 'deploy_unapproved') traitNotes.push(`${emoji} 20% +10 progress`);
-        else if (agent.trait === 'architecture_debates') traitNotes.push(`${emoji} -3s/day`);
-        else if (agent.trait === 'feature_creep') traitNotes.push(`${emoji} 25% -6s`);
-        else if (agent.trait === 'wildcard_shortcut') traitNotes.push(`${emoji} 50/50 ±6s`);
+        else if (agent.trait === 'architecture_debates') traitNotes.push(`${emoji} -2s / +8 rep`);
+        else if (agent.trait === 'feature_creep') traitNotes.push(`${emoji} 25% -4s / +16 rep`);
+        else if (agent.trait === 'deploy_unapproved') traitNotes.push(`${emoji} 20% +8s / -32 rep`);
+        else if (agent.trait === 'wildcard_shortcut') traitNotes.push(`${emoji} 50% +6s or 50% -3s`);
         else traitNotes.push(`${emoji} ${agent.name}`);
       }
       // Check synergy / clash
