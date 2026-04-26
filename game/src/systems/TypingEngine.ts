@@ -37,6 +37,7 @@ export class TypingEngine {
   private dayPrompts?: string[];
   private dayPromptIndex = 0;
   private overridePool?: string[];
+  private overridePoolSource?: string[];
   private active = false;
   private paused = false;
   private typoForgiveness = 0;
@@ -160,9 +161,10 @@ export class TypingEngine {
 
   /** Replace the active prompt pool with a custom set (e.g. overtime production prompts) */
   setPromptPool(prompts: string[]): void {
+    this.overridePoolSource = [...prompts];
     this.overridePool = Phaser.Utils.Array.Shuffle([...prompts]);
     // Immediately load next from new pool
-    if (this.active && !this.paused) this.nextPrompt();
+    if (this.active) this.nextPrompt();
   }
 
   private nextPrompt(): void {
@@ -178,7 +180,7 @@ export class TypingEngine {
 
     if (this.overridePool) {
       if (this.overridePool.length === 0) {
-        this.overridePool = Phaser.Utils.Array.Shuffle([...this.overridePool]);
+        this.overridePool = Phaser.Utils.Array.Shuffle([...(this.overridePoolSource ?? [])]);
       }
       const prompt = this.overridePool.pop() ?? 'npm start';
       this.currentWrongCount = 0;

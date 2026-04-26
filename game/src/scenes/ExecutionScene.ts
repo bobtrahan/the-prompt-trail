@@ -94,6 +94,7 @@ export class ExecutionScene extends Phaser.Scene {
   private inOvertime: boolean = false;
   private overtimeBonus: number = 0;
   private overtimePromptsCompleted: number = 0;
+  private overtimeWindowSeconds: number = 0;
   private completionShown: boolean = false;
   private overtimeText?: Phaser.GameObjects.Text;
 
@@ -335,6 +336,7 @@ export class ExecutionScene extends Phaser.Scene {
     this.inOvertime = false;
     this.overtimeBonus = 0;
     this.overtimePromptsCompleted = 0;
+    this.overtimeWindowSeconds = 0;
     this.lastStreakMilestone = 0;
     this.hwBarFlashing = false;
     this.clashVoicedToday = false;
@@ -1589,6 +1591,7 @@ export class ExecutionScene extends Phaser.Scene {
 
   private showCompletionChoice(): void {
     this.completionShown = true;
+    this.overtimeWindowSeconds = this.timeSeconds;
     this.typingEngine.pause();
 
     const dw = 480;
@@ -1675,6 +1678,16 @@ export class ExecutionScene extends Phaser.Scene {
 
     this.inOvertime = true;
     this.typingEngine.resume();
+
+    // Restart countdown using the time remaining when completion was shown
+    this.timeSeconds = this.overtimeWindowSeconds;
+    this.maxTimeSeconds = this.overtimeWindowSeconds;
+    this.dayTimer = this.time.addEvent({
+      delay: 1000,
+      repeat: this.overtimeWindowSeconds - 1,
+      callback: () => this.tickTime(),
+    });
+
     this.terminal.addLine('Deploying to production...');
 
     // Swap prompt pool
