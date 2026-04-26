@@ -8,6 +8,7 @@ import { PROJECTS } from '../data/projects';
 import AudioManager from '../systems/AudioManager';
 import { drawWallpaper } from '../ui/DesktopWallpaper';
 import { calcRunningGrade, GRADE_FLAVOR, RANK_COLORS } from './resultsGrade';
+import { TUNING } from '../data/tuning';
 
 export class ResultsScene extends Phaser.Scene {
   private window!: Window;
@@ -130,7 +131,7 @@ export class ResultsScene extends Phaser.Scene {
 
     if (hasOvertime) {
       this.yShift += 25;
-      this.window.add(this.add.text(x + 20, y + 225, 'Production ♙:', labelStyle));
+      this.window.add(this.add.text(x + 20, y + 225, TUNING.COPY.OVERTIME_LABEL, labelStyle));
       this.overtimeBonusText = this.add.text(x + 140, y + 225, '+0', valueStyle);
       this.window.add(this.overtimeBonusText);
     }
